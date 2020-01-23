@@ -1,0 +1,99 @@
+## ----setup, include = FALSE---------------------------------------------------
+knitr::opts_chunk$set(
+  eval=F,
+  collapse = TRUE,
+  comment = "#>"
+)
+library(tidyverse)
+library(sf)
+library(spsurvey)
+library(glue)
+library(BASSr)
+
+## -----------------------------------------------------------------------------
+#  shape.file <- "XYhex100_LC_ha_JoyceLake"
+#  cost.table <- "XYhex100_LC_ha_JoyceLake_z15"
+
+## -----------------------------------------------------------------------------
+#  desired_crs <- "+proj=utm +zone=15 +ellps=GRS80 +datum=NAD83 +units=m +no_defs"
+#  
+#  att <- spsurvey::read.dbf(system.file("extdata", glue("{shape.file}.shp"),
+#    package = "BASSr", mustWork = T
+#  )) %>%
+#    dplyr::select(-LC_9_ha) %>% # This seems to be an error and should be cleaned prior to introducting to function
+#    rename_at(vars(contains("_ha")), ~ sub("_ha", "", .)) %>%
+#    rename_at(vars(contains("LC_")), ~ sub("LC_", "LC", .))
+#  
+#  att.sp <- sf::st_read(system.file("extdata", glue("{shape.file}.shp"),
+#    package = "BASSr", mustWork = T
+#  )) %>%
+#    sf::st_transform(desired_crs, check = T)
+#  sf::st_crs(att.sp)
+#  
+#  cost <- spsurvey::read.dbf(system.file("extdata", glue("{cost.table}.shp"),
+#    package = "BASSr", mustWork = T
+#  )) %>% rename(NEAR_DIST = NDIST_open) # Rename for now
+
+## ---- eval=F------------------------------------------------------------------
+#  runs <- c(2:20,seq(40,80, by = 20), seq(100, 1000, by = 100))
+#  grts_all <- purrr::map(.x = runs,
+#                         .f = draw_random_samples,att_cleaned = att, att.sf = att.sp, num_runs = 1000)
+#  names(grts_all) <- as.character(runs)
+#  write_rds(grts_all,"output/grts_sampling.rds")
+#  
+#  
+#  
+#  
+
+## ---- eval=F------------------------------------------------------------------
+#  att_cleaned_long <- prepare_hab_long(att)
+#  
+#  
+#  benefits_test <- subsample_grts_and_calc_benefit(num_runs = 20, nsamples = runs[[5]], att = att_cleaned_long, grts_file = "output/grts_sampling.rds")
+#  
+#  
+#  
+
+## ---- eval=F------------------------------------------------------------------
+#  inclusions_iter_test <- map_df(1:20,~full_BASS_run(num_runs = .x, nsamples = 20, att = att, att.sp = att.sp, cost = cost))
+#  write_rds(inclusions_iter_test, "output/inclusions_iter_test.rds")
+
+## -----------------------------------------------------------------------------
+#  inclusions_iter_test2 <- map_df(c(50,100,200),~full_BASS_run(num_runs = .x, nsamples = 20, att = att, att.sp = att.sp, cost = cost))
+
+## -----------------------------------------------------------------------------
+#  ggplot(inclusions_iter_test %>% bind_rows(inclusions_iter_test2), aes(num_runs, benefit, group = HEX100)) +
+#    geom_line(alpha = 0.2)
+
+## -----------------------------------------------------------------------------
+#  ggplot(inclusions_iter_test%>% bind_rows(inclusions_iter_test2), aes(num_runs, benefit, group = num_runs)) +
+#    stat_summary(fun.data = 'mean_cl_boot')
+
+## -----------------------------------------------------------------------------
+#  inclusions_iter_test <- read_rds("output/inclusions_iter_test.rds")
+#  inclusions_iter_test%>% #bind_rows(inclusions_iter_test2) %>%
+#    group_by(HEX100) %>% arrange(num_runs) %>%
+#    mutate(delta_ben = ifelse(is.na(lag(benefit) ), benefit, benefit - lag(benefit)))%>% ungroup %>%
+#    ggplot(aes(num_runs, abs(delta_ben))) + stat_summary(fun.y = 'var', na.rm=T, geom='point')
+#  
+#  
+
+## ---- eval=F------------------------------------------------------------------
+#  inclusions_iter_test3 <- map_df(c(50,100,200,1:20),~full_BASS_run(num_runs = .x, nsamples = 200, att = att, att.sp = att.sp, cost = cost))
+
+## -----------------------------------------------------------------------------
+#  ggplot(inclusions_iter_test3, aes(num_runs, benefit, group = HEX100)) +
+#    geom_line(alpha = 0.2)
+
+## -----------------------------------------------------------------------------
+#  ggplot(inclusions_iter_test3, aes(num_runs, benefit, group = num_runs)) +
+#    stat_summary(fun.data = 'mean_cl_boot')
+
+## -----------------------------------------------------------------------------
+#  inclusions_iter_test3 %>%
+#    group_by(HEX100) %>% arrange(num_runs) %>%
+#    mutate(delta_ben = ifelse(is.na(lag(benefit) ), benefit, benefit - lag(benefit)))%>% ungroup %>%
+#    ggplot(aes(num_runs, abs(delta_ben))) + stat_summary(fun.y = 'var', na.rm=T, geom='point')
+#  
+#  
+

@@ -1,0 +1,168 @@
+## ----setup, echo=T, include=F-------------------------------------------------
+knitr::opts_chunk$set(
+  eval=T,
+  collapse = TRUE,
+  comment = "#>"
+)
+library(tidyverse)
+library(sf)
+library(spsurvey)
+library(glue)
+library(BASSr)
+library(raster)
+library(rlang)
+library(patchwork)
+
+## -----------------------------------------------------------------------------
+test_sa <- c("0322", "0740", "0404","0165","0247","0197")
+allhexes <- read_rds(here::here("output/NOntario_BASS_hexes.rds"))
+studyareas <-  allhexes$StudyAreas%>% filter(grepl(glue_collapse( test_sa,"|"), StudyAreaID))
+samplehexes <- allhexes$SampleUnits%>% filter(grepl(glue_collapse( test_sa,"|"), StudyAreaID))
+rm(allhexes)
+habLoc <- "//int.ec.gc.ca/sys/InGEO/GW/EC1130MigBirds_OiseauxMig/ON_CWS/THEMES/BMS_ON/SANDBOX/dhdev/OnBMS/spatial/NontariobrandtLCC2015_reproj.tif"
+roadloc1 <- "//int.ec.gc.ca/sys/InGEO/GW/EC1130MigBirds_OiseauxMig/ON_CWS/THEMES/BMS_ON/SPATIAL/SecondaryRoadsNOntario.shp"
+roadloc2 <- "//int.ec.gc.ca/sys/InGEO/GW/EC1130MigBirds_OiseauxMig/ON_CWS/THEMES/BMS_ON/SPATIAL/PrimaryRoadsNOnt.shp"
+
+# n_BASS_iterations <- 20
+# n_BASS_samples_per_it <- 100
+# sample_size <- 20
+
+ids <- list.files(here::here("output"), "BassPrep.rds")
+
+put_a_hex_on_u <- map(glue::glue("{here::here('output')}/{ids[1:6]}"), read_rds) %>% transpose
+
+lcc <- map_df(put_a_hex_on_u$landcover, as_tibble)
+
+hex_phab <- 
+lcc %>% group_by(StudyAreaID) %>% 
+  summarise_at(vars(matches("LC\\d")), ~sum(./1003, na.rm=T))  %>% 
+  ungroup
+
+
+with(put_a_hex_on_u, {
+  cost ->> study_hexes_cost
+  landcover ->> sample_hexes_lcc
+  study_area ->> id_})
+
+
+
+## ---- eval=F------------------------------------------------------------------
+#  fbr_study_area_test <- pmap(expand.grid(id = unique(studyareas$StudyAreaID),
+#                                    number_iterations = c(3,5,10,15, 20, 25, 50),
+#                                    n_samples_per_iter = c(10, 50, 100)),
+#                             BASSr::extract_habitat_cost,#number_iterations = n_BASS_iterations,
+#                                                          # n_samples_per_iter = n_BASS_samples_per_it,
+#                                                          sample_hexes = samplehexes,
+#                                                          study_area_hexes = studyareas,
+#                                                          # id = .x,
+#                             id_col = StudyAreaID,
+#                                                          hab_rast_location = habLoc,
+#                                                          primary_roads = roadloc1,
+#                                                          secondary_roads =roadloc2,
+#                                                          return_all_ = F,
+#                                                          write_hexes =F,
+#                                                          load_hexes = T,
+#                                                          quick = T,
+#                                                          rds.loc="output" )
+#  write_rds(fbr_study_area_test,"output/StudyArea_sensitivity.rds")
+
+## ---- echo=T, message=F, warning=F--------------------------------------------
+fbr_study_area_test <- read_rds(here::here("output/StudyArea_sensitivity.rds"))
+fbr_study_area_testdf <- map_df(fbr_study_area_test, as_tibble) %>% filter(!is.na(benefit))
+
+
+## -----------------------------------------------------------------------------
+
+ggplot(fbr_study_area_testdf , 
+       aes(num_runs, benefit,
+                                  group = interaction(SampleUnitID, nsamples), colour = as.factor(nsamples))) +
+  geom_line(alpha = 0.01) + facet_wrap(~StudyAreaID) + scale_colour_viridis_d() +
+  guides(colour = guide_legend(override.aes = list(alpha = 1)))
+
+ggplot(fbr_study_area_testdf, aes(nsamples, benefit,
+                                  group = interaction( num_runs),
+                                  colour = num_runs)) +
+  stat_summary(fun.data = 'mean_cl_boot', position = position_dodge(width = 5)) +
+   facet_wrap(~StudyAreaID) + scale_colour_viridis_c() 
+
+
+
+ggplot(data =fbr_study_area_testdf %>% filter(., SampleUnitID %in% sample(unique(.$SampleUnitID),10)),
+       aes(num_runs, benefit,group = nsamples,
+           colour = as.factor(nsamples))) +
+  geom_line() + facet_wrap(~SampleUnitID, scales='free_y') + scale_colour_viridis_d()
+
+
+withHab <- 
+fbr_study_area_testdf %>% left_join(lcc %>% 
+                                      dplyr::select(-geometry),
+                                    by= c("SampleUnitID", "StudyAreaID", "X", "Y"))
+
+LCN <- names(lcc) %>% .[grepl("LC",.)]
+
+printBen <- function(d,r, LC){
+  rd <- rename(r, l = {{LC}})
+  rename(d, l = {{LC}}) %>% #print()
+ggplot( aes(round(l/10,0)*10, benefit)) +
+  stat_summary(fun.data='mean_cl_boot', na.rm=T,
+               fill = 'grey',aes(group = nsamples),
+               geom='ribbon', alpha = 0.5) +
+  stat_summary(aes( colour = as.factor(nsamples)),
+    fun.y='mean', geom='line', na.rm=T) +
+     
+    scale_colour_viridis_d()+
+    geom_vline(data = rd,
+               aes(xintercept = l),
+               colour = 'red', linetype = 2) +
+  facet_wrap(~StudyAreaID) +
+  labs(x = quo({{LC}} ), colour = "N Ran Samples") + theme_classic()
+    
+}
+plots_out <- map(LCN, printBen, d = withHab, r = hex_phab)
+
+## ----pdf-maker, eval = F------------------------------------------------------
+#  pdf("output/LCBens.pdf")
+#  (plots_out)
+#  dev.off()
+#  
+
+## -----------------------------------------------------------------------------
+plots_out
+
+## ---- eval=F------------------------------------------------------------------
+#  sas <- unique(withHab$StudyAreaID)
+#  
+#  blcs <- c("LC01", "LC14", "LC06", "LC18")
+#  blcs <- names(hex_phab)[-1]
+#  printben2 <- function(hx, wh, SA){
+#  h <- hx %>% dplyr::select_at(vars(c("StudyAreaID", blcs))) %>%
+#    filter(StudyAreaID == SA) %>%
+#    pivot_longer(names_to = "lc", values_to = 'l', cols = matches("LC\\d"))
+#  
+#  
+#  wh %>% dplyr::select_at(vars(c("StudyAreaID",'benefit','nsamples', blcs))) %>%
+#    filter(StudyAreaID == SA) %>%
+#    pivot_longer(names_to = "lc", values_to = 'l', cols = matches("LC\\d")) %>%
+#    ggplot( aes(round(l/10,0)*10, benefit)) +
+#    stat_summary(fun.data='mean_cl_boot', na.rm=T,
+#                 fill = 'grey',aes(group = nsamples),
+#                 geom='ribbon', alpha = 0.5) +
+#    stat_summary(aes( colour = as.factor(nsamples)),
+#      fun.y='mean', geom='line', na.rm=T) +
+#      scale_colour_viridis_d()+
+#      geom_vline(data = h,
+#                 aes(xintercept = l),
+#                 colour = 'red', linetype = 2) +
+#    facet_wrap(~lc) + theme_classic() +
+#     labs(title = SA , colour = "N Ran Samples", x = "Percentage of Hexagon", y = "Benefit")
+#  }
+#  
+#  
+#  plots_out2 <- map(sas, printben2, wh = withHab, hx = hex_phab)
+#  
+
+## ---- eval=F------------------------------------------------------------------
+#  pdf("output/TopLCBens2.pdf")
+#  (plots_out2)
+#  dev.off()
+

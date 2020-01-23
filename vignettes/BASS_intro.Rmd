@@ -1,0 +1,460 @@
+---
+title: "BASS Boreal Approach Sampling Strategy"
+author: "Russ Weeber, Rich Russell, Nora Spencer, others, David Hope"
+date: "`r Sys.Date()`"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{BASS Boreal Approach Sampling Strategy}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(
+  eval=T,
+  collapse = TRUE,
+  comment = "#>", 
+  fig.width = 8
+)
+library(tidyverse)
+library(sf)
+library(spsurvey)
+library(glue)
+library(BASSr)
+library(patchwork)
+```
+
+The goal of this vignette is to run through the implementation of the BASS design for a study area. Data associated with the tutorial are in `extdata`.
+
+
+## Step 1 - Select parameters for runs and samples
+`num_runs` is the number of runs you want ( how many times would you like grts repeated) and `samples` are the number of samples you want grts to randomly select from the study area
+```{r paramaters}
+num_runs <- 3
+samples <- 100
+```
+
+
+
+## Step 2 - assign shape file names and cost tables.
+
+`shape.file` is the the name of the shapefile/dbf for the study area. `cost.table` is the name of the cost table for the study area? Do not include extension. 
+```{r filenames}
+shape.file <- "XYhex100_LC_ha_JoyceLake"
+cost.table <- "XYhex100_LC_ha_JoyceLake_z15"
+```
+
+# Step 3 - Read in the source files.
+
+`att` is the dbf file to run grts- the attribute table for the study area. `att.sp` is the shapefile for the study area. The CRS for this example should be "+proj=longlat +ellps=GRS80 +datum=NAD83", but it will depend on the scale of interest. We will transform it to "+proj=utm +zone=15 +ellps=GRS80 +datum=NAD83 +units=m +no_defs".
+```{r load-sourcefiles}
+desired_crs <- "+proj=utm +zone=15 +ellps=GRS80 +datum=NAD83 +units=m +no_defs"
+
+att <- spsurvey::read.dbf(system.file("extdata", glue("{shape.file}.shp"),
+  package = "BASSr", mustWork = T
+)) %>%
+  dplyr::select(-LC_9_ha) # This seems to be an error and should be cleaned prior to introducting to fuction
+att.sp <- sf::st_read(system.file("extdata", glue("{shape.file}.shp"),
+  package = "BASSr", mustWork = T
+)) %>%
+  sf::st_transform(desired_crs, check = T)
+sf::st_crs(att.sp)
+```
+
+For a different projection use this website to look up: http://spatialreference.org/
+More details on how to select a CRS are available in "BorealRep/METHODS/Production2016/Boreal_Methods_2016May.docx"
+
+
+```{r, fig.cap="Number of hectres of Temperatue needleleaf forest (left) and open water (right)"}
+
+(ggplot(att.sp) + geom_sf(aes(colour = LC1_ha)) ) + ggplot(att.sp) + geom_sf(aes(colour = LC18_ha))
+```
+
+
+
+# Step 4 - Read in cost table
+Read in the cost table. Includes information about whether the centroid is located in a lake or not and the nearest road feature
+```{r load-cost}
+cost <- spsurvey::read.dbf(system.file("extdata", glue("{cost.table}.shp"),
+  package = "BASSr", mustWork = T
+)) %>% rename(NEAR_DIST = NDIST_open) # Rename for now
+```
+
+
+
+# STEP 7 -- Name the output files
+
+There will be 4 files generated from the code (as well as the sample files generated for each run of grts, but that's taken care of below and you don't need to change anything). Name the `benefit.csv` table with the lake name. Give the selection `probability.csv` table a name with the lake name. Name for the shapefile output too for the selection probability.
+```{r output-names}
+benefit_csv <- "./benefit_JoyceLake.csv"
+
+
+InclProb_csv <- "./InclProb_JoyceLake.csv"
+
+
+InclProb_shpfile <- "InclProb_JoyceLake"
+```
+
+
+We also want to save an rds of critical files, because running all this code takes a long time! We will add the key objects into an rds list file at the end. This is safer than just saving the environment to an .RData file because you have to actively choose what to put in and so prevents "sneaky" variables being pulled along.
+
+
+```{r}
+workspace_name <- "JoyceLake_environment.rds"
+```
+
+
+# Step 8 - The remainder of the code can be run together.
+
+## 8a Clean up Attribute table
+
+I'll need to come back to this and make it more generalized. 
+
+```{r}
+
+ptm <- proc.time() ### records time at start of loop
+
+
+
+## This code deletes columns 1 (HEX100K) and 5 (_NAME_)
+# att2 <- att[,- c( 1, 5)]
+## now lets rename the "LC9_ha" to "LC9", to make it easier for coding
+# colnames(att2) <- sub( "_ha", "", names(att2) )
+## change LC_99 to LC99
+# colnames(att2)[25] <- "LC99"
+
+# Now a more general version
+
+att_cleaned <- att %>%
+  # dplyr::select(-contains("100K"), -contains("NAME")) %>%
+  rename_at(vars(contains("_ha")), ~ sub("_ha", "", .)) %>%
+  rename_at(vars(contains("LC_")), ~ sub("LC_", "LC", .))
+
+str(att_cleaned)
+```
+
+
+
+## 8b - GRTS function
+
+
+Set up the survey design for GRTS.
+```{r}
+
+equaldesgn <- list(None = list # a list named 'None" that contains:
+(
+  panel = c(PanelOne = samples), # panelOne indicates the number of samples you want
+  seltype = "Equal"
+)) # equal probability sample
+```
+
+
+set up an empty vector with 0 rows and 37 columns (to match the number of columns in the grts output). The number of columns will have to be modified to make it more general. As will the column naming process.
+
+Name the columns to match output of grts. The last column will be the run number. (I don't think you need to do this as can specify the column names in GRTS).
+
+
+## 8c run GRTS
+run for loop. I'm going to use map to do this as it is quicker than a for loop.
+```{r}
+
+grts_output <- map(
+  1:num_runs,
+  ~ grts(
+    design = equaldesgn, ## selects the reference equaldesgn object
+    src.frame = "sf.object", # the sample frame is coming from a shapefile
+    sf.object = att.sp, # the shape file used
+    att.frame = att_cleaned, # attribute data frame
+    type.frame = "finite", # type-area vs linear
+    DesignID = "sample", # the prefix for each point name
+    shapefile = FALSE
+  ) # no shapefile created here, will be created below)
+)
+
+
+grts_random_sample <- as.list(grts_output) %>%
+  do.call("rbind", .) %>%
+  as_tibble() %>%
+  mutate(run = rep(1:num_runs, each = samples))
+```
+
+
+
+## 8d  DATA MANIPULATION BEFORE CALCULATIONS FOR BENEFIT
+
+Convert r100 to a long data format,subset only the information I want to keep-too much clutter.  Take out the first 9 columns and the last two columns with the x and y coord. (I'll need to chage this to make it more widely useful)
+
+
+beauty..now melt. I'm not comfortable here. What is melt? It is the same as `gather` or `pivot_longer`.
+
+```{r}
+
+grts_random_sample_long <- pivot_longer(grts_random_sample,
+  cols = matches("LC\\d"),
+  names_to = "lc", values_to = "ha"
+)
+```
+
+
+
+
+
+melt --- variable name will be 'lc' and the values will be named 'ha'
+
+```{r}
+
+land_cover_summary <- att_cleaned %>%
+  summarize_at(vars(matches("LC\\d")), sum) %>%
+  pivot_longer(cols = everything(), names_to = "lc", values_to = "ha") %>%
+  mutate(total_phab = ha / sum(ha))
+
+
+att_cleaned_long <- pivot_longer(att_cleaned,
+  cols = matches("LC\\d"),
+  names_to = "lc", values_to = "ha"
+) %>%
+  left_join(land_cover_summary %>%
+    rename(ha_total = ha), by = "lc")
+```
+
+
+##Take the sum of the hectares for each land cover in the random samples using the ddply function (from Plyr) we can summarise columns super easily by whatever variables we want, in this case the LC and the run number. Repeat this sum by the number of hex_IDs in the study area (to match the length of att_long)
+
+
+
+######################################
+##`random sample + hex100[i]`
+######################################
+Here we take each run from grts (in r100) and append one row (or HexID) from the study area on to the random sample[i] to re-evaluate the sum of hectares over each landcover class (ha_adjust), the sum of all landcover classes for the random sample plus one (sum_rand_adjust), and the sum of all land cover classes for the random sample[i] (sum_rand_ha)
+
+- use the wide format data r100 and att2
+- make sure that they have the same lengths/same columns.  The numbers in the c()
+- indicate the column numbers to keep
+
+
+
+using this in the loop. a Vector of 1, repeated 1009 times, 2, repeated 1009 times and 3, repeated 1009 times
+
+set up the dataframe that will house all of the adjusted random sums
+
+
+```{r}
+grts_random_sample_summary <-
+  grts_random_sample_long %>%
+  group_by(run, lc) %>%
+  summarize(ha_random = sum(ha)) %>%
+  group_by(run) %>%
+  mutate(phab_random = ha_random / sum(ha_random)) %>%
+  ungroup()
+
+grts_random_sample_summary_widenest <- 
+  grts_random_sample %>% 
+  group_by(run) %>% 
+  summarize_at(vars(matches("LC\\d")), sum ) %>%
+  mutate(cat = "cat") %>% ungroup %>% 
+  group_by(cat, run) %>%
+  nest() %>%
+  ungroup()
+
+
+nested_random_samples <-
+  grts_random_sample %>%
+  mutate(cat = "cat") %>%
+  group_by(cat, run) %>%
+  nest() %>%
+  ungroup()
+```
+
+Here I need to speed this up. Way too slow.
+```{r, eval = F}
+start_time <- Sys.time()
+hexagon_adjustment_df <-
+  att_cleaned_long %>%
+  mutate(cat = "cat") %>%
+  as_tibble() %>%
+  left_join(
+    nested_random_samples,
+    by = "cat"
+  ) %>%
+  dplyr::select(-cat) %>%
+  mutate(ha_adjust = pmap(., function(data, lc, ha, ...) sum(data[, lc], na.rm = T) + ha)) %>%
+  left_join(grts_random_sample_summary, by = c("run", "lc")) %>%
+  dplyr::select(-data) %>%
+  unnest(cols = ha_adjust)
+
+ difftime( Sys.time(),start_time)
+start_time <- Sys.time()
+
+#BestHere
+hexagon_adjustment_df2 <-
+  att_cleaned_long %>%
+  mutate(cat = "cat") %>%
+  as_tibble() %>%
+  left_join(
+    nested_random_samples,
+    by = "cat"
+  ) %>%
+  dplyr::select(-cat) %>%
+  mutate(ha_adjust = pmap(., function(data, lc, ha, ...) sumH(data[[lc]],  ha))) %>%
+  left_join(grts_random_sample_summary, by = c("run", "lc")) %>%
+  dplyr::select(-data) %>%
+  unnest(cols = ha_adjust)
+ difftime( Sys.time(),start_time)
+start_time <- Sys.time()
+
+hexagon_adjustment_df3 <-
+  att_cleaned_long %>%
+  mutate(cat = "cat") %>%
+  as_tibble() %>%
+  left_join(
+    grts_random_sample_summary_widenest,
+    by = "cat"
+  ) %>%
+  dplyr::select(-cat) %>%
+  mutate(ha_adjust = pmap(., function(data, lc, ha, ...) data[[lc]]+ha)) %>%
+  left_join(grts_random_sample_summary, by = c("run", "lc")) %>%
+  dplyr::select(-data) %>%
+  unnest(cols = ha_adjust)
+difftime( Sys.time(),start_time)
+
+
+
+```
+
+
+**Quick note about levels(df$HEX100)[as.numeric(df$HEX100[i])] - because HEX100 is a factor, when we use code df$HEX100[i] it extracts the ID factor level (which is numeric) instead of the actual ID HEX100_300...  levels() by itself returns an array of characters, so here we are converting the i^th HEX100 factor to numeric and then pulling out the corresponding character from the level.  BUT, this converts the entire dataframe to character.  More on that below **
+##########################################################################################################################################
+###                                                     BENEFIT CALCULATION
+##########################################################################################################################################
+
+
+```{r, eval =F}
+hexagon_benefits_by_run_andLC <- hexagon_adjustment_df2 %>%
+  group_by( run) %>%
+  mutate(random_total_hab = sum(ha_adjust)) %>%
+  ungroup() %>%
+  # group_by(HEX100,run, lc, phab_random, total_phab) %>%
+  mutate(
+    phab_ran_plus1 = ha_adjust / random_total_hab,
+    desired_direction = case_when(
+      phab_random > total_phab ~ "neg",
+      phab_random < total_phab ~ "pos",
+      phab_random == total_phab ~ "none",
+      TRUE ~ ""
+    ),
+    observed_direct = case_when(
+      phab_ran_plus1 > total_phab ~ "neg",
+      phab_ran_plus1 < total_phab ~ "pos",
+      phab_ran_plus1 == total_phab ~ "none",
+      TRUE ~ ""
+    ),
+    change = phab_ran_plus1 - phab_random,
+    ben_yes_no = case_when(
+      ((change < 0 & desired_direction == "neg") | (change > 0 & desired_direction == "pos")) ~ 1,
+      ((change < 0 & desired_direction == "pos") | (change > 0 & desired_direction == "neg")) ~ 0,
+      (change == 0 & desired_direction == "none") ~ 0,
+      (change == 0 & desired_direction != "none") ~ 0,
+      (desired_direction == "none" & change != 0) ~ -956498465,
+      TRUE ~ -999999
+    ),
+    benefit = as.numeric(ben_yes_no) * abs(change)
+  ) %>%
+  group_by(run, lc, phab_random, total_phab) %>%
+  mutate(sum_hex = sum(phab_ran_plus1)) %>%
+  ungroup()
+```
+
+# I've rewrote this using cpp
+```{r}
+
+```
+
+
+```{r}
+
+hexagon_benefits <- BASSr::quick_ben(d = att_cleaned, 
+                             samples = grts_random_sample_summary_widenest$data[[1]],
+                             land_cover_summary = land_cover_summary,col_ = HEX100, pd =T )
+
+```
+
+```{r}
+hexagon_benefits
+```
+
+
+Hexagon benefits - old version
+
+```{r, eval=F}
+
+
+hexagon_benefits_by_run <- hexagon_benefits_by_run_andLC %>%
+  group_by(HEX100, run) %>%
+  summarize(ben_by_run = sum(benefit, na.rm = T))
+
+
+hexagon_benefits <- hexagon_benefits_by_run %>%
+  group_by(HEX100) %>%
+  summarise(benefit = mean(ben_by_run, na.rm = T)) %>%
+  filter(!is.na(benefit))
+
+
+benefit.sp <- att.sp %>% left_join(hexagon_benefits, by = "HEX100")
+```
+
+##########################################################################################################################################
+###                                      INCLUSION PROBABILITY CALCULATION (AVG BENEFIT ACROSS RUNS)
+##########################################################################################################################################
+
+
+
+
+```{r}
+cost_ben <- left_join(cost, hexagon_benefits,
+  by = "HEX100"
+) %>%
+  filter(INLAKE == "NO") %>% ## delete any centroids that are in water
+  ## any NA in the 'INLAKE' column will be converted to a 0
+  dplyr::select(HEX100, LONG_DD, LAT_DD, NEAR_DIST, benefit) %>%
+  mutate(
+    RawCost = ifelse(NEAR_DIST > 1000, 5000, NEAR_DIST), ## scale the distance so anything greater than 1000m from the road is given a value of 5000
+    LogCost = log10(RawCost),
+    ScLogCost = LogCost / (max(LogCost, na.rm = T) + 1),
+    scale_ben = benefit / max(benefit, na.rm = T),
+    partIP = (1 - ScLogCost) * scale_ben, ## Inclusion probability
+    inclpr = partIP / max(partIP, na.rm = T) ## scaled Inclusion probability
+  )
+
+proc.time() - ptm ### ouputs time taken for routine
+```
+
+###wRITE OUT A SHAPEFILE FOR IMPORT INTO GIS
+
+
+```{r, eval=F}
+cost_ben_sp <- cost_ben
+## set up the spatial dataframe
+cost_ben_sp <- SpatialPointsDataFrame(cost_ben_sp[, c("LONG_DD", "LAT_DD")], cost_ben_sp)
+## set the projection for the spatial file to be written.  For a different projection use this website,
+## http://spatialreference.org/ --> Use the search to find coordinate system you would like.  On the 'results' page,
+## click on the link for the correct coordinate system you want.  You can either define the EPSG number (like this: "+init=epsg:4269" )
+# or below I am using "Proj4" definition. Either works
+proj4string(cost_ben_sp) <- CRS("+proj=longlat +ellps=GRS80 +datum=NAD83") ## Sets the CRS to lat/lon NAD83
+## use this code to project the data properly
+cost_ben_sp <- spTransform(cost_ben_sp, CRS("+proj=utm +zone=15 +ellps=GRS80 +datum=NAD83 +units=m+no_defs"))
+## More details on how to select a CRS are available in BorealRep/METHODS/Boreal_Methods_R_2016May.doc
+
+## write the file
+# writeOGR(cost_ben_sp, ".", InclProb_shpfile, driver = "ESRI Shapefile")
+```
+
+```{r}
+
+sf_out <- att.sp %>% left_join(cost_ben)
+
+ggplot(sf_out, aes(colour = inclpr)) + geom_sf(size = 3) + scale_colour_viridis_c() + labs(title = "Inclusion Probability")
+ggplot(sf_out, aes(colour = scale_ben)) + geom_sf(size = 3) + scale_colour_viridis_c() + labs(title = "Scaled Benefit")
+ggplot(sf_out, aes(colour = ScLogCost)) + geom_sf(size = 3) + scale_colour_viridis_c() + labs(title = "Scaled Cost")
+```
+
