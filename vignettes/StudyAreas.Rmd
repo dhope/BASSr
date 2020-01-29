@@ -1,5 +1,5 @@
 ---
-title: "N Ontario Study Areas"
+title: "N Ontario Study Areas v1"
 author: "David Hope"
 date: "`r Sys.Date()`"
 output:
@@ -7,7 +7,7 @@ output:
     theme: cayman
     highlight: github
 vignette: >
-  %\VignetteIndexEntry{N Ontario Study Areas}
+  %\VignetteIndexEntry{N Ontario Study Areas v1}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---

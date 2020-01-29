@@ -12,9 +12,12 @@ extract_habitat_cost(
   id,
   id_col,
   hab_rast_location,
-  primary_roads,
-  secondary_roads,
+  shape_file_list,
   return_all_,
+  nARUs = 30,
+  hexid_col = SampleUnitID,
+  calc_cost = F,
+  calc_hab = F,
   write_hexes = F,
   load_hexes = T,
   rds.loc = "output",
@@ -37,9 +40,15 @@ extract_habitat_cost(
 
 \item{hab_rast_location}{Location of raster for habitat}
 
-\item{primary_roads}{location of shp file for primary roads}
-
-\item{secondary_roads}{location of shp file for secondary roads}
+\item{shape_file_list}{named list of shapefiles used in cost calculation. The current iteration must include the following names:
+\describe{
+    \item{primary_roads}{sf polygon with primary roads buffer}
+    \item{secondary_roads}{sf polygon with atv roads buffer}
+    \item{winter_roads}{ sf polygon with winter roads buffer}
+    \item{total_roads}{ sf polygon with all roads buffer}
+    \item{airport_locations}{ sf points with airport locations}
+    \item{camp_locations}{ sf points with camp locations}
+    }}
 
 \item{return_all_}{Logical to return a full results or just the inclusion probabilities}
 

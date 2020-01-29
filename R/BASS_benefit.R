@@ -33,15 +33,19 @@ calculate_benefit <- function(grts_res, HexID, att_long, output = "all", quick =
     dplyr::select({{HexID}},lc, ha) %>%
     mutate({{HexID}} := as.character({{HexID}})) %>%
     pivot_wider(names_from = lc, values_from = ha)
-
+  # print(hexes)
   total <- att_long %>%
     dplyr::select(lc, ha_total) %>% distinct %>% rename(ha = ha_total)
 
-  return(quick_ben(d = hexes,samples  = grts_random_sample_summary_widenest, land_cover_summary = total,
+  return(quick_ben(d = hexes,
+                   samples  = grts_random_sample_summary_widenest,
+                   land_cover_summary = total,
                    col_ =  {{HexID}}, pd ))
 
 
   }
+
+
 
   grts_random_sample_summary <-
     grts_res$grts_random_sample_long %>%
@@ -146,6 +150,7 @@ calculate_benefit <- function(grts_res, HexID, att_long, output = "all", quick =
 #'
 #' @examples
 prepare_hab_long <- function(att) {
+  sa_a <- sum(att$area)
   land_cover_summary <- att %>%
     summarize_at(vars(matches("LC\\d")), sum) %>%
     pivot_longer(cols = everything(), names_to = "lc", values_to = "ha") %>%
@@ -190,7 +195,7 @@ subsample_grts_and_calc_benefit <- function(nsamples, num_runs, grts_file, att, 
 
 #' Quick Benefits
 #'
-#' @param d
+#' @param d Hexagon data.frame
 #' @param samples
 #' @param land_cover_summary
 #' @param col_
@@ -199,9 +204,16 @@ subsample_grts_and_calc_benefit <- function(nsamples, num_runs, grts_file, att, 
 #' @return
 #' @export
 quick_ben <- function(d,samples, land_cover_summary, col_, pd ){
-  # col <- rlang::enquo(col_)
-  hexes <- d %>% dplyr::select_at(vars( matches("LC\\d")))
 
+  # col <- rlang::enquo(col_)
+  hexes <- d %>%
+    as_tibble() %>%
+    dplyr::select_at(vars( matches("LC\\d")))
+
+  if(all(round(rowSums(hexes),0)==100)| all(round(rowSums(hexes),0)==1)){
+    stop("I think you have inputed percentages into your hexagons.
+                This will not calculate accurate benefit values.")
+  }
   hexNames <-  #as.character(d[[col_]])
     dplyr::select(as_tibble(d), {{col_}} ) %>% .[[1]]
   # print(names(d))
@@ -209,19 +221,27 @@ quick_ben <- function(d,samples, land_cover_summary, col_, pd ){
   total <- land_cover_summary %>% dplyr::select(lc, ha) %>%
     pivot_wider(names_from = lc, values_from = ha)
   total <- total[names(hexes)]
-
+  if(all(round(rowSums(total),0)==100)| all(round(rowSums(total),0)==1)){
+    stop("I think you have inputed percentages into your total values.
+                This will not calculate accurate benefit values.")
+  }
   samp <- samples %>% dplyr::select_at(vars( matches("LC\\d")))
   samp <- samp[names(hexes)]
 
+  if(all(round(rowSums(samp),0)==100)| all(round(rowSums(samp),0)==1)){
+    stop("I think you have inputed percentages into your sample values.
+                This will not calculate accurate benefit values.")
+  }
+
   if(all(names(hexes) != names(total))) {print(names(hexes))
     print(names(total))
-    simpleError("Hexes and total are not organized correctly")}
+    stop("Hexes and total are not organized correctly")}
   if(all(names(hexes) != names(samp))) {print(names(hexes))
     print(names(samp))
-    simpleError("Hexes and samples are not organized correctly")}
+    stop("Hexes and samples are not organized correctly")}
   if(all(names(samp) != names(total))) {print(names(samp))
     print(names(total))
-    simpleError("Samples and total are not organized correctly")}
+    stop("Samples and total are not organized correctly")}
 
   h <- as.matrix(hexes)
   s <- samp %>% as.matrix

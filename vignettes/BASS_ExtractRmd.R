@@ -21,9 +21,12 @@ rm(allhexes)
 samplehexes1 <- samplehexes %>% filter(StudyAreaID=="ONT_SA_0197")
 sa1 <- studyareas %>% filter(StudyAreaID=="ONT_SA_0197")
 
-## ----extract-landcover, eval=F------------------------------------------------
+## ----load-layers, eval=F------------------------------------------------------
 #  lcc2015 <- raster("//int.ec.gc.ca/sys/InGEO/GW/EC1130MigBirds_OiseauxMig/ON_CWS/THEMES/BMS_ON/SANDBOX/dhdev/OnBMS/spatial/NontariobrandtLCC2015_reproj.tif")
 #  
+#  
+
+## ----extract-landcover, eval=F------------------------------------------------
 #  
 #  sa1 <- studyareas %>% filter(StudyAreaID==unique(studyareas$StudyAreaID)[[1]])
 #  sa1_lcc <- lcc2015 %>% crop(.,st_buffer(sa1, 1000)) %>% mask(st_buffer(sa1, 1000))

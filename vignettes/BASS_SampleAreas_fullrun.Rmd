@@ -49,9 +49,9 @@ roadloc2 <- "//int.ec.gc.ca/sys/InGEO/GW/EC1130MigBirds_OiseauxMig/ON_CWS/THEMES
 
 
 ```{r, eval=F}
-fbr_study_area_test <- map(unique(studyareas$StudyAreaID) , ~BASSr::extract_habitat_cost(number_iterations = n_BASS_iterations, n_samples_per_iter = n_BASS_samples_per_it, sample_hexes = samplehexes, study_area_hexes = studyareas, id = .x, id_col = StudyAreaID, hab_rast_location = habLoc, primary_roads = roadloc1, secondary_roads =roadloc2, return_all_ = T, write_hexes =T, load_hexes = T,quick = T, rds.loc="output" ))
-
-write_rds(fbr_study_area_test, "output/2020-01-14_studyarea_test_results.rds")
+# fbr_study_area_test <- map(unique(studyareas$StudyAreaID) , ~BASSr::extract_habitat_cost(number_iterations = n_BASS_iterations, n_samples_per_iter = n_BASS_samples_per_it, sample_hexes = samplehexes, study_area_hexes = studyareas, id = .x, id_col = StudyAreaID, hab_rast_location = habLoc, primary_roads = roadloc1, secondary_roads =roadloc2, return_all_ = T, write_hexes =T, load_hexes = T,quick = T, rds.loc="output" ))
+# 
+# write_rds(fbr_study_area_test, "output/2020-01-24_fbr_studyarea.rds")
 
 ```
 
@@ -63,7 +63,7 @@ x <- read_rds("output/studyArea_ONT_SA_0197_BassPrep.rds")
 
 
 ```{r, message=F, warning=F}
-fbr_study_area_test <- read_rds(here::here("output/2020-01-14_studyarea_test_results.rds"))
+fbr_study_area_test <- read_rds(here::here("output/2020-01-28_fbr_studyarea2.rds"))
 grts_run <- run_grts_on_BASS(n_grts_tests = 30, 
                              study_area_results = fbr_study_area_test,
                              nARUs = sample_size, idcol = "StudyAreaID",
@@ -86,16 +86,19 @@ pwplots
 
 
 ```{r, eval =F}
+sf_list = list(primary_roads = primary_buffer, secondary_roads = secondary_buffer, winter_roads = winter_buff, total_roads = road_buffer, airport_locations = airports_official, camp_locations = tourism)
+
 sampleSizeAllocation <- function(nArus, n_grts_tests, fbr, os, n_BASS_iterations = 20) {
   if (is.null(fbr)) {
     fbr <- map(unique(studyareas$StudyAreaID),
                ~ extract_habitat_cost(number_iterations = n_BASS_iterations,
                                       n_samples_per_iter = 20, sample_hexes = samplehexes,
                                       study_area_hexes = studyareas, id = .x, 
-                                      id_col = StudyAreaID, hab_rast_location = habLoc,
-                                      primary_roads = roadloc1, secondary_roads = roadloc2,
-                                      return_all_ = T, write_hexes = F, quick = T,
-                                      load_hexes = T, rds.loc = here::here("output")))
+                                      id_col = StudyAreaID, shape_file_list = NA,
+                                      return_all_ = T, write_hexes = F, quick = T,calc_cost = F,
+                                      calc_hab = F,
+                                      load_hexes = T,
+                                      rds.loc = here::here("output")))
   }
   print("Finished Extracting Hexagons")
   grts_run <- run_grts_on_BASS(idcol = "StudyAreaID",
@@ -164,7 +167,7 @@ tr_sm %>% group_by(StudyAreaID, run, samplesize) %>%
 all_samples <- map(c(10,20,30,50,100,200), sampleSizeAllocation,  n_grts_tests = 50, fbr = NULL,
                    os = 0.5, n_BASS_iterations = 20)
 
-write_rds(all_samples, "output/2020-01-15_allsamples_drawARUsInBASS.rds")
+write_rds(all_samples, "output/2020-01-28_allsamples_drawARUsInBASS.rds")
 
 
 ```
@@ -172,7 +175,7 @@ write_rds(all_samples, "output/2020-01-15_allsamples_drawARUsInBASS.rds")
 
 
 ```{r, fig.width=12, fig.height=12}
-as2 <- read_rds(here::here( "output/2020-01-15_allsamples_drawARUsInBASS.rds"))
+as2 <- read_rds(here::here( "output/2020-01-27_allsamples_drawARUsInBASS.rds"))
 pw <- (as2[[1]]$sampleBASSresults$see_plot + labs(title = "10 arus") +
 as2[[2]]$sampleBASSresults$see_plot + labs(title = "20 arus") + as2[[3]]$sampleBASSresults$see_plot + labs(title = "30 arus")) / (
 as2[[4]]$sampleBASSresults$see_plot+ labs(title = "50 arus") +

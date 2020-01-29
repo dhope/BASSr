@@ -1,0 +1,321 @@
+---
+title: "Step by Step"
+author: "David Hope"
+date: "`r Sys.Date()`"
+output:
+  html_document:
+    code_folding: hide
+    theme: united
+highlight: github
+vignette: >
+  %\VignetteIndexEntry{Step by Step}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r setup, include=F, echo=T}
+knitr::opts_chunk$set(
+  eval=T,
+  collapse = TRUE,
+  comment = "#>"
+)
+library(tidyverse)
+library(sf)
+library(spsurvey)
+library(glue)
+library(BASSr)
+library(raster)
+library(rlang)
+```
+
+
+This is an example of how we calculate the benefit for one hexagon in a study area. The same approach applies to all other hexagons in the study area and also to calculating benefits for the study areas in a region.
+
+## Step 1 - Load in data
+```{r load-data}
+study_area_id  <- "ONT_SA_0740"
+StudyArea_hexes <- read_rds(here::here(glue::glue("output/StudyArea_{study_area_id}_BassPrep.rds") ) )
+SA_sum <- StudyArea_hexes$landcover %>% as_tibble() %>% 
+  summarize_at( .vars = vars(contains("LC")), .funs = sum) %>% 
+   pivot_longer(cols = contains("LC"), names_to = "lc", values_to = "pHab_SA") %>% 
+  mutate(pHab_SA = pHab_SA / sum(pHab_SA)) %>% 
+  arrange(pHab_SA) %>% 
+  mutate(cHAb_SA = cumsum(pHab_SA),
+         lcFac = forcats::fct_reorder(lc, pHab_SA))
+```
+
+
+This example study area is shown below.
+
+```{r raster-plot, fig.cap = "Fig 1. The distribution of land cover classes across an example study area"}
+r <- raster::raster(
+    glue::glue(here::here("output/{study_area_id}.tif")) ) %>%
+  raster::as.data.frame(xy=T, long =T) %>% as_tibble() %>%
+    filter(!is.na(value))
+
+  pal_ <- viridis::viridis(19)
+  names(pal_) <- as.character(1:19)
+
+
+  lc <- ggplot() + geom_raster(data = r, aes(x, y, fill = as.factor(value))) +
+    scale_fill_manual(values = pal_) +
+    geom_sf(data = StudyArea_hexes$landcover, fill = NA) +
+    labs(x = "", y = "", fill = "LCC2015") + theme_linedraw()
+  
+  # inplt <- ggplot() + geom_sf(data = StudyArea_hexes,
+  #                             aes(fill = inclpr) ) + scale_fill_viridis_c()
+  # library(patchwork)
+  # lc + inplt
+
+lc
+```
+
+
+There is variation in the composition of land cover classes amongst hexagons
+
+```{r land-cover-hexes, fig.cap = "Fig 2. The cumulative proportion of land cover classes within sample hexagons (grey) and the study area (black)"}
+hex_LC <- 
+StudyArea_hexes$landcover %>% 
+  as_tibble() %>% dplyr::select(-geometry) %>% 
+  pivot_longer(cols = contains("LC"), names_to = "lc", values_to = "pHab") %>% 
+  left_join(SA_sum, by =c( "lc")) %>% arrange(SampleUnitID, pHab_SA) %>% 
+  group_by(SampleUnitID) %>% 
+  mutate(cpHab = cumsum(pHab/100)) %>% ungroup
+set.seed(2277)
+exampleHex <- sample_n(StudyArea_hexes$landcover, 1)
+exLC <- hex_LC %>% filter(SampleUnitID %in% exampleHex$SampleUnitID)
+
+ggplot(hex_LC, aes(lcFac, cpHab, group = SampleUnitID)) + 
+  geom_step(colour = 'grey', 
+            alpha = 0.1) + 
+  geom_step(data = exLC, 
+            colour = 'red')+
+  geom_step(data = SA_sum, 
+            aes(y = cHAb_SA, group = 1), 
+            colour = "black", size =2) + theme_minimal() +
+  labs(x = "Land Cover Class (Increasing freq from left to right)", y = "Cumulative proportion of hexagon")
+
+```
+
+Lets focus on one hexagon for now. It is shown in the figure above in red and below it is the shaded hexagon.
+
+```{r, fig.cap="Fig 3. Example Hexagon"}
+ggplot(exampleHex) + geom_sf(fill = 'red') +
+  geom_sf(data = StudyArea_hexes$landcover, fill = NA) + theme_minimal()
+
+
+```
+
+This hexagon varies in many ways from the study area.
+
+```{r example-hex-table, results='asis'}
+
+ exLC %>% dplyr::select(lcFac,pHab, pHab_SA) %>% 
+  mutate(pHab_SA = pHab_SA * 100) %>% 
+  knitr::kable(col.names = c("Land Cover", "Hex %", "Study Area %"), digits = 2)
+
+```
+
+
+## Draw a sample
+
+To examine the importance of the hexagon, we will draw 1 random, spatially-dispersed sample of hexagons.
+
+```{r, fig.cap = "Fig 4. Plot of focal hexagon (red) and random sample of hexagons (grey)"}
+
+sample_hexes <- BASSr::draw_random_samples(att_cleaned = as_tibble(StudyArea_hexes$landcover), 
+                                           att.sf = st_centroid(StudyArea_hexes$landcover), 
+                                           num_runs = 1, nsamples = 10) 
+
+sample_hexes_sf <- StudyArea_hexes$landcover %>% 
+  filter(SampleUnitID %in% (sample_hexes$grts_random_sample %>% filter(panel == "PanelOne"))$SampleUnitID)
+
+ggplot(exampleHex) + geom_sf(fill = 'red') +
+  geom_sf(data = StudyArea_hexes$landcover, fill = NA) + 
+  geom_sf(data = sample_hexes_sf, fill = 'grey')+
+  theme_minimal()
+
+
+```
+
+```{r}
+
+sample_hexes_phab <-  hex_LC %>% filter(SampleUnitID %in% sample_hexes_sf$SampleUnitID) %>% 
+  group_by(lcFac) %>% 
+  summarize(pHab_samp = sum(pHab)) %>% ungroup %>% 
+  mutate(pHab_samp = pHab_samp/ sum(pHab_samp)* 100)
+
+m2toha <- 0.0001
+study_area_size <- as.numeric(sum(st_area(StudyArea_hexes$landcover))) *m2toha
+hexsize <- as.numeric(st_area(exampleHex))*m2toha
+
+
+samp_com <- 
+left_join( exLC %>% dplyr::select(lcFac,pHab, pHab_SA), sample_hexes_phab) %>% 
+  mutate(pHab_Sample_plus_hex = 100*( (pHab*hexsize + pHab_samp*hexsize*10)/
+                                        (sum(pHab*hexsize) + sum(pHab_samp*hexsize*10))),
+         pHab_SA = pHab_SA * 100)
+
+names(samp_com) <- c("lcFac", "Hexagon", "Study Area", "Sample", "Sample + Hex")
+
+knitr::kable(samp_com)
+```
+
+
+
+```{r, fig.cap = "Fig 5. Distribution of land cover by hexagon, sample, sample plus hexagon and study area"}
+
+
+d <- 
+  samp_com %>%  
+  pivot_longer(names_to = "sampletype", values_to = "phabitat", cols = -lcFac) %>% 
+  mutate(sampletype = factor(sampletype, levels = c("Hexagon",  "Sample", "Sample + Hex","Study Area")))
+
+
+d%>% 
+  ggplot(aes(sampletype, phabitat, fill = lcFac)) + geom_bar(stat= 'identity') +
+  scale_fill_viridis_d() + labs(x = "" , y = "Percentage of total", fill = "Land Cover") + theme_minimal()
+
+
+
+
+
+
+```
+
+
+To calculate the benefit for this hexagon, we determine if the difference between the sample with the hexagon makes the sample more or less representative.
+
+
+
+```{r, results = 'asis'}
+rep_tabl <- samp_com %>% 
+  # mutate_at(vars(-lcFac), ~(.*study_area_size))
+  mutate(`Desired Direction` = case_when(`Study Area` > Sample ~ "Positive",
+                                         `Study Area` < Sample ~ "Negative", 
+                                         `Study Area` == Sample ~ "None"), 
+         `Observed Direction` =  case_when(`Sample + Hex` > Sample ~ "Positive",
+                                         `Sample + Hex` < Sample ~ "Negative", 
+                                         `Sample + Hex` == Sample ~ "None"),
+         `Land Cover Benefit` = case_when(`Observed Direction` == "None"~"No Benefit",
+           `Desired Direction`== `Observed Direction`~ "Benefit",
+         TRUE~"No Benefit"), 
+         Benefit = case_when(`Land Cover Benefit`== "Benefit"~abs(Sample - `Sample + Hex`)/100,
+                             TRUE~0) )
+
+
+knitr::kable(rep_tabl, digits = 2)
+```
+
+
+
+
+```{r, include =T, results = 'asis'}
+a <- sum(rep_tabl$Benefit )
+b <- quick_ben(d = exampleHex%>% as_tibble %>% 
+             mutate_at(.vars = vars(contains("LC")),.funs = ~(.*hexsize)), 
+          samples = sample_hexes$grts_random_sample %>% 
+             summarize_at(.vars = vars(contains("LC")),.funs = ~sum(.*hexsize)), 
+          land_cover_summary = SA_sum %>% mutate(ha = pHab_SA*study_area_size), 
+          col_ = SampleUnitID, pd=F)
+
+print(glue::glue("The benefit is {round(a,3)}. If it is calculated using the script it is {round(b$benefit,3)}, with minor rounding difference of {a-b$benefit}"))
+
+
+```
+
+
+The total benefit for the hexagon based on national land cover is shown above (`r a`). How does this compare with other values in the study area? We can run the same process on all the other hexagons to find out.
+
+```{r all-benefits, fig.lab = "Fig 6. Benefit distribution across all hexagons in a study area"}
+
+one_sample <- quick_ben(
+  d = StudyArea_hexes$landcover %>% as_tibble %>% 
+             mutate_at(.vars = vars(contains("LC")),.funs = ~(.*hexsize)), 
+          samples = sample_hexes$grts_random_sample %>% 
+             summarize_at(.vars = vars(contains("LC")),.funs = ~sum(.*hexsize)), 
+          land_cover_summary = SA_sum %>% mutate(ha = pHab_SA*study_area_size), 
+          col_ = SampleUnitID, pd=F)
+
+ggplot(one_sample, aes(benefit)) + 
+  geom_density(fill= 'grey') + 
+  geom_vline(xintercept = b$benefit, linetype =2) +
+  labs(x= "Benefit", y = "Density") +
+  theme_minimal() +
+  xlim(0, 0.15)
+
+```
+
+
+The goal is to run this multiple times with many random samples. The smaller the sample the wider the distribution in benefits are likely to be and the more variance between runs. So samples should be small and iterations nunmerous. 
+
+I will run 200 iterations here with samples of 10 hexagons. We need to start with hectares of land cover rather than percent or proportion or the benefit calculation will not work.
+
+```{r 200iterations-1, fig.cap="Fig 7. Mean benefit distribution across 200 iterations of the benefit calculation. The mean benefit for the example hexagon is shown in the dotted line"}
+landcover_ha <- StudyArea_hexes$landcover %>% 
+  mutate_at(.vars = vars(contains("LC")),.funs = ~(.*area)) %>% ungroup
+set.seed(1234)
+sample_hexes2 <- BASSr::draw_random_samples(att_cleaned = as_tibble(landcover_ha), 
+                                           att.sf = st_centroid(landcover_ha), 
+                                           num_runs = 200, nsamples = 10) 
+att.long <- BASSr::prepare_hab_long(as_tibble(landcover_ha))
+benefits2 <- calculate_benefit(sample_hexes2, HexID = SampleUnitID,att_long =  att.long, quick = T, 
+                               output = 'mean.benefit')
+
+ggplot(benefits2, aes(benefit)) + 
+  geom_density(fill= 'grey') + 
+  geom_vline(xintercept = benefits2$benefit[benefits2$SampleUnitID==exampleHex$SampleUnitID], 
+             linetype =2) +
+  labs(x= "Benefit", y = "Density") +
+  theme_minimal() +xlim(0, 0.15)
+
+
+```
+
+As we can see the distribution of benefits has narrowed quite a bit. Lets have a look it what a larger sample size will look like. 
+
+
+```{r 200iterations-2, fig.cap="Fig 8. Mean benefit distribution across 200 iterations of the benefit calculation. The mean benefit for the example hexagon is shown in the dotted line. 20 samples are drawn per iteration"}
+set.seed(1234)
+sample_hexes3 <- BASSr::draw_random_samples(att_cleaned = as_tibble(landcover_ha), 
+                                           att.sf = st_centroid(landcover_ha), 
+                                           num_runs = 200, nsamples = 20) 
+
+benefits3 <- calculate_benefit(sample_hexes3, HexID = SampleUnitID,att_long =  att.long, quick = T, 
+                               output = 'mean.benefit')
+
+ggplot(benefits3, aes(benefit)) + 
+  geom_density(fill= 'grey') + 
+  geom_vline(xintercept = benefits3$benefit[benefits3$SampleUnitID==exampleHex$SampleUnitID], 
+             linetype =2) +
+  labs(x= "Benefit", y = "Density") +
+  theme_minimal() +xlim(0, 0.15)
+
+
+```
+
+This shifts the benefit smaller, as the amount an individual hexagon can contribute is smaller, but the distribution remains roughly the same and the example hexagon in the same position.
+
+
+```{r, fig.width=4, fig.height=4}
+ggplot(benefits3 %>% right_join(landcover_ha) %>% st_as_sf) +
+  geom_sf(aes(fill = benefit)) + scale_fill_viridis_c() + theme_linedraw()
+```
+
+```{r, fig.width=4, fig.height=4}
+benefits3 %>% right_join(hex_LC) %>% 
+ 
+ggplot(aes(round((pHab/100 - pHab_SA)*5,1)/5, benefit, group = lc )) + 
+  stat_summary(fun.data = 'mean_cl_boot', geom = 'ribbon', fill = 'grey', na.rm=T, alpha = 0.5) +
+  stat_summary(fun.y = 'mean', geom = 'line') +
+  labs(x = "Difference Between Hex and Study Area", y = "Benefit") +
+  theme_minimal()
+```
+
+```{r}
+
+
+
+
+```
+

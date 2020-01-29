@@ -7,6 +7,8 @@
 quick_ben(d, samples, land_cover_summary, col_, pd)
 }
 \arguments{
+\item{d}{Hexagon data.frame}
+
 \item{pd}{print details}
 }
 \value{

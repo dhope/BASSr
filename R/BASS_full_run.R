@@ -17,7 +17,7 @@
 full_BASS_run <- function(num_runs, nsamples, att, att.sp, cost, return_all=F, seed_ = as.integer(Sys.time()), HexID_ = HEX100, q=F) {
   set.seed(seed_)
   grts_output <- draw_random_samples(att_cleaned = att, att.sf = att.sp, num_runs = num_runs, nsamples = nsamples)
-
+  message("sample draw complete")
 
   att_cleaned_long <- prepare_hab_long(att)
 

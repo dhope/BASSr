@@ -82,7 +82,7 @@ estimate_cost_study_area <- function(narus, StudyAreas, pr, sr, dist_base_sa, di
     total_atv_cost = atv_cost * {{ sr }},
     total_heli_cost = (1 - {{ pr }} - {{ sr }}) * (cost_base + cost_to_SA + cost_within_SA),
 
-    total_cost = total_truck_cost + total_atv_cost + total_heli_cost
+    RawCost = total_truck_cost + total_atv_cost + total_heli_cost
   )
 
 
@@ -122,10 +122,32 @@ estimate_cost_study_area <- function(narus, StudyAreas, pr, sr, dist_base_sa, di
 #'
 #' @examples
 getroaddensity <- function(hexes,sa, pr,sr,wr, r,idcol,...){
-  print(sa)
+  # message(sa)
+  if(exists("pb")){pb$tick()$print()}
   hex <- filter(hexes, {{idcol}} == sa)
-  pr_h <-st_intersection(pr, hex)# %>% st_area() %>% sum#ifelse(isTRUE(st_contains(hex, pr), sparse =F),, 0)
-  sr_h <- st_intersection(sr, hex)# %>% st_area() %>% sum#ifelse(isTRUE(st_contains(hex, sr, sparse =F)), ,0)
+  saa <- as.numeric(st_area(hex))
+  if("r_lg" %in% colnames(hex)){ # Shortcut to avoid calculating road densitys where there are no roads in SA
+    if(!isTRUE(any(hex$r_lg))){
+      return(
+        tibble(saa = saa,
+               pr = 0,
+               sr = 0,
+               r = 0,
+               wr = 0,
+               {{idcol}} := as.character(sa),
+               p_pr = 0, # Covert to proportion of area
+                 p_sr = 0,
+                 p_wr = 0)
+      )
+    }}
+
+  sr_h <- dplyr::filter(hex, {{idcol}} == "CLIMATE ACTION NOW")
+  pr_h <- dplyr::filter(hex, {{idcol}} == "CATBURGLER")
+
+  if(any((st_intersects(hex, pr, sparse = F) ))){pr_h <-  st_intersection(pr, hex)}#else{print("No Prime")}#,
+                # %>% st_area() %>% sum#ifelse(isTRUE(st_contains(hex, pr), sparse =F),, 0)
+  if(any((st_intersects(hex, sr, sparse = F) )) ){ sr_h <- st_intersection(sr, hex)}#else{print("No Sec")}
+                 ## %>% st_area() %>% sum#ifelse(isTRUE(st_contains(hex, sr, sparse =F)), ,0)
   if((nrow(pr_h) == 0) |(nrow(sr_h) == 0 )){
     sr_h_noP <-  sr_h
   } else{   sr_h_noP <- st_difference(sr_h, pr_h) }
@@ -133,13 +155,13 @@ getroaddensity <- function(hexes,sa, pr,sr,wr, r,idcol,...){
   sr_a <- st_area(sr_h_noP) %>% as.numeric %>% sum
   r_h <- st_intersection(r, hex) %>% st_area() %>% as.numeric %>% sum# ifelse(isTRUE(st_contains(hex, r, sparse =F)), ,0)
   wr_h <- st_intersection(wr, hex) %>% st_area() %>% as.numeric %>% sum# ifelse(isTRUE(st_contains(hex, r, sparse =F)), ,0)
-  saa <- st_area(hex)
+
   tibble(saa = saa,
          pr = ifelse(length(pr_a)==0,0, pr_a),
          sr = ifelse(length(sr_a)==0,0,sr_a),
          r = ifelse(length(r_h)==0, 0, r_h),
          wr = ifelse(length(wr_h)==0, 0, wr_h),
-         StudyArea = as.character(sa) ) %>%
+         {{idcol}} := as.character(sa) ) %>%
     mutate(p_pr = pr / saa, # Covert to proportion of area
            p_sr = sr / saa,
            p_wr = wr /saa)
@@ -172,11 +194,15 @@ prepare_cost <- function( truck_roads, atv_roads, winter_roads,all_roads, airpor
                           basecamp_cols = c("OFFICIAL_N", "OGF_ID", "CLASS_SUBT")
 
 ){
-  ids <- unique(hexagons[[as_string(quote(idcol_))]]) # Hexagon IDs
+  ids <- dplyr::select(hexagons,{{idcol_}})[[1]]
+    #unique(hexagons[[as_string(quote(idcol_))]]) # Hexagon IDs
   if(isTRUE(calc_roads)){
     #1 Calculate the proportion of each hexagon covered by roads
+    message("Getting road density")
+    pb <<- progress_estimated(length(ids))
     hexagons_w_roads <- map_df(ids, getroaddensity, hexes = hexagons, wr = winter_buff,
-                               pr= truck_roads,sr = atv_roads, r = all_roads, idcol = idcol_)
+                               pr= truck_roads,sr = atv_roads, r = all_roads, idcol = {{idcol_}}) %>%
+      left_join(x = hexagons, y = .) %>% st_as_sf
   } else{hexagons_w_roads <- hexagons}
 
   # Hexagon centroids

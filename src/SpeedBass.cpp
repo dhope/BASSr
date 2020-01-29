@@ -53,18 +53,18 @@ double speedbass(NumericVector hex, NumericVector sample, NumericVector total, b
   if(nc != sample.size() || nc != total.size() || sample.size() != total.size()){
     Rcout << "Error!: Hexagon, sample, and total are not the same size\n";
   }
-  double tt = sumC(total);
-  double tot = sumC(sample);
-  double totHex = sumC(hex);
+  double tt = sumC(total); // Larger region (study area) area
+  double tot = sumC(sample); // Sample total area
+  double totHex = sumC(hex); // Hexagon area
   // NumericVector ben(nc);
   // int goodben = 0;
   double ben = 0;
   for(int i = 0; i < nc; ++i) {
     // Rcout << i;
-    double z = (hex[i] + sample[i]) / (tot + totHex);
-    double tp =  total[i] / tt;
-    double sp = sample[i] / tot;
-    double d = (z - sp);
+    double z = (hex[i] + sample[i]) / (tot + totHex); // prop habitat of sample plus hex
+    double tp =  total[i] / tt; // prop habitat for larger region
+    double sp = sample[i] / tot; // prop habitat for sample alone.
+    double d = (z - sp); // difference in prop habitat between sample and sample plus hex
 
     int dd;
     if(sp > tp) {dd = -1;

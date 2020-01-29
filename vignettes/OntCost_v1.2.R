@@ -233,4 +233,6 @@ cost_est2 <- estimate_cost_study_area(narus = 30, StudyAreas =  all_costvars,
                          dist_airport_sa = airportdist_km, dist2airport_base = cabin_dist_to_air,
                          vars = cost_vars)
 
+# write_rds(cost_est2, "output/2020-01-24_StudyArea_costs.rds")
+
 

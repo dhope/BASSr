@@ -99,8 +99,9 @@ getresults_BASS <- function(grts_output, study_area_results,  nARUs) {
     outputs <- map_df(1:length(grts_output), fixgrtsout, saN = saN, nARUs = nARUs)
 
     plt <- ggplot(outputs, aes(LC, pHab)) + geom_point() +
-      geom_line(data = sa_habsum %>% filter(StudyAreaID == sa) ,
-                aes(group = 1, y=pHab_SA), colour = 'red') +
+      geom_point(data = sa_habsum %>% filter(StudyAreaID == sa) ,
+                 shape = "-", size = 5,
+                aes( y=pHab_SA), colour = 'red') +
       facet_wrap(~StudyAreaID)+
       labs(title = glue::glue("SA - {sa}, Samples = {nARUs}") )
 
