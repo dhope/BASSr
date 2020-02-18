@@ -8,23 +8,27 @@
 #' @param return_all return each piece of BASS implementation
 #' @param seed_ random seed to use for random grts samples
 #' @param HexID_ Column for hexagon id
+#' @param stratumID Column for larger area id. Likely StudyAreaID or Province
 #' @param q Run the benefit calculation quickly
+#' @param non_ran_set Non random set that is added to the hypothetical sample set in benefit calculation.
 #'
 #' @return a table with inclusion probabilities
 #' @export
 #'
 #' @examples
-full_BASS_run <- function(num_runs, nsamples, att, att.sp, cost, return_all=F, seed_ = as.integer(Sys.time()), HexID_ = HEX100, q=F) {
+full_BASS_run <- function(num_runs, nsamples, att, att.sp, cost, return_all=F, seed_ = as.integer(Sys.time()),
+                          HexID_ = HEX100,stratumID = StudyAreaID, q=F, non_ran_set = NULL) {
   set.seed(seed_)
   grts_output <- draw_random_samples(att_cleaned = att, att.sf = att.sp, num_runs = num_runs, nsamples = nsamples)
   message("sample draw complete")
 
-  att_cleaned_long <- prepare_hab_long(att)
+  att_cleaned_long <- prepare_hab_long(att,{{stratumID}})
 
   if(!isTRUE(return_all)){
-  benefits <- calculate_benefit(grts_res = grts_output, att_long = att_cleaned_long, output = "mean_benefit", HexID = {{HexID_}}, quick = q)
+  benefits <- calculate_benefit(grts_res = grts_output, att_long = att_cleaned_long,non_random_set = non_ran_set,
+                                output = "mean_benefit", HexID = {{HexID_}}, quick = q)
 
-  pointswith_inclusion <- calculate_inclusion_probs(cost = cost, hexagon_benefits = benefits, HexID = {{HexID_}})
+  pointswith_inclusion <- calculate_inclusion_probs(cost = cost, hexagon_benefits = benefits, HexID = {{HexID_}},StratumID = {{stratumID}} )
 
   return(pointswith_inclusion %>% mutate(num_runs = num_runs, nsamples = nsamples))
   }

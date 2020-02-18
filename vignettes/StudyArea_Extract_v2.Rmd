@@ -101,7 +101,7 @@ fbr_study_area_test <- map(rev(unique(studyareas$StudyAreaID)),
                                                  load_hexes = T, 
                                                  write_hexes = T))
 
-write_rds(fbr_study_area_test, "output/2020-01-28_fbr_studyarea2.rds")
+write_rds(fbr_study_area_test, "output/2020-01-29_fbr_studyarea2.rds")
 
 
 ```

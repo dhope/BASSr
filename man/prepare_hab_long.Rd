@@ -4,7 +4,7 @@
 \alias{prepare_hab_long}
 \title{Summarize land cover in attribute and add it to a longer table}
 \usage{
-prepare_hab_long(att)
+prepare_hab_long(att, lg_area = StudyAreaID)
 }
 \arguments{
 \item{att}{attribute table}

@@ -13,7 +13,7 @@ vignette: >
 ---
 
 ```{r setup, message =F, warning=F}
-knitr::opts_chunk$set(eval=T)
+knitr::opts_chunk$set(eval=F)
 library(BASSr)
 library(tidyverse)
 library(patchwork)
@@ -31,10 +31,10 @@ ontario <- read_sf("//int.ec.gc.ca/Shares/C/CWS_ON/Shared_Data/Base_Data/Boundar
   filter(PROV == "ON") %>%
   st_transform(st_crs(studyareas), partial = F, check = T)
 
-road_info <- read_rds(here::here("output/road_density_byHex_full.rds")) %>% 
-  mutate(p_pr = pr / saa,
-         p_sr = sr / saa,
-         wr = wr /saa)
+# road_info <- read_rds(here::here("output/road_density_byHex_full.rds")) %>% 
+#   mutate(p_pr = pr / saa,
+#          p_sr = sr / saa,
+#          wr = wr /saa)
 
 
 study_area_hexagons_in_brandt <- studyareas %>% 
@@ -43,21 +43,63 @@ study_area_hexagons_in_brandt <- studyareas %>%
 ```
 
 
+
+
+
+
 ```{r}
 
 
+airports_official <- st_read("//int.ec.gc.ca/sys/InGEO/GW/EC1130MigBirds_OiseauxMig/ON_CWS/THEMES/BorealApproach/SPATIAL/BASS_AccessLyrs/Airports_Official_FeaturesToPoints.shp") %>% filter(AIRPORT_TY != "Hospital Heliport")%>% st_transform(ont.proj)
 
-airports_official <- st_read("//int.ec.gc.ca/sys/InGEO/GW/EC1130MigBirds_OiseauxMig/ON_CWS/THEMES/BorealApproach/SPATIAL/BASS_AccessLyrs/Airports_Official_FeaturesToPoints.shp") %>% filter(AIRPORT_TY != "Hospital Heliport")%>% st_transform(st_crs(ont.proj))
 
+airports_other <- st_read("//int.ec.gc.ca/sys/InGEO/GW/EC1130MigBirds_OiseauxMig/ON_CWS/THEMES/BorealApproach/SPATIAL/BASS_AccessLyrs/Airports_Other_FeaturesToPoints.shp")%>% st_transform(ont.proj)
 
-airports_other <- st_read("//int.ec.gc.ca/sys/InGEO/GW/EC1130MigBirds_OiseauxMig/ON_CWS/THEMES/BorealApproach/SPATIAL/BASS_AccessLyrs/Airports_Other_FeaturesToPoints.shp")%>% st_transform(st_crs(ont.proj))
-
-tourism <- st_read("//int.ec.gc.ca/sys/InGEO/GW/EC1130MigBirds_OiseauxMig/ON_CWS/THEMES/BorealApproach/SPATIAL/BASS_AccessLyrs/TourismEstablishments_pt.shp")%>% st_transform(st_crs(ont.proj))
+tourism <- st_read("//int.ec.gc.ca/sys/InGEO/GW/EC1130MigBirds_OiseauxMig/ON_CWS/THEMES/BorealApproach/SPATIAL/BASS_AccessLyrs/TourismEstablishments_pt.shp")%>% st_transform(ont.proj)
+primary_buffer <- st_read("//int.ec.gc.ca/sys/InGEO/GW/EC1130MigBirds_OiseauxMig/ON_CWS/THEMES/BorealApproach/SANDBOX/dhdev/Primary1000.shp") %>% st_transform(ont.proj)
+secondary_buffer <- st_read("//int.ec.gc.ca/sys/InGEO/GW/EC1130MigBirds_OiseauxMig/ON_CWS/THEMES/BorealApproach/SANDBOX/dhdev/SecondaryOnlyBuff1k.shp")%>% st_transform(ont.proj)
+road_buffer <- st_read("//int.ec.gc.ca/sys/InGEO/GW/EC1130MigBirds_OiseauxMig/ON_CWS/THEMES/BorealApproach/SANDBOX/dhdev/Roads_1000_PriSec.shp")%>% st_transform(ont.proj)
+winter_buff <- st_read("//int.ec.gc.ca/sys/InGEO/GW/EC1130MigBirds_OiseauxMig/ON_CWS/THEMES/BorealApproach/SANDBOX/dhdev/WinterRoads_Buffer1k.shp")%>% st_transform(ont.proj)
+habLoc <- "//int.ec.gc.ca/sys/InGEO/GW/EC1130MigBirds_OiseauxMig/ON_CWS/THEMES/BMS_ON/SANDBOX/dhdev/OnBMS/spatial/NontariobrandtLCC2015_reproj.tif"
 
 
 ```
 
 
+```{r, eval=F}
+
+ontario_cost <- 
+prepare_cost(truck_roads = primary_buffer, atv_roads = secondary_buffer, winter_roads = winter_buff, all_roads = road_buffer, airports = airports_official,basecamps = tourism, hexagons = study_area_hexagons_in_brandt, idcol_ = StudyAreaID, calc_roads = T)
+
+StudyArea_CostModel <- 
+estimate_cost_study_area(narus = 30, StudyAreas =  ontario_cost, 
+                         pr  = p_pr, sr = p_sr, dist_base_sa = basecamps,
+                         dist_airport_sa = airportdist_km, dist2airport_base = cabin_dist_to_air,
+                         vars = cost_vars)
+
+
+write_rds(list(StudyArea_CostVars = ontario_cost, StudyArea_CostModel = StudyArea_CostModel), "output/2020-02-05_StudyAreaCost.rds")
+```
+
+```{r}
+modelrun <- read_rds(here::here("output/2020-02-05_StudyAreaCost.rds"))
+ontario_cost <- modelrun$StudyArea_CostVars
+ StudyArea_CostModel <- modelrun$StudyArea_CostModel
+```
+
+
+```{r}
+ggplot(ontario_cost, aes(fill = p_sr)) + geom_sf() +
+     ggspatial::annotation_scale(location = "bl", width_hint = 0.4) +
+  labs(fill = "Proportion of Secondary Roads")
+```
+
+```{r}
+ggplot(StudyArea_CostModel, aes(fill = log10(RawCost))) + 
+  geom_sf() +
+     ggspatial::annotation_scale(location = "bl", width_hint = 0.4) +
+  labs(fill = "Raw Cost (log10)")
+```
 
 
 ```{r}
@@ -141,8 +183,11 @@ cost_hexes <- cost_estimates_hexes %>% as_tibble() %>%
 ```{r}
 
  cost_hexes%>% 
+  filter(!is.na(total_cost)) %>% 
   ggplot() + geom_sf(aes(fill = total_cost) )+ 
-  scale_fill_viridis_c()
+  scale_fill_viridis_c() +
+     ggspatial::annotation_scale(location = "bl", width_hint = 0.4)+
+  labs(fill = "Total Cost")
 
 
 ```
@@ -150,7 +195,7 @@ cost_hexes <- cost_estimates_hexes %>% as_tibble() %>%
 
 ```{r}
   cost_hexes %>% 
-
+filter(!is.na(total_cost)) %>% 
   ggplot() + geom_sf(aes(fill = total_truck_cost) )+ 
   scale_fill_viridis_c()
 ```
@@ -191,7 +236,7 @@ range(cost_estimates_hexes$total_cost)
 
 
 
-```{r cost-function}
+```{r cost-function, eval=F}
 
 prepare_cost <- function( truck_roads, atv_roads, winter_roads,all_roads, airports, basecamps, hexagons, idcol_,
                          calc_roads = T,
@@ -203,7 +248,7 @@ prepare_cost <- function( truck_roads, atv_roads, winter_roads,all_roads, airpor
                                             "dist_to_air")
                         
                          ){
-  ids <- unique(hexagons[[as_string(quote(idcol_))]]) # Hexagon IDs
+  ids <- unique(hexagons[[as_label(enquo(idcol_))]]) # Hexagon IDs
   if(isTRUE(calc_roads)){
   #1 Calculate the proportion of each hexagon covered by roads
   hexagons_w_roads <- map_df(ids, getroaddensity, hexes = hexagons, wr = winter_buff,

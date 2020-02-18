@@ -4,12 +4,13 @@ knitr::opts_chunk$set(eval=T, fig.width = 8)
 library(BASSr)
 library(tidyverse)
 library(patchwork)
+theme_set(theme_minimal())
 
 
 ## -----------------------------------------------------------------------------
 lcc2015 <- "//int.ec.gc.ca/sys/InGEO/GW/EC1130MigBirds_OiseauxMig/ON_CWS/THEMES/BMS_ON/SPATIAL/lcc2015_hab/NontariobrandtLCC2015_reproj.tif"
 
-fbr_study_area_test <- read_rds(here::here("output/study_area_test_results.rds"))
+fbr_study_area_test <- read_rds(here::here("output/2020-01-28_fbr_studyarea2.rds"))
 
 studyarea <- purrr::transpose(fbr_study_area_test)$study_area %>% do.call('c',.)
 test_sa <-c("0322", "0740", "0404","0165","0247","0197")

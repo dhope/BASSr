@@ -4,7 +4,12 @@
 \alias{calculate_inclusion_probs}
 \title{BASS cost benefit calculation}
 \usage{
-calculate_inclusion_probs(cost, hexagon_benefits, HexID)
+calculate_inclusion_probs(
+  cost,
+  hexagon_benefits,
+  HexID,
+  StratumID = StudyAreaID
+)
 }
 \arguments{
 \item{cost}{data frame with costs for each hexagon in a RawCost format}
@@ -12,6 +17,8 @@ calculate_inclusion_probs(cost, hexagon_benefits, HexID)
 \item{hexagon_benefits}{data frame with benefits for each hexagon}
 
 \item{HexID}{column of hexagon ids}
+
+\item{StratumID}{Column of larger area id}
 }
 \value{
 A data frame with full inclusion probabilities for each raster.

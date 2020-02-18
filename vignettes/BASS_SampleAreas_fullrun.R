@@ -41,7 +41,7 @@ roadloc2 <- "//int.ec.gc.ca/sys/InGEO/GW/EC1130MigBirds_OiseauxMig/ON_CWS/THEMES
 #  x <- read_rds("output/studyArea_ONT_SA_0197_BassPrep.rds")
 
 ## ---- message=F, warning=F----------------------------------------------------
-fbr_study_area_test <- read_rds(here::here("output/2020-01-28_fbr_studyarea2.rds"))
+fbr_study_area_test <- read_rds(here::here("output/2020-01-29_fbr_studyarea2.rds"))
 grts_run <- run_grts_on_BASS(n_grts_tests = 30, 
                              study_area_results = fbr_study_area_test,
                              nARUs = sample_size, idcol = "StudyAreaID",

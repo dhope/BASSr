@@ -5,12 +5,14 @@
 #' @param nARUs Number of samples
 #' @param os Over sample size (proportional)
 #' @param idcol Identification column for units
+#' @param hexid Column for hexagon identification
+#' @param removedhexes Vector of names of hexagons to remove
 #'
 #' @return
 #' @export
 #'
-run_grts_on_BASS <- function(n_grts_tests, study_area_results,nARUs, os, idcol) {
-  if(is.list(study_area_results)){
+run_grts_on_BASS <- function(n_grts_tests, study_area_results,nARUs, os, idcol, hexid, removedhexes) {
+  if(is.list(study_area_results)&!is.data.frame(study_area_results)){
     if(!is_null(study_area_results$inclusionPr)){
       attframe <- study_area_results$inclusionPr
     }
@@ -20,8 +22,10 @@ run_grts_on_BASS <- function(n_grts_tests, study_area_results,nARUs, os, idcol) 
     dplyr::select(-geometry) %>% filter(!is.na(X))
   }
     } else{
-    attframe <- study_area_results
-  }
+    attframe <- as_tibble(study_area_results) %>%
+      dplyr::select(-geometry) %>% filter(!is.na(X))
+    }
+  attframe <- filter(attframe, !{{hexid}} %in% removedhexes)
   Stratdesgn <- rep(list(PanelOne = list # a list named 'None" that contains:
                          (
                            panel = c(PanelOne = rep(nARUs)),
@@ -35,7 +39,7 @@ run_grts_on_BASS <- function(n_grts_tests, study_area_results,nARUs, os, idcol) 
     ~ grts(
       design = Stratdesgn, ## selects the reference equaldesgn object
       src.frame = "att.frame", # the sample frame is coming from a shapefile
-      sf.object = att.sf, # the shape file used
+      # sf.object = att.sf, # the shape file used
       att.frame = attframe, # attribute data frame
       type.frame = "finite", # type-area vs linear
       DesignID = "sample", # the prefix for each point name

@@ -17,17 +17,30 @@
 #' @export
 #'
 #' @examples
-calculate_benefit <- function(grts_res, HexID, att_long, output = "all", quick = F) {
+calculate_benefit <- function(grts_res, HexID,  att_long, output = "all", quick = F,non_random_set = NULL) {
   if (!output %in% c("all", "full", "by_run", "mean_benefit")) {
     simpleError("output must be one of 'all'(default), 'full','by_run', or 'mean_benefit'")
   }
-
-  if(isTRUE(quick)){
-    pd <- F#ifelse(output == 'all',  T, F)
+  pd <- F#ifelse(output == 'all',  T, F)
+  if(is_null(non_random_set)){
   grts_random_sample_summary_widenest <-
     grts_res$grts_random_sample %>%
     group_by(run) %>%
     summarize_at(vars(matches("LC\\d")), sum )
+  }
+  if(!is_null(non_random_set)){
+
+    grts_random_sample_summary_widenest <-
+      grts_res$grts_random_sample %>%
+      group_by(run) %>%
+      bind_rows(
+        expand_grid(filter(att_long %>% mutate(SampleUnitID = as.character(SampleUnitID)) %>%
+                             pivot_wider(id_cols = SampleUnitID, names_from = lc, values_from = ha)
+                           , {{ HexID }} %in% non_random_set), run = 1:n_distinct(grts_res$grts_random_sample$run))
+      ) %>%
+      summarize_at(vars(matches("LC\\d")), sum )
+    # browser()
+  }
 
   hexes <- att_long %>%
     dplyr::select({{HexID}},lc, ha) %>%
@@ -36,6 +49,7 @@ calculate_benefit <- function(grts_res, HexID, att_long, output = "all", quick =
   # print(hexes)
   total <- att_long %>%
     dplyr::select(lc, ha_total) %>% distinct %>% rename(ha = ha_total)
+  if(isTRUE(quick)){
 
   return(quick_ben(d = hexes,
                    samples  = grts_random_sample_summary_widenest,
@@ -45,93 +59,19 @@ calculate_benefit <- function(grts_res, HexID, att_long, output = "all", quick =
 
   }
 
-
-
-  grts_random_sample_summary <-
-    grts_res$grts_random_sample_long %>%
-    group_by(run, lc) %>%
-    summarize(ha_random = sum(ha)) %>%
-    group_by(run) %>%
-    mutate(phab_random = ha_random / sum(ha_random)) %>%
-    ungroup()
-
-  nested_random_samples <-
-    grts_res$grts_random_sample %>%
-    mutate(cat = "cat") %>%
-    group_by(cat, run) %>%
-    nest() %>%
-    ungroup()
-
-
-  hexagon_adjustment_df <-
-    att_long %>%
-    mutate(cat = "cat") %>%
-    as_tibble() %>%
-    left_join(
-      nested_random_samples,
-      by = "cat"
-    ) %>%
-    dplyr::select(-cat) %>%
-    mutate(ha_adjust = pmap(., function(data, lc, ha, ...) sumH(data[[lc]], ha))) %>%
-    left_join(grts_random_sample_summary, by = c("run", "lc")) %>%
-    dplyr::select(-data) %>%
-    unnest(cols = ha_adjust)
-
-
-  full <-
-    hexagon_adjustment_df %>%
-    group_by(run) %>%
-    mutate(random_total_hab = sum(ha_adjust)) %>%
-    ungroup() %>%
-    # group_by({{HexID}},run, lc, phab_random, total_phab) %>%
-    mutate(
-      phab_ran_plus1 = ha_adjust / random_total_hab,
-      desired_direction = case_when(
-        phab_random > total_phab ~ "neg",
-        phab_random < total_phab ~ "pos",
-        phab_random == total_phab ~ "none",
-        TRUE ~ ""
-      ),
-      observed_direct = case_when(
-        phab_ran_plus1 > total_phab ~ "neg",
-        phab_ran_plus1 < total_phab ~ "pos",
-        phab_ran_plus1 == total_phab ~ "none",
-        TRUE ~ ""
-      ),
-      change = phab_ran_plus1 - phab_random,
-      ben_yes_no = case_when(
-        ((change < 0 & desired_direction == "neg") | (change > 0 & desired_direction == "pos")) ~ 1,
-        ((change < 0 & desired_direction == "pos") | (change > 0 & desired_direction == "neg")) ~ 0,
-        (change == 0 & desired_direction == "none") ~ 0,
-        (change == 0 & desired_direction != "none") ~ 0,
-        (desired_direction == "none" & change != 0) ~ 0,
-        TRUE ~ -999999
-      ),
-      benefit = as.numeric(as.character(ben_yes_no)) * abs(change)
-    ) %>%
-    group_by(run, lc, phab_random, total_phab) %>%
-    mutate(sum_hex = sum(phab_ran_plus1),
-           n = n()) %>%
-    ungroup()
-
-
-  by_run <- full %>%
-    group_by(run) %>%
-    group_by({{HexID}}, add =T) %>%
-    summarize(ben_by_run = sum(benefit, na.rm = T))
-
-
-  mean_benefit <- by_run %>%
-    group_by({{HexID}}) %>%
-    summarise(benefit = mean(ben_by_run, na.rm = T)) %>%
-    filter(!is.na(benefit))
+  benefit_by_run <- map_df(1:n_distinct(grts_random_sample_summary_widenest$run),
+                           ~quick_ben(d = hexes,
+                                      samples = grts_random_sample_summary_widenest %>%
+                                        filter(run == .x),
+                                      land_cover_summary = total,
+                                      col_ = {{HexID}}, pd=pd) %>% mutate(run = .x) )
 
 
   if (output == "all") {
     return(list(
-      hexagon_benefits_by_run_andLC = full, hexagon_benefits_by_run = by_run,
-      hexagon_benefits = mean_benefit
-    ))
+       hexagon_benefits_by_run = benefit_by_run,
+       grts_random_sample_summary_widenest=grts_random_sample_summary_widenest,
+       hexes = hexes, total = total))
   }
 
   return(get(output))
@@ -149,20 +89,21 @@ calculate_benefit <- function(grts_res, HexID, att_long, output = "all", quick =
 #' @export
 #'
 #' @examples
-prepare_hab_long <- function(att) {
-  sa_a <- sum(att$area)
+prepare_hab_long <- function(att, lg_area = StudyAreaID) {
+  # sa_a <- sum(att$area)
   land_cover_summary <- att %>%
-    summarize_at(vars(matches("LC\\d")), sum) %>%
-    pivot_longer(cols = everything(), names_to = "lc", values_to = "ha") %>%
-    mutate(total_phab = ha / sum(ha, na.rm = T))
+    group_by({{ lg_area }}) %>%
+    summarize_at(vars(matches("^LC\\d+$")), sum) %>%
+    pivot_longer(cols =matches("^LC\\d+$"), names_to = "lc", values_to = "ha") %>%
+    mutate(total_phab = ha / sum(ha, na.rm = T)) %>% ungroup
 
 
   att_cleaned_long <- pivot_longer(att,
-    cols = matches("LC\\d"),
+    cols = matches("^LC\\d+$"),
     names_to = "lc", values_to = "ha"
   ) %>%
     left_join(land_cover_summary %>%
-      rename(ha_total = ha), by = "lc")
+      rename(ha_total = ha), by = c("lc", as_label(enquo(lg_area))))
 
   att_cleaned_long
 }

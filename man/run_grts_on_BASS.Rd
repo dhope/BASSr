@@ -4,7 +4,15 @@
 \alias{run_grts_on_BASS}
 \title{Run grts sampling on BASSr results}
 \usage{
-run_grts_on_BASS(n_grts_tests, study_area_results, nARUs, os, idcol)
+run_grts_on_BASS(
+  n_grts_tests,
+  study_area_results,
+  nARUs,
+  os,
+  idcol,
+  hexid,
+  removedhexes
+)
 }
 \arguments{
 \item{n_grts_tests}{Number of times to draw arus from grts}
@@ -16,6 +24,10 @@ run_grts_on_BASS(n_grts_tests, study_area_results, nARUs, os, idcol)
 \item{os}{Over sample size (proportional)}
 
 \item{idcol}{Identification column for units}
+
+\item{hexid}{Column for hexagon identification}
+
+\item{removedhexes}{Vector of names of hexagons to remove}
 }
 \value{
 

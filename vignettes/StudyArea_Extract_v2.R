@@ -30,18 +30,35 @@ library(rlang)
 ## ----load-layers--------------------------------------------------------------
 #  
 #  
-#  airports_official <- st_read("//int.ec.gc.ca/sys/InGEO/GW/EC1130MigBirds_OiseauxMig/ON_CWS/THEMES/BorealApproach/SPATIAL/BASS_AccessLyrs/Airports_Official_FeaturesToPoints.shp") %>% filter(AIRPORT_TY != "Hospital Heliport")%>% st_transform(st_crs(ont.proj))
+#  airports_official <- st_read("//int.ec.gc.ca/sys/InGEO/GW/EC1130MigBirds_OiseauxMig/ON_CWS/THEMES/BorealApproach/SPATIAL/BASS_AccessLyrs/Airports_Official_FeaturesToPoints.shp") %>% filter(AIRPORT_TY != "Hospital Heliport")%>% st_transform(ont.proj)
 #  
 #  
-#  airports_other <- st_read("//int.ec.gc.ca/sys/InGEO/GW/EC1130MigBirds_OiseauxMig/ON_CWS/THEMES/BorealApproach/SPATIAL/BASS_AccessLyrs/Airports_Other_FeaturesToPoints.shp")%>% st_transform(st_crs(ont.proj))
+#  airports_other <- st_read("//int.ec.gc.ca/sys/InGEO/GW/EC1130MigBirds_OiseauxMig/ON_CWS/THEMES/BorealApproach/SPATIAL/BASS_AccessLyrs/Airports_Other_FeaturesToPoints.shp")%>% st_transform(ont.proj)
 #  
-#  tourism <- st_read("//int.ec.gc.ca/sys/InGEO/GW/EC1130MigBirds_OiseauxMig/ON_CWS/THEMES/BorealApproach/SPATIAL/BASS_AccessLyrs/TourismEstablishments_pt.shp")%>% st_transform(st_crs(ont.proj))
-#  primary_buffer <- st_read("//int.ec.gc.ca/sys/InGEO/GW/EC1130MigBirds_OiseauxMig/ON_CWS/THEMES/BorealApproach/SANDBOX/dhdev/Primary1000.shp") %>% st_transform(st_crs(studyareas))
-#  secondary_buffer <- st_read("//int.ec.gc.ca/sys/InGEO/GW/EC1130MigBirds_OiseauxMig/ON_CWS/THEMES/BorealApproach/SANDBOX/dhdev/SecondaryOnlyBuff1k.shp")%>% st_transform(st_crs(studyareas))
-#  road_buffer <- st_read("//int.ec.gc.ca/sys/InGEO/GW/EC1130MigBirds_OiseauxMig/ON_CWS/THEMES/BorealApproach/SANDBOX/dhdev/Roads_1000_PriSec.shp")%>% st_transform(st_crs(studyareas))
-#  winter_buff <- st_read("//int.ec.gc.ca/sys/InGEO/GW/EC1130MigBirds_OiseauxMig/ON_CWS/THEMES/BorealApproach/SANDBOX/dhdev/WinterRoads_Buffer1k.shp")%>% st_transform(st_crs(studyareas))
+#  tourism <- st_read("//int.ec.gc.ca/sys/InGEO/GW/EC1130MigBirds_OiseauxMig/ON_CWS/THEMES/BorealApproach/SPATIAL/BASS_AccessLyrs/TourismEstablishments_pt.shp")%>% st_transform(ont.proj)
+#  primary_buffer <- st_read("//int.ec.gc.ca/sys/InGEO/GW/EC1130MigBirds_OiseauxMig/ON_CWS/THEMES/BorealApproach/SANDBOX/dhdev/Primary1000.shp") %>% st_transform(ont.proj)
+#  secondary_buffer <- st_read("//int.ec.gc.ca/sys/InGEO/GW/EC1130MigBirds_OiseauxMig/ON_CWS/THEMES/BorealApproach/SANDBOX/dhdev/SecondaryOnlyBuff1k.shp")%>% st_transform(ont.proj)
+#  road_buffer <- st_read("//int.ec.gc.ca/sys/InGEO/GW/EC1130MigBirds_OiseauxMig/ON_CWS/THEMES/BorealApproach/SANDBOX/dhdev/Roads_1000_PriSec.shp")%>% st_transform(ont.proj)
+#  winter_buff <- st_read("//int.ec.gc.ca/sys/InGEO/GW/EC1130MigBirds_OiseauxMig/ON_CWS/THEMES/BorealApproach/SANDBOX/dhdev/WinterRoads_Buffer1k.shp")%>% st_transform(ont.proj)
 #  habLoc <- "//int.ec.gc.ca/sys/InGEO/GW/EC1130MigBirds_OiseauxMig/ON_CWS/THEMES/BMS_ON/SANDBOX/dhdev/OnBMS/spatial/NontariobrandtLCC2015_reproj.tif"
 #  
+#  
+
+## -----------------------------------------------------------------------------
+#  hex <- samplehexes %>% filter(StudyAreaID == "ONT_SA_0165")
+#  sb <- st_intersection(secondary_buffer, hex)
+#  sbd <- st_difference(sb, primary_buffer)
+#  any(st_intersects(hex, sb, sparse = F))
+#  
+#  ggplot(hex[,1]) + geom_sf(fill = NA) +
+#    geom_sf(data = sb,
+#            fill = 'red') +
+#    geom_sf(data = sbd, fill = 'grey') +
+#    theme_linedraw()
+#  
+#  r <- getroaddensity(hexes = samplehexes,sa = hex$SampleUnitID[[1]],pr = primary_buffer, sr = secondary_buffer, wr = winter_buff, r = road_buffer, idcol = SampleUnitID  )
+#  
+#  r
 
 ## ---- eval=F------------------------------------------------------------------
 #  
@@ -59,12 +76,12 @@ library(rlang)
 #                                                   nARUs = 1,
 #                                                   return_all_ = T,
 #                                                   quick = T,
-#                                                   calc_cost = F,
+#                                                   calc_cost = T,
 #                                                   calc_hab = F,
 #                                                   load_hexes = T,
-#                                                   write_hexes = F))
+#                                                   write_hexes = T))
 #  
-#  write_rds(fbr_study_area_test, "output/2020-01-28_fbr_studyarea2.rds")
+#  write_rds(fbr_study_area_test, "output/2020-01-29_fbr_studyarea2.rds")
 #  
 #  
 

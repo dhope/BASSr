@@ -4,7 +4,7 @@ author: "Vignette Author"
 date: "`r Sys.Date()`"
 output: rmarkdown::html_vignette
 vignette: >
-  %\VignetteIndexEntry{Vignette Title}
+  %\VignetteIndexEntry{Spatial Works Hexagons}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---
@@ -56,7 +56,7 @@ FNLC <- read_SW(files_study, "FNLC") %>%
   left_join(StudyAreas, by = "ID")
 
 StudyArea_cost_30arus <- 
-  read_rds("C:/Users/hoped/Documents/Local_Workspace/Projects/BASSr/output/2020-01-24_StudyArea_costs.rds") %>% 
+  read_rds(here::here("output/2020-02-05_StudyAreaCost.rds"))$StudyArea_CostModel %>% 
   as_tibble %>% dplyr::select(-geometry)
 brandtStudyAreas_list <-  brandtStudyAreas$StudyAreaID
 StudyArea_LandCover_Cost <- list(
@@ -79,15 +79,10 @@ write_rds(StudyArea_LandCover_Cost, glue::glue("{spatialworks}/StudyAreas_Spatia
 tranx <- function(x)glue::glue("LC{stringr::str_pad(stringr::str_split(x, '_')[[2]],2, pad = 0)}")
 brandtStudyAreas_list <-  brandtStudyAreas$StudyAreaID
 
-clean_forBass <- function(df, s, f_vec = brandtStudyAreas_list, appended = ""){
-  df %>% 
-  rename_at(.vars= vars(contains(glue::glue("{s}_"))), 
-            .funs = ~glue::glue('LC{stringr::str_pad(gsub(glue::glue("{s}_"), "", .), width = 2, pad = 0)}{appended}'
-            ))  %>% filter(StudyAreaID %in%f_vec)
-}
 
 
-LC2015_att <- clean_forBass(LCC2015, "CLC15")
+
+LC2015_att <- clean_forBass(LCC2015, "CLC15") 
 
 WaterSA <- LC2015_att$StudyAreaID[LC2015_att$D_CLC15 == 18& LC2015_att$LC18/ LC2015_att$TOT_HA>0.6]
 
@@ -108,7 +103,7 @@ sa.cost <- StudyArea_LandCover_Cost$StudyArea_cost_30arus %>%
 
 LCC2015_BASS <- BASSr::full_BASS_run(num_runs = 50, nsamples = 10, 
                                      att = LC2015_att, 
-                                     att.sp = st_centroid(sp.sa),
+                                     att.sp = st_centroid(sp.sa), stratumID = Province,
                                      cost = sa.cost, return_all = T, HexID_ = StudyAreaID, q = T)
 
 LCC2015_BASS$inclusionPr %>% 
@@ -125,7 +120,9 @@ plt_SA <- function(d, fill_){
      left_join(d) %>% 
   ggplot() + 
   geom_sf(aes(fill = {{fill_}})) +
-  scale_fill_viridis_c()
+  scale_fill_viridis_c() +
+     ggspatial::annotation_scale(location = "bl", width_hint = 0.4)
+
 }
 
 plt_SA(LCC2015_BASS$inclusionPr, benefit)
@@ -144,7 +141,7 @@ WaterSA_FNLC <- FNLC_att$StudyAreaID[FNLC_att$D_FNLC == 1& FNLC_att$LC01/ FNLC_a
 
 FNLC_BASS <- BASSr::full_BASS_run(num_runs = 50, nsamples = 10, 
                                      att = FNLC_att, 
-                                     att.sp = st_centroid(sp.sa),
+                                     att.sp = st_centroid(sp.sa),stratumID = Province,
                                      cost = sa.cost, return_all = T, HexID_ = StudyAreaID, q = T)
 
 
@@ -168,7 +165,7 @@ WaterSA_FNLC <- FNLC_att$StudyAreaID[FNLC_att$D_FNLC == 1& FNLC_att$LC01/ FNLC_a
 
 LC10_BASS <- BASSr::full_BASS_run(num_runs = 50, nsamples = 10, 
                                      att = CLC10_att, 
-                                     att.sp = st_centroid(sp.sa),
+                                     att.sp = st_centroid(sp.sa),stratumID = Province,
                                      cost = sa.cost, return_all = T, HexID_ = StudyAreaID, q = T)
 
 
@@ -239,21 +236,25 @@ LCC2015_BASS2 <- BASSr::full_BASS_run(num_runs = 50, nsamples = 10,
                                      att.sp = st_centroid(sp.sa %>% 
                                                             filter(StudyAreaID %in% Studyareas_forcompare)),
                                      cost = sa.cost %>% 
-                                       filter(StudyAreaID %in% Studyareas_forcompare), return_all = T, HexID_ = StudyAreaID, q = T)
+                                       filter(StudyAreaID %in% Studyareas_forcompare), 
+                                     return_all = T, 
+                                     HexID_ = StudyAreaID,stratumID = Province, 
+                                      q = T)
 FNLC_BASS2 <- BASSr::full_BASS_run(num_runs = 50, nsamples = 10, 
                                      att = FNLC_att %>% 
                                      filter(StudyAreaID %in% Studyareas_forcompare), 
                                      att.sp = st_centroid(sp.sa %>% 
                                                             filter(StudyAreaID %in% Studyareas_forcompare)),
                                      cost = sa.cost %>% 
-                                     filter(StudyAreaID %in% Studyareas_forcompare), return_all = T, HexID_ = StudyAreaID, q = T)
+                                     filter(StudyAreaID %in% Studyareas_forcompare), return_all = T,stratumID = Province, HexID_ = StudyAreaID, q = T)
 LC10_BASS2 <- BASSr::full_BASS_run(num_runs = 50, nsamples = 10, 
                                      att = CLC10_att %>% 
                                      filter(StudyAreaID %in% Studyareas_forcompare), 
                                      att.sp = st_centroid(sp.sa %>% 
                                                             filter(StudyAreaID %in% Studyareas_forcompare)),
                                      cost = sa.cost %>% 
-                                     filter(StudyAreaID %in% Studyareas_forcompare), return_all = T, HexID_ = StudyAreaID, q = T)
+                                     filter(StudyAreaID %in% Studyareas_forcompare), return_all = T, 
+                                   HexID_ = StudyAreaID,stratumID = Province, q = T)
 
 
 ```
@@ -284,7 +285,7 @@ FNLC_CLC2010_BASS <- BASSr::full_BASS_run(num_runs = 50, nsamples = 10,
                                                             filter(StudyAreaID %in% Studyareas_forcompare)),
                                      cost = sa.cost %>% 
                                      filter(StudyAreaID %in% Studyareas_forcompare), return_all = T, 
-                                     HexID_ = StudyAreaID, q = T)
+                                     HexID_ = StudyAreaID, stratumID = Province,q = T)
 
 
 ```
@@ -298,6 +299,55 @@ plt_SA(FNLC_CLC2010_BASS$inclusionPr, scale_ben) +
 ```
 
 
+```{r mean_ben-fnlc-lcc}
+
+
+  
+lcc_fnlcben <- (LCC2015_BASS2$inclusionPr$benefit + FNLC_BASS2$inclusionPr$benefit)/2
+
+lcc_fnlc <- LCC2015_BASS2$inclusionPr %>% mutate(beneft = lcc_fnlcben) %>% 
+  calculate_inclusion_probs(cost = sa.cost %>% 
+                                     filter(StudyAreaID %in% Studyareas_forcompare), 
+                            hexagon_benefits = ., HexID = StudyAreaID)
+
+
+plt_SA(lcc_fnlc, scale_ben) + 
+  labs(title="Far North and LC2010 Combined-PostHoc")+  scale_fill_viridis_c(limits = c(0,1))
+
+```
+
+
+
+```{r, eval=F}
+z <- 2500
+lrc <- 
+LC2015_att %>% select_at( vars(StudyAreaID,matches("^LC\\d+$"))) %>% 
+  mutate_if(is.numeric, ~round(./z,0 )*z) 
+lrc_sa <- 
+lrc %>% 
+  group_by_if(is.numeric) %>% 
+  mutate(n=n()) %>% 
+  nest(StudyAreaID = c(StudyAreaID)) %>% 
+  filter(n>1) %>% arrange(desc(n))
+
+LC2015_att[LC2015_att$StudyAreaID%in% lrc_sa$StudyAreaID[[1]]$StudyAreaID,]$StudyAreaID
+LC2015_att[LC2015_att$StudyAreaID%in% lrc_sa$StudyAreaID[[2]]$StudyAreaID,]$StudyAreaID
+
+```
+
+```{r, eval=F}
+z2 <- 100
+closest_wetland <- 
+  LC2015_att %>% select_at( vars(StudyAreaID,matches("^LC14$"))) %>% 
+  mutate_if(is.numeric, ~round(./z2,0 )*z2) %>% 
+   group_by_if(is.numeric) %>% 
+  mutate(n=n()) %>% 
+  nest(StudyAreaID = c(StudyAreaID)) %>% 
+  filter(n>1) %>% arrange(desc(LC14))
+  
+  LC2015_att[LC2015_att$StudyAreaID%in% closest_wetland$StudyAreaID[[1]]$StudyAreaID,]$StudyAreaID
+  
+```
 
 
 

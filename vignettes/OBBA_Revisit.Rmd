@@ -1,0 +1,331 @@
+---
+title: "OBBA Revisit Inclusion"
+author: "David Hope"
+date: "`r Sys.Date()`"
+output:
+  html_document:
+    code_folding: hide
+    theme: united
+highlight: github
+vignette: >
+  %\VignetteIndexEntry{OBBA Revisit Inclusion}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r setup, include=F}
+knitr::opts_chunk$set(
+  eval=T,warning = F,
+  message = F,
+  fig.width = 12, fig.height = 8,
+  collapse = TRUE,
+  comment = "#>"
+)
+library(tidyverse)
+library(sf)
+library(BASSr)
+library(patchwork)
+ont.proj <- 3161
+ontario <- read_sf("//int.ec.gc.ca/Shares/C/CWS_ON/Shared_Data/Base_Data/Boundaries/Canada/canada.shp") %>%
+  filter(PROV == "ON") %>%
+  st_transform(st_crs(ont.proj), partial = F, check = T)
+lcc2015_codes <- read_csv(here::here("inst/extdata/LCC2010_LandCoverCodeDescriptions.csv"))
+
+
+clrfile <- read_delim("//int.ec.gc.ca/sys/InGEO/GW/EC1130MigBirds_OiseauxMig/ON_CWS/THEMES/BorealApproach/SANDBOX/dhdev/CAN_NALCMS_LC_30m_LAEA_mmu12_urb05.clr", col_names = c("Value", "red", "green", "blue"), delim = " ") %>% 
+  mutate(rgb = pmap_chr(.l = list(red, green, blue),
+                    .f = rgb,maxColorValue = 255 )) %>% 
+  left_join(lcc2015_codes, by = c("Value" = "LCC_CODE"))
+```
+
+
+
+A key part of OBBA-3 is revisits of point counts. To incorporate these revisits into a design in order to reduce bias generated from the locations of these point counts we need to incorporate them into the benefit calculation.
+
+
+First, I'll import some data. To start I'll import northern point count data  
+
+
+```{r}
+proj.dir <- "//int.ec.gc.ca/Shares/C/CWS_ON/Project_Workspace/PCS/INITIATIVES/OBBA/OBBA2/OBBAIIPOINTS"
+
+
+# From \\int.ec.gc.ca\sys\InGEO\GW\EC1130MigBirds_OiseauxMig\ON_CWS\THEMES\AtlasNorth\DATA
+obbaCrs <- 4269
+obba2 <- read_tsv(glue::glue("{proj.dir}/2020-02-17_export_ptctstns_all.txt"))   %>% 
+  st_as_sf(coords = c("LONGITUDE", "LATITUDE"),crs = obbaCrs) %>% 
+  st_transform(ont.proj)
+
+
+
+all_study_areas <- read_rds(here::here("output/hexagons_cropped.rds"))
+
+study_area_id  <- "ONT_SA_0740"
+
+StudyArea_hexes <- read_rds(here::here(glue::glue("output/StudyArea_{study_area_id}_BassPrep.rds") ) )
+SA_sum <- StudyArea_hexes$landcover %>% as_tibble() %>% 
+  summarize_at( .vars = vars(contains("LC")), .funs = sum) %>% 
+   pivot_longer(cols = contains("LC"), names_to = "lc", values_to = "pHab_SA") %>% 
+  mutate(pHab_SA = pHab_SA / sum(pHab_SA)) %>% 
+  arrange(pHab_SA) %>% 
+  mutate(cHAb_SA = cumsum(pHab_SA),
+         lcFac = forcats::fct_reorder(lc, pHab_SA),
+         lc_n = as.numeric(stringr::str_extract(lc, "\\d\\d") ))%>% 
+  left_join(lcc2015_codes, by = c("lc_n" = "LCC_CODE")) %>% 
+  mutate(lcc_fac = forcats::fct_reorder(LCC_NAME, pHab_SA))
+
+
+atlas_hex <- obba2 %>% 
+  st_filter(y= StudyArea_hexes$landcover, join = st_intersects,  left=F)
+
+
+atlas_hexagons <- st_join(StudyArea_hexes$landcover, obba2, join = st_intersects, left=F) %>% 
+  filter(!is.na(OBJECTID)) %>% 
+  group_by(SampleUnitID) %>% 
+  summarize(n =n())
+
+# atlas_hex
+
+# plot(atlas_hex["LC02"])
+# plot(StudyArea_hexes$landcover["LC18"], add = T)
+# 
+# ggplot() +
+#   geom_sf(data = ontario, fill = "NA") +
+#   geom_sf(data = all_study_areas %>% filter(grepl(glue::glue_collapse(test_sa,  '|'),StudyAreaID)),
+#           aes(fill = StudyAreaID)) +
+#     geom_sf(data = obba2)
+
+
+ggplot()+
+  geom_sf(data = StudyArea_hexes$landcover)+
+  geom_sf(data = atlas_hex) 
+
+
+```
+
+
+
+```{r}
+sample_p <- StudyArea_hexes$landcover %>% 
+  st_filter(atlas_hex, join = st_intersects,  left=F)
+subsample_P <- atlas_hexagons %>% st_drop_geometry() %>% 
+  sample_frac(size = 0.33, weight = n) 
+
+
+landcover_ha <- StudyArea_hexes$landcover %>% 
+  mutate_at(.vars = vars(contains("LC")),.funs = ~(.*area)) %>% ungroup
+att.long <- BASSr::prepare_hab_long(as_tibble(landcover_ha))
+
+sample_hexes100 <- BASSr::draw_random_samples(att_cleaned = as_tibble(landcover_ha), 
+                                           att.sf = st_centroid(landcover_ha), 
+                                           num_runs = 100, nsamples = 10) 
+
+multi_ex <- calculate_benefit(grts_res = sample_hexes100, 
+                                     HexID = SampleUnitID,
+                                     att_long = att.long, 
+                                     q=T ) %>% mutate(withAtlas =F,
+                                                      ScBen = benefit / max(benefit))
+
+
+
+multi_ex_withAtlas <- calculate_benefit(grts_res = sample_hexes100, 
+                                     HexID = SampleUnitID,
+                                     att_long = att.long, 
+                              non_random_set = sample_p$SampleUnitID,
+                                     q=T ) %>% mutate(withAtlas =T,
+                                                      ScBen = benefit / max(benefit))
+
+
+
+ggplot(bind_rows(multi_ex, multi_ex_withAtlas), 
+       aes(withAtlas, benefit, group = SampleUnitID)) +
+  geom_line(alpha =0.05)
+
+```
+
+```{r}
+a <- 
+ggplot(left_join(StudyArea_hexes$landcover, multi_ex_withAtlas)) +
+  geom_sf(aes(fill = ScBen)) +
+  geom_sf(data =sample_p, fill= "NA", colour = 'red') + 
+  labs(title = "With Atlas", fill = "Benefit") + scale_fill_viridis_c(limits = c(0,1))
+b <-   
+ggplot(left_join(StudyArea_hexes$landcover, multi_ex)) +
+  geom_sf(aes(fill = ScBen)) +
+  geom_sf(data =sample_p, fill= "NA", colour = 'red') + 
+  labs(title ="Without Atlas", fill = "Benefit")+ scale_fill_viridis_c(limits = c(0,1))
+
+
+b / a  + plot_layout(guides = 'collect')
+```
+
+
+Run GRTS on SA with and without PC, and with a subsample of the hexagons where point counts occur.
+
+```{r}
+
+runtest <- function(nrset = NULL, ntests= 200, narus = 30){
+  nrsetid <- nrset$SampleUnitID
+  nPC <- 0
+  if(!is_null(nrset)) nPC <-  length(nrsetid)
+  full_BASS <- full_BASS_run(100, 10, st_drop_geometry(landcover_ha),
+                                 att.sp = st_centroid(landcover_ha), 
+                                 cost = st_centroid(StudyArea_hexes$cost), 
+                                 return_all = T, 
+                                 HexID_ = SampleUnitID, 
+                                 stratumID = StudyAreaID, 
+                                 non_ran_set = nrsetid, q = T)
+  grts_withPC <- run_grts_on_BASS(ntests, 
+                                study_area_results = full_BASS,
+                                nARUs = max(0,narus-ifelse(is_null(nrset),0,nrow(nrset))),
+                                idcol = "StudyAreaID",hexid = SampleUnitID,
+                                removedhexes = ifelse(is_null(nrset), NA,nrsetid),
+                                os=0)
+  z_out_PC <- map_df(1:ntests,~grts_withPC[[.x]]@data %>% filter(panel == "PanelOne") %>% mutate(r = .x) ) 
+  
+  diff_withSA_draws <- 
+    z_out_PC %>% left_join(StudyArea_hexes$landcover) %>% 
+  bind_rows(expand_grid(nrset, r = 1:ntests)) %>% 
+    filter(!is.na(SampleUnitID)) %>% 
+  pivot_longer(cols = matches("LC\\d"), values_to = "ha", names_to = "lc") %>% 
+  group_by(r, lc) %>% 
+  summarize(ha = sum(ha, na.rm=T)) %>% 
+  group_by(r) %>% 
+  mutate(phab = ha / sum(ha, na.rm=T)) %>% ungroup %>% 
+  left_join(SA_sum, by = "lc") %>% 
+    mutate(PC = nPC)
+  
+  
+  return(list(full_BASS=full_BASS,grts_withPC=grts_withPC,z_out_PC=z_out_PC ,diff_withSA_draws=diff_withSA_draws ))
+ 
+}
+test_out <- runtest(nrset = NULL, ntests = 200, narus = 30)
+test_sample <- runtest(nrset = sample_p, ntests = 200, narus = 30)
+test_subsample <- runtest(nrset = subsample_P, ntests = 200, narus = 30)
+
+
+
+
+
+test_subsample
+```
+
+
+Here is how the samples are distributed with and without including point counts in the sample.
+```{r}
+
+a <- 
+ggplot(
+  left_join(
+    StudyArea_hexes$landcover, as_tibble(st_drop_geometry(test_out$full_BASS$inclusionPr)),
+                 by = c("SampleUnitID", "StudyAreaID") ) 
+         ) +
+  geom_sf(aes(fill = scale_ben)) +
+  geom_sf(data =sample_p, fill= "NA", colour = 'red') + 
+  labs(title = "With Atlas", fill = "Benefit") + scale_fill_viridis_c(limits = c(0,1))
+b <-   
+ggplot(left_join(StudyArea_hexes$landcover, st_drop_geometry(test_sample$full_BASS$inclusionPr))) +
+  geom_sf(aes(fill = scale_ben)) +
+  geom_sf(data =sample_p, fill= "NA", colour = 'red') + 
+  labs(title ="Without Atlas", fill = "Benefit")+ scale_fill_viridis_c(limits = c(0,1))
+
+
+(b + 
+  geom_sf(data = filter( StudyArea_hexes$landcover,
+            SampleUnitID %in% test_out$grts_withPC[[1]]$SampleUnitID), fill = "NA", colour = 'white') )/ 
+(  a  +  geom_sf(data = filter( StudyArea_hexes$landcover,
+            SampleUnitID %in% test_sample$grts_withPC[[1]]$SampleUnitID), fill = "NA", colour = 'white') )+ 
+plot_layout(guides = 'collect')
+
+
+```
+
+```{r}
+
+b_samp <-   
+ggplot(left_join(StudyArea_hexes$landcover, st_drop_geometry(test_subsample$full_BASS$inclusionPr))) +
+  geom_sf(aes(fill = scale_ben)) +
+  geom_sf(data =StudyArea_hexes$landcover %>% 
+            filter(SampleUnitID %in% subsample_P$SampleUnitID) , fill= "NA", colour = 'red') + 
+  labs(title ="With Partial Atlas", fill = "Benefit")+ scale_fill_viridis_c(limits = c(0,1))+
+   geom_sf(data = filter( StudyArea_hexes$landcover,
+            SampleUnitID %in% test_subsample$grts_withPC[[1]]$SampleUnitID), fill = "NA", colour = 'white')
+b_samp
+```
+
+
+
+
+```{r}
+
+
+ggplot(test_out$diff_withSA_draws, aes(lcc_fac, phab)) + 
+  geom_point(position = position_jitter(width = 0.2), alpha = 0.5) +
+  geom_point(aes(y = pHab_SA), colour = 'red', shape = "-", size = 10)+
+    theme(axis.text.x = element_text(family = 'mono', 
+                                   angle= 75, vjust = 1, hjust = 1))
+  
+```
+
+
+
+
+
+```{r}
+
+
+ggplot(test_sample$diff_withSA_draws, aes(lcc_fac, phab)) + 
+  geom_point(position = position_jitter(width = 0.2), alpha = 0.5) +
+  geom_point(aes(y = pHab_SA), colour = 'red', shape = "-", size = 10)+
+    theme(axis.text.x = element_text(family = 'mono', 
+                                   angle= 75, vjust = 1, hjust = 1))
+  
+```
+
+
+
+
+```{r}
+bind_rows(
+  test_out$diff_withSA_draws,
+  test_sample$diff_withSA_draws,
+  test_subsample$diff_withSA_draws
+  ) %>% 
+  ggplot( aes(lcc_fac, phab, colour = as.factor(PC), group = PC)) + 
+  geom_point(
+    position = position_jitterdodge(dodge.width = 0.5,
+                                             jitter.width = 0.1), 
+             alpha = 0.1) +
+  geom_point(aes(y = pHab_SA, group = PC),
+             colour = 'black', position = position_dodge(width = 0.5), shape = "-", size = 10)+
+    theme(axis.text.x = element_text(family = 'mono', 
+                                   angle= 75, vjust = 1, hjust = 1)) +
+  scale_colour_viridis_d(option = "D", direction = -1) + 
+  labs(colour = "n revisit Hexes", x = "", y = "Proportion of Study Area") +
+  guides(colour = guide_legend(override.aes = list(alpha  =1 )))
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

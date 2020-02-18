@@ -6,24 +6,27 @@ library(patchwork)
 library(sf)
 library(gganimate)
 ont.proj <- 3161
-
+spatialworks <- "//int.ec.gc.ca/sys/InGEO/GW/EC1130MigBirds_OiseauxMig/ON_CWS/THEMES/BorealApproach/SPATIAL/BaldwinHexLandCov/Data/ExportedDataTables"
 select <- dplyr::select
 set.seed(2996581)
 
-studyareas <- st_read(here::here("output/NOntario_BASS_StudyAreas.shp"))
-brantStudyAreas <- read_rds(here::here("output/NONT_HexesWithinBrant.rds"))
+studyareas <- st_read(here::here("output/NOntario_BASS_StudyAreas.shp")) %>% rename(StudyAreaID = StdyAID )
+brandtStudyAreas <- read_rds(here::here("output/NONT_HexesWithinBrant.rds"))
+brandtStudyAreas_list <-  brandtStudyAreas$StudyAreaID
 ontario <- read_sf("//int.ec.gc.ca/Shares/C/CWS_ON/Shared_Data/Base_Data/Boundaries/Canada/canada.shp") %>%
   filter(PROV == "ON") %>%
   st_transform(st_crs(studyareas), partial = F, check = T)
+spatialworks_dat <- read_rds(glue::glue("{spatialworks}/StudyAreas_Spatialworks_w_cost.rds"))
 
 ## -----------------------------------------------------------------------------
-all_study_areas <- read_rds(here::here("output/AllStudyAreaExtracdf.rds")) %>% 
-  filter(StdyAID %in% brantStudyAreas$StudyAreaID) %>% 
+all_study_areas <- spatialworks_dat$LCC2015 %>% 
+  clean_forBass(s = "CLC15", f_vec = brandtStudyAreas_list, appended = "", id_col = StudyAreaID) %>% 
+  left_join(studyareas) %>% 
+  #read_rds(here::here("output/AllStudyAreaExtracdf.rds")) %>% 
   mutate_at(vars(contains("LC")), ~(replace(., is.na(.), 0))) %>% 
-  mutate(StudyAreaID = StdyAID) %>% 
   select(-LC11, -LC09) # REMOVED VERY RARE HABITATS HERE
 
-in_a_lake <- all_study_areas %>% mutate(INLAKE = ifelse(LC18>0.5, T, F)) %>% 
+in_a_lake <- all_study_areas %>% mutate(INLAKE = ifelse(LC18>0.5*100000, T, F)) %>% 
   as_tibble %>% 
   select(StudyAreaID,INLAKE )
 
@@ -44,7 +47,8 @@ ggplot(hexagons_cropped_ontario) +
 ## -----------------------------------------------------------------------------
 
 
-cost_estimates_points <- read_rds(here::here("output/2020-01-24_StudyArea_costs.rds")) %>% left_join(in_a_lake) %>% bind_cols(as_tibble(st_coordinates(st_centroid(.))))
+cost_estimates_points <- read_rds(here::here("output/2020-02-05_StudyAreaCost.rds"))$StudyArea_CostModel %>% 
+  left_join(in_a_lake) %>% bind_cols(as_tibble(st_coordinates(st_centroid(.))))
 
 ## ----BASS-run, warning=F, message=F, eval=F-----------------------------------
 #  BASSres <- full_BASS_run(num_runs = 200, nsamples = 20,
@@ -53,53 +57,37 @@ cost_estimates_points <- read_rds(here::here("output/2020-01-24_StudyArea_costs.
 #                           cost = as_tibble(cost_estimates_points) %>%
 #                             select(-geometry),
 #                           HexID_ = StudyAreaID, return_all = T )
-#  write_rds(BASSres, "output/2020-01-24_BASS_studyarea.rds")
+#  write_rds(BASSres, "output/2020-02-06_BASS_studyarea.rds")
 
 ## -----------------------------------------------------------------------------
-BASSres <- read_rds(here::here( "output/2020-01-24_BASS_studyarea.rds"))
+BASSres <- read_rds(here::here( "output/2020-02-06_BASS_studyarea.rds"))
 BASS_incl <- left_join(hexagons_cropped_ontario,
                        BASSres$inclusionPr, 
                        by = "StudyAreaID") %>% 
   st_as_sf() %>% 
   filter(!is.na(inclpr))
+sa <- BASS_incl %>% filter(grepl("0165",StudyAreaID))
 gp <- ggplot(BASS_incl) + scale_fill_viridis_c() + 
   geom_sf(data = ontario) +
+  geom_sf(data = sa, fill = NA, colour = 'red')+
   theme_linedraw()
 
 gp + geom_sf(aes(fill = ScLogCost )) +
-  labs(fill = "Cost")
-
-
-## -----------------------------------------------------------------------------
-
-ecoregions <- read_sf("//int.ec.gc.ca/Shares/C/CWS_ON/Shared_Data/Base_Data/Natural_Frameworks/NationalEcolFramework/eco_reg_join.shp") %>%
-  st_transform(ont.proj, partial = F, check = T,)
-OntBrant <- read_rds(system.file("extdata",package = "BASSr", "ontario_brandt.rds")) # From the BMS Ontario scripts
-
-OntEco <- st_intersection(ecoregions, OntBrant)
-OntEco_N <- st_centroid(OntEco) %>% 
-  left_join(n_by_eco) %>% 
-  mutate(n = replace_na(n,0)) %>% 
-  filter(REGION_NAM != "Big Trout Lake" | AREA>1)
-
-ggplot(OntEco) + 
-  geom_sf(aes(fill = REGION_NAM)) +
-  scale_fill_viridis_d() + 
-  geom_sf_label(data = OntEco_N, aes(label = n)) +
-  labs(fill = "Ecoregion", x = "", y = "") +
-  theme_linedraw() +
-  theme(legend.position = 'bottom')
-
+  scale_fill_viridis_c(direction = -1) + 
+  labs(fill = "Cost") +
+  geom_sf(data = sa, fill = NA, colour = 'red', size =1)
 
 
 ## ----benefit-plt--------------------------------------------------------------
 gp + geom_sf(aes(fill = scale_ben )) +
-  labs(fill = "Benefit")
+  labs(fill = "Benefit")+
+   geom_sf(data = sa, fill = NA, colour = 'red', size =1)
 
 
 ## ----inclusion-plt------------------------------------------------------------
 gp + geom_sf(aes(fill = inclpr )) +
-  labs(fill = "Prob Inclusion") 
+  labs(fill = "Selection Prob") +
+  geom_sf(data = sa, fill = NA, colour = 'red', size =1)
 
 
 ## ---- eval=F------------------------------------------------------------------
@@ -172,7 +160,9 @@ sample_representivity %>%
 
 ggplot(run_sb_rep, aes(spbal, SSE_hab)) + geom_point() +
   labs(x = "Spatial Balance", y = "SSE proportion Habitat") + 
-  lims(x = c(0.95, 1.05), y = c(0,0.01))
+  lims(x = c(0.95, 1.05), y = c(0,0.2)) + 
+  geom_hline(yintercept = 0, linetype = 2) +
+  geom_vline(xintercept = 1, linetype = 2)
 
 
 ## -----------------------------------------------------------------------------

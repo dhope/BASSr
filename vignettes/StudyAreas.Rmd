@@ -22,13 +22,14 @@ library(sf)
 library(exactextractr)
 library(raster)
 lcc2015 <- "//int.ec.gc.ca/sys/InGEO/GW/EC1130MigBirds_OiseauxMig/ON_CWS/THEMES/BMS_ON/SPATIAL/lcc2015_hab/NontariobrandtLCC2015_reproj.tif"
-
+spatialworks <- "//int.ec.gc.ca/sys/InGEO/GW/EC1130MigBirds_OiseauxMig/ON_CWS/THEMES/BorealApproach/SPATIAL/BaldwinHexLandCov/Data/ExportedDataTables"
 r <- raster(lcc2015)
-studyareas <- st_read(here::here("output/NOntario_BASS_StudyAreas.shp"))
+studyareas <- st_read(here::here("output/NOntario_BASS_StudyAreas.shp")) %>%  mutate(StudyAreaID = StdyAID)
 brantStudyAreas <- read_rds(here::here("output/NONT_HexesWithinBrant.rds"))
 ontario <- read_sf("//int.ec.gc.ca/Shares/C/CWS_ON/Shared_Data/Base_Data/Boundaries/Canada/canada.shp") %>%
   filter(PROV == "ON") %>%
   st_transform(st_crs(studyareas), partial = F, check = T)
+StudyArea_LandCover_Cost <- read_rds( glue::glue("{spatialworks}/StudyAreas_Spatialworks_w_cost.rds"))
 ```
 
 ```{r}
@@ -100,17 +101,25 @@ sa1_hex_lcc <- raster::extract(r,studyareas[1,],fun = f_, df = F, sp =F)
 
 ```{r, fig.width=15, fig.height=12}
 
-all_study_areas <- read_rds(here::here("output/AllStudyAreaExtracdf.rds")) %>% 
-  filter(StdyAID %in% brantStudyAreas$StudyAreaID) %>% 
-  mutate_at(vars(contains("LC")), ~(replace(., is.na(.), 0))) %>% 
-  mutate(StudyAreaID = StdyAID)
+all_study_areas <- StudyArea_LandCover_Cost$LCC2015 %>% 
+  clean_forBass("CLC15", f_vec = brantStudyAreas$StudyAreaID) %>% 
+  left_join(studyareas %>% rename(StudyAreaID = StdyAID))
+  # #read_rds(here::here("output/AllStudyAreaExtracdf.rds")) %>% 
+  # filter(StdyAID %in% brantStudyAreas$StudyAreaID) %>% 
+  # mutate_at(vars(contains("LC")), ~(replace(., is.na(.), 0))) %>% 
+  # mutate(StudyAreaID = StdyAID)
 
 ggplot() + 
   geom_sf(
     data = st_as_sf(pivot_longer(all_study_areas,
-                                 cols = contains("LC"),
+                                 cols = matches("^LC\\d+$"),
                                  names_to = "LC", 
-                                 values_to = "pHab")),
+                                 values_to = "Hab") %>% 
+                      group_by(StudyAreaID) %>% 
+                      mutate(pHab = Hab / sum(Hab)) %>% 
+                      ungroup
+                    
+                    ),
                     aes(fill = pHab)) +
   facet_wrap(~LC, ncol = 5) +
   scale_fill_viridis_c()
@@ -127,8 +136,10 @@ hex_centroids <- st_centroid(study_area_sf)
 ```{r prov-prob, results='asis'}
 
 all_study_areas %>% dplyr::select(-geometry) %>% 
-  pivot_longer(names_to = "LC", values_to = 'pHab', cols = matches("LC\\d")) %>% 
-  mutate(habHA = pHab * t_noNA) %>% 
+  pivot_longer(names_to = "LC", values_to = 'habHA', cols = matches("^LC\\d")) %>% 
+   group_by(StudyAreaID) %>% 
+                      mutate(pHab = habHA / sum(habHA)) %>% 
+                      ungroup %>% 
   group_by(LC) %>% 
   summarise(sqkm = sum(habHA) * 0.01 ) %>% ungroup %>% 
   mutate(pHab = round(sqkm/sum(sqkm) * 100, 2)) %>% 
@@ -263,7 +274,7 @@ den_map <- read_rds(here::here("output/road_density_byHex_full.rds"))
 
 den_map_p <- den_map %>% filter(StudyArea %in% unique(as.character(sa_bcr$StudyAreaID) )) %>% 
   mutate(prim = pr / saa, sec = sr / saa, allroads = r/saa,
-         wint = wr /saa ) %>% right_join(studyareas, by = c("StudyArea" = "StdyAID"))
+         wint = wr /saa ) %>% right_join(studyareas, by = c("StudyArea"))
 
 
 pl <- ggplot(data= st_as_sf(den_map_p)) + scale_fill_viridis_c(limits = c(0,1))# + geom_sf(fill = alpha('white', 0.), colour = 'black')
@@ -361,7 +372,8 @@ cost_brandt <- read_rds(here::here("output/cost_estimates.rds"))
 sa_w_cost <- all_study_areas %>% 
   left_join(cost_brandt) %>% dplyr::select(-x) %>% 
   mutate(RawCost = total_cost) %>% 
-  mutate(INLAKE = ifelse(LC18>0.5, T, F))
+  mutate(INLAKE = ifelse(LC18/TOT_HA>0.5, T, F),
+         Province = "ON")
 
 sa_w_cost[c("X", "Y")] <- st_coordinates(st_centroid(st_as_sf(all_study_areas)))
  
@@ -375,7 +387,7 @@ ggplot(all_study_areas %>% st_as_sf , aes(fill = LC18)) + geom_sf() +
 
 
 ```{r}
-left_join(all_study_areas, as_tibble(sa_bcr)) %>% 
+left_join(all_study_areas, as_tibble(sa_bcr), by = "StudyAreaID") %>% 
   dplyr::select(-x) %>% 
   st_as_sf() %>% 
   ggplot() +
@@ -385,27 +397,29 @@ left_join(all_study_areas, as_tibble(sa_bcr)) %>%
 
 
 ```{r, warning=F, message=F}
-BASSres <- full_BASS_run(num_runs = 100, nsamples = 10, att = sa_w_cost,q = T,
-                         att.sp = st_centroid(st_as_sf(sa_w_cost)), 
-                         cost = sa_w_cost, HexID_ = StdyAID, return_all = T )
+BASSres <- full_BASS_run(num_runs = 100, nsamples = 10, 
+                         att = sa_w_cost ,
+                         q = T,
+                         att.sp = st_centroid(st_as_sf(sa_w_cost)), stratumID = Province,
+                         cost = sa_w_cost, HexID_ = StudyAreaID, return_all = T )
 ```
 
 
 
 ```{r}
-ggplot(left_join(study_area_hexes_w_cost, BASSres$inclusionPr)) + geom_sf(aes(fill = benefit))
+ggplot(left_join(studyareas, BASSres$inclusionPr)) + geom_sf(aes(fill = benefit))
 ```
 
 ```{r,fig.width=12, fig.height=8}
-ggplot(left_join(study_area_hexes_w_cost, BASSres$inclusionPr)) + geom_sf(aes(fill = ScLogCost)) +
-ggplot(left_join(study_area_hexes_w_cost, BASSres$inclusionPr)) + geom_sf(aes(fill = scale_ben)) +
+ggplot(left_join(studyareas, BASSres$inclusionPr)) + geom_sf(aes(fill = ScLogCost)) +
+ggplot(left_join(studyareas, BASSres$inclusionPr)) + geom_sf(aes(fill = scale_ben)) +
   plot_layout(guides = 'collect')
 
 ```
 
 
 ```{r}
-ggplot(left_join(study_area_hexes_w_cost, BASSres$inclusionPr)) + geom_sf(aes(fill = inclpr))
+ggplot(left_join(studyareas, BASSres$inclusionPr)) + geom_sf(aes(fill = inclpr))
 ```
 
 
@@ -426,23 +440,23 @@ z <-map(1:200,~SAs[[.x]]@data %>% filter(panel == "PanelOne") %>%
 z_out <- map_df(1:200,~SAs[[.x]]@data %>% filter(panel == "PanelOne") %>% mutate(r = .x) )
 
 z_200 <- 
-z_out %>% group_by(StdyAID) %>% 
+z_out %>% group_by(StudyAreaID) %>% 
   summarize(n=n())
 
 
-sampleont <- dplyr::filter(.data = left_join(sa_w_cost, BASSres$inclusionPr), StdyAID %in% z_200$StdyAID)
+sampleont <- dplyr::filter(.data = left_join(studyareas, BASSres$inclusionPr), StudyAreaID %in% z_200$StudyAreaID)
 
 sb <- spbalance(SAs[[1]], study_area_hexes_w_cost)
 
-ggplot(sampleont) + geom_sf(data = sa_w_cost,fill=NA) + 
+ggplot(sampleont) + geom_sf(data = st_as_sf(sa_w_cost),fill=NA) + 
   geom_sf(aes(fill = inclpr))
 
 
-ggplot(study_area_hexes_w_cost %>% left_join(z_200)) + geom_sf(fill=NA) + 
+ggplot(studyareas %>% left_join(z_200)) + geom_sf(fill=NA) + 
   geom_sf(aes(fill = n/200)) +scale_fill_viridis_c() +
   labs(fill = "", title = "Proportion of 200 grts SA chosen")
 
-grts_er <- left_join(z_out,sa_bcr, by = c("StdyAID" = "StudyAreaID") )
+grts_er <- left_join(z_out,sa_bcr, by = c( "StudyAreaID") )
 
 grts_er %>% group_by(REGION_NAM, r) %>% 
   summarize(n =n()) %>% 

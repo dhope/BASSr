@@ -11,7 +11,7 @@ cost_vars <- list(
   atv_arus_per_crew_per_day = 3,
   helicopter_cost_per_hour = 1250,
   helicopter_max_km_from_base = 150,
-  helicopter_base_setup_cost_per_km = 750 * 1.2,
+  helicopter_base_setup_cost_per_km = 7.5 * 1.2,
   helicopter_l_per_hour = 160,
   helicopter_crew_size = 4,
   helicopter_aru_per_person_per_day = 5,
@@ -41,8 +41,9 @@ estimate_cost_study_area <- function(narus, StudyAreas, pr, sr, dist_base_sa, di
   list2env(vars, env = environment())
 
   StudyAreas %>% mutate(
+
     # Cost of survey the study area by truck
-    primary_cost = truck_cost_per_day * narus / (truck_arus_per_crew_per_day * truck_n_crews),
+    primary_cost = truck_cost_per_day * narus / (truck_arus_per_crew_per_day ),#* truck_n_crews),
     # Cost of surveying the study area by atv
     atv_cost = atv_cost_per_day * narus / (atv_arus_per_crew_per_day * atv_n_crews),
     # # Distance between airport and basecamp
@@ -81,7 +82,7 @@ estimate_cost_study_area <- function(narus, StudyAreas, pr, sr, dist_base_sa, di
     total_truck_cost = primary_cost * {{ pr }},
     total_atv_cost = atv_cost * {{ sr }},
     total_heli_cost = (1 - {{ pr }} - {{ sr }}) * (cost_base + cost_to_SA + cost_within_SA),
-
+    narus = narus,
     RawCost = total_truck_cost + total_atv_cost + total_heli_cost
   )
 

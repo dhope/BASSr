@@ -13,7 +13,9 @@ full_BASS_run(
   return_all = F,
   seed_ = as.integer(Sys.time()),
   HexID_ = HEX100,
-  q = F
+  stratumID = StudyAreaID,
+  q = F,
+  non_ran_set = NULL
 )
 }
 \arguments{
@@ -33,7 +35,11 @@ full_BASS_run(
 
 \item{HexID_}{Column for hexagon id}
 
+\item{stratumID}{Column for larger area id. Likely StudyAreaID or Province}
+
 \item{q}{Run the benefit calculation quickly}
+
+\item{non_ran_set}{Non random set that is added to the hypothetical sample set in benefit calculation.}
 }
 \value{
 a table with inclusion probabilities

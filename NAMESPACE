@@ -3,6 +3,7 @@
 export(allhexes)
 export(calculate_benefit)
 export(calculate_inclusion_probs)
+export(clean_forBass)
 export(draw_random_samples)
 export(estimate_cost_study_area)
 export(extract_habitat_cost)

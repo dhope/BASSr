@@ -4,7 +4,14 @@
 \alias{calculate_benefit}
 \title{Title}
 \usage{
-calculate_benefit(grts_res, HexID, att_long, output = "all", quick = F)
+calculate_benefit(
+  grts_res,
+  HexID,
+  att_long,
+  output = "all",
+  quick = F,
+  non_random_set = NULL
+)
 }
 \arguments{
 \item{HexID}{column for hexagons}
