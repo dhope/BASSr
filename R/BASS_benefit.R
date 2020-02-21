@@ -5,18 +5,18 @@
 
 #' Title
 #'
-#' @param grts_res
-#' @param att_long
+#' @param grts_res Results from GRTS random sample set.
+#' @param att_long Attribute table
 #' @param output  Must be one of 'all'(default), 'full','by_run', or 'mean_benefit'
 #' @param HexID column for hexagons
 #' @param att_long Data frame with habitat information, in long format
 #' @param output if not using quick. Output format
 #' @param quick should you run it fast?
+#' @param non_random_set Set of hexagons to include as a non randomly selected set
 #'
 #' @return
 #' @export
 #'
-#' @examples
 calculate_benefit <- function(grts_res, HexID,  att_long, output = "all", quick = F,non_random_set = NULL) {
   if (!output %in% c("all", "full", "by_run", "mean_benefit")) {
     simpleError("output must be one of 'all'(default), 'full','by_run', or 'mean_benefit'")
@@ -84,11 +84,11 @@ calculate_benefit <- function(grts_res, HexID,  att_long, output = "all", quick 
 #' Summarize land cover in attribute and add it to a longer table
 #'
 #' @param att attribute table
+#' @param lg_area Column for larger area. Either study area or region
 #'
 #' @return
 #' @export
 #'
-#' @examples
 prepare_hab_long <- function(att, lg_area = StudyAreaID) {
   # sa_a <- sum(att$area)
   land_cover_summary <- att %>%
@@ -137,9 +137,9 @@ subsample_grts_and_calc_benefit <- function(nsamples, num_runs, grts_file, att, 
 #' Quick Benefits
 #'
 #' @param d Hexagon data.frame
-#' @param samples
-#' @param land_cover_summary
-#' @param col_
+#' @param samples Hypothetical sample set
+#' @param land_cover_summary Land cover summary for larger area
+#' @param col_ ID column
 #' @param pd print details
 #'
 #' @return

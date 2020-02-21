@@ -1,4 +1,4 @@
-## ----setup, include=F, echo=T-------------------------------------------------
+## ----setup, include=T, warning=F, message =F----------------------------------
 knitr::opts_chunk$set(
   eval=T,
   collapse = TRUE,
@@ -13,22 +13,24 @@ library(raster)
 library(rlang)
 library(patchwork)
 ont.proj <- 3161
-ontario <- read_sf("//int.ec.gc.ca/Shares/C/CWS_ON/Shared_Data/Base_Data/Boundaries/Canada/canada.shp") %>%
-  filter(PROV == "ON") %>%
-  st_transform(st_crs(ont.proj), partial = F, check = T)
-lcc2015_codes <- read_csv(here::here("inst/extdata/LCC2010_LandCoverCodeDescriptions.csv"))
-
-
-clrfile <- read_delim("//int.ec.gc.ca/sys/InGEO/GW/EC1130MigBirds_OiseauxMig/ON_CWS/THEMES/BorealApproach/SANDBOX/dhdev/CAN_NALCMS_LC_30m_LAEA_mmu12_urb05.clr", col_names = c("Value", "red", "green", "blue"), delim = " ") %>% 
-  mutate(rgb = pmap_chr(.l = list(red, green, blue),
-                    .f = rgb,maxColorValue = 255 )) %>% 
-  left_join(lcc2015_codes, by = c("Value" = "LCC_CODE"))
+# ontario <- read_sf("//int.ec.gc.ca/Shares/C/CWS_ON/Shared_Data/Base_Data/Boundaries/Canada/canada.shp") %>%
+#   filter(PROV == "ON") %>%
+#   st_transform(st_crs(ont.proj), partial = F, check = T)
+# lcc2015_codes <- read_csv(here::here("inst/extdata/LCC2010_LandCoverCodeDescriptions.csv"))
+# 
+# 
+# clrfile <- read_delim("//int.ec.gc.ca/sys/InGEO/GW/EC1130MigBirds_OiseauxMig/ON_CWS/THEMES/BorealApproach/SANDBOX/dhdev/CAN_NALCMS_LC_30m_LAEA_mmu12_urb05.clr", col_names = c("Value", "red", "green", "blue"), delim = " ") %>% 
+#   mutate(rgb = pmap_chr(.l = list(red, green, blue),
+#                     .f = rgb,maxColorValue = 255 )) %>% 
+#   left_join(lcc2015_codes, by = c("Value" = "LCC_CODE"))
+# all_study_areas <- read_rds(here::here("output/hexagons_cropped.rds"))
+# StudyArea_hexes <- read_rds(here::here(glue::glue("output/StudyArea_{study_area_id}_BassPrep.rds") ) )
 
 ## ----load-data----------------------------------------------------------------
-all_study_areas <- read_rds(here::here("output/hexagons_cropped.rds"))
+
 
 study_area_id  <- "ONT_SA_0740"
-StudyArea_hexes <- read_rds(here::here(glue::glue("output/StudyArea_{study_area_id}_BassPrep.rds") ) )
+
 SA_sum <- StudyArea_hexes$landcover %>% as_tibble() %>% 
   summarize_at( .vars = vars(contains("LC")), .funs = sum) %>% 
    pivot_longer(cols = contains("LC"), names_to = "lc", values_to = "pHab_SA") %>% 
@@ -40,7 +42,7 @@ SA_sum <- StudyArea_hexes$landcover %>% as_tibble() %>%
   left_join(lcc2015_codes, by = c("lc_n" = "LCC_CODE")) %>% 
   mutate(lcc_fac = forcats::fct_reorder(LCC_NAME, pHab_SA))
 
-## ---- fig.cap='Map of Ontario study areas with example study area shown in red', fig.width=8, fig.height=8----
+## ----ontario-map, fig.cap='Map of Ontario study areas with example study area shown in red', fig.width=8, fig.height=8----
 ggplot(all_study_areas) +
   geom_sf(data = ontario) +
   geom_sf(fill = 'white')+
@@ -48,14 +50,14 @@ ggplot(all_study_areas) +
   geom_sf(data = filter(all_study_areas, StudyAreaID == study_area_id), fill = 'red')
 
 ## ----raster-plot, fig.cap = "Fig 1. The distribution of land cover classes across an example study area"----
-r <- raster::raster(
-    glue::glue(here::here("output/{study_area_id}.tif")) ) %>%
+r <- raster::raster(system.file("extdata", glue("{study_area_id}.tif"),
+  package = "BASSr", mustWork = T)) %>% 
+   
   raster::as.data.frame(xy=T, long =T) %>% as_tibble() %>%
     filter(!is.na(value)) %>% 
   left_join(lcc2015_codes, by = c("value" = "LCC_CODE"))
 
-  # pal_ <- viridis::viridis(19)
-  # names(pal_) <- as.character(1:19)
+
   pal_ <- clrfile$rgb
   names(pal_) <- as.character(clrfile$LCC_NAME)
 
@@ -149,7 +151,7 @@ names(samp_com) <- c("lcFac", "Sample Unit", "Study Area", "Hypothetical Sample 
 
 knitr::kable(samp_com, digits = 2)
 
-## ---- fig.cap = "Fig 5. Distribution of land cover by hexagon, sample, sample plus hexagon and study area", fig.width=12, fig.height=8----
+## ---- fig.cap = "Fig 5. Distribution of land cover by hexagon, sample, sample plus hexagon and study area", fig.width=14, fig.height=8----
 
 
 d <- 
@@ -357,10 +359,10 @@ ggplot(ben_diffs,
 ## -----------------------------------------------------------------------------
 ARU_locs <- run_grts_on_BASS(200, study_area_results = 
                     left_join(landcover_ha,benefits2) %>% 
-                   mutate(inclpr = benefit),
-                 30, os = 0, idcol = "StudyAreaID")
+                   mutate(inclpr = benefit),hexid = SampleUnitID,
+                   nARUs =  30, os = 0, idcol = "StudyAreaID")
 
-## ---- fig.cap="The number of draws a sample unit was selected out of 200 GRTS runs of 30 ARUs based on the benefit (left) and absolute difference from the study area (right)"----
+## ---- fig.cap="Fig. 12. The number of draws a sample unit was selected out of 200 GRTS runs of 30 ARUs based on the benefit (left) and absolute difference from the study area (right)"----
 
 
 
@@ -399,7 +401,7 @@ left_join(StudyArea_hexes$landcover, z_200) %>%
 benefit_sf+grts_res
 
 
-## -----------------------------------------------------------------------------
+## ---- fig.width=8, fig.height=12----------------------------------------------
 diff_withSA_draws <- 
 z_out %>% 
   pivot_longer(cols = matches("LC\\d"), values_to = "ha", names_to = "lc") %>% 

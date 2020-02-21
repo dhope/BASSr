@@ -11,7 +11,7 @@ run_grts_on_BASS(
   os,
   idcol,
   hexid,
-  removedhexes
+  removedhexes = c("None")
 )
 }
 \arguments{

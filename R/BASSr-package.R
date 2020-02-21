@@ -1,44 +1,95 @@
-#' BASSr
+#' BASSr: Boreal Avian Strategic Sampling in R
 #'
 #' The BASSr package implements the Boreal Approach to Suitable Sampling Design
 #'
-#' @name BASSr
 #' @docType package
+#' @name BASSr
 #' @import dplyr
 #' @import tidyr
 #' @import rlang
 #' @import spsurvey
 #' @import sf
-#' @importFrom Rcpp sourceCpp
+#' @importFrom methods as
+#' @importFrom utils capture.output data
 #' @useDynLib BASSr, .registration = TRUE
 #'
 NULL
 
 
-#' Variables for cost estimation
+#' Polygon SF of Ontario
 #'
-#' Cost variables for estimate_cost_study_area
+#' A dataset containing the prices and other attributes of almost 54,000
+#' diamonds.
 #'
-#' @format A list with 18 variables used to calculate the cost model for N Ontario:
+#' @format A data frame with 53940 rows and 10 variables:
 #' \describe{
-#'   \item{truck_cost_per_day}{Cost of truck use per day per crew, in dollars}
-#'   \item{truck_n_crews}{Number of crews for truck surveys}
-#'   \item{truck_arus_per_crew_per_day}{number of arus deployed per crew per day}
-#'   \item{atv_cost_per_day}{Cost of ATV use per day per crew, in dollars}
-#'   \item{atv_n_crews}{Number of crews for ATV surveys}
-#'   \item{atv_arus_per_crew_per_day}{Number of arus deployed per crew per day}
-#'   \item{helicopter_cost_per_hour}{Cost of helicopter rental per hour, in dollars}
-#'   \item{helicopter_max_km_from_base}{Maximum range of helicopter from fuelling base, in kilometres}
-#'   \item{helicopter_base_setup_cost_per_km}{Cost of setting up base for helicopter use with distance from airport, in km}
-#'   \item{helicopter_l_per_hour}{Helicopter fuel usage per hour, in litres}
-#'   \item{helicopter_crew_size}{Helicopter crew size}
-#'   \item{helicopter_aru_per_person_per_day}{Number of arus deployed per day per person}
-#'   \item{helicopter_relocation_speed}{Speed of movement of helicopter when relocating, in km per hour}
-#'   \item{helicopter_airport_cost_per_l}{Cost of heli fuel from an airport, in dollars per litre}
-#'   \item{helicopter_base_cost_per_l}{Cost of heli fuel from a basecamp, in dollars per litre}
-#'   \item{helicopter_2nd_base_cost_per_l}{Cost of heli fuel from a a remote fuel cache, in dollars per litre}
-#'   \item{helicopter_hours_flying_within_sa_per_day}{Number of hours a helicopter spends flying in the study area per day.}
+#'   \item{price}{price, in US dollars}
+#'   \item{carat}{weight of the diamond, in carats}
 #'   ...
 #' }
-#' @source Advice from Rich Russel
-NULL
+#' @source \url{http://www.diamondse.info/}
+"ontario"
+
+#' rgb colour codes to plot 2015 National Land Cover.
+#'
+#' A dataset containing red, blue, green values associated with
+#' all the land cover types found in the 2015 Canadian National
+#' Land Cover Classification
+#'
+#' @format A data frame with 20 rows and 6 variables:
+#' \describe{
+#'   \item{Value}{price, in US dollars}
+#'   \item{red}{weight of the diamond, in carats}
+#'   \item{green}{weight of the diamond, in carats}
+#'   \item{blue}{weight of the diamond, in carats}
+#'   \item{rgb}{weight of the diamond, in carats}
+#'   \item{LCC_NAME}{weight of the diamond, in carats}
+#'
+#' }
+#' @source \url{http://www.diamondse.info/}
+"clrfile"
+
+#' 2015 National Landcover Classification Table
+#'
+#' A dataset containing the prices and other attributes of almost 54,000
+#' diamonds.
+#'
+#' @format A data frame with 53940 rows and 10 variables:
+#' \describe{
+#'   \item{price}{price, in US dollars}
+#'   \item{carat}{weight of the diamond, in carats}
+#'   ...
+#' }
+#' @source \url{http://www.diamondse.info/}
+"lcc2015_codes"
+
+#' All of Ontario's Study Areas
+#'
+#' A simple features (package SF) object with all of Ontario's Study Areas and the associated Land Cover
+#'
+#' @format A data frame with 746 rows and 19 variables:
+#' \describe{
+#'   \item{StudyAreaID}{Unique Identifier for each study area}
+#'   \item{TOT_HA}{Total hectares in study area}
+#'   \item{D_CLC15}{Dominant land cover in study area}
+#'   \item{LC..}{Hectares covered by landcover type (00-18)}
+#'   ...
+#'   \item{geometry}{SF geometry}
+#' }
+#' @source Hexagons generated in R, landcover extracted from National Land Cover 2015.
+"all_study_areas"
+
+#' BASSr data needed for example study area
+#'
+#' A list containing the cost, landcover, and id for an example study area
+#'
+#' @format A list of 2 dataframes and one character string:
+#' \describe{
+#'   \item{cost}{cost estimates for each sample unit}
+#'   \item{landcover}{SF polygon with land cover in percentages for each sample unit}
+#'   \item{study_area}{Unique identifier for Study Area}
+#' }
+#' @source \url{http://www.diamondse.info/}
+"StudyArea_hexes"
+
+

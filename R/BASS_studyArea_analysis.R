@@ -11,7 +11,8 @@
 #' @return
 #' @export
 #'
-run_grts_on_BASS <- function(n_grts_tests, study_area_results,nARUs, os, idcol, hexid, removedhexes) {
+run_grts_on_BASS <- function(n_grts_tests, study_area_results,nARUs, os, idcol, hexid, removedhexes = c("None")) {
+  if(as_label(enquo(hexid))=="<empty>")stop("run_grts_on_BASS now requires you to specify hexagon column under hexid. Please correct and try again.")
   if(is.list(study_area_results)&!is.data.frame(study_area_results)){
     if(!is_null(study_area_results$inclusionPr)){
       attframe <- study_area_results$inclusionPr
@@ -25,7 +26,7 @@ run_grts_on_BASS <- function(n_grts_tests, study_area_results,nARUs, os, idcol, 
     attframe <- as_tibble(study_area_results) %>%
       dplyr::select(-geometry) %>% filter(!is.na(X))
     }
-  attframe <- filter(attframe, !{{hexid}} %in% removedhexes)
+  attframe <- filter(attframe, ! {{hexid}} %in% removedhexes )
   Stratdesgn <- rep(list(PanelOne = list # a list named 'None" that contains:
                          (
                            panel = c(PanelOne = rep(nARUs)),
@@ -57,14 +58,13 @@ run_grts_on_BASS <- function(n_grts_tests, study_area_results,nARUs, os, idcol, 
 
 #' Get the results from a BASS grts run
 #'
-#' @param grts_output
-#' @param study_area_results
-#' @param nARUs
+#' @param grts_output Hypothetical sample set
+#' @param study_area_results Study area results of BASS
+#' @param nARUs Number of ARUs to deploy
 #'
 #' @return
 #' @export
 #'
-#' @examples
 getresults_BASS <- function(grts_output, study_area_results,  nARUs) {
   fbr_t <- study_area_results %>% transpose()
   landcover <- fbr_t %>% .[["landcover"]]

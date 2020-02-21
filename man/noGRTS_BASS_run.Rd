@@ -16,6 +16,8 @@ noGRTS_BASS_run(
 )
 }
 \arguments{
+\item{grts_output}{Hypothetical sample set}
+
 \item{num_runs}{The number of times to draw random samples from hexagons}
 
 \item{nsamples}{The number of samples to draw in each sample}

@@ -8,6 +8,8 @@ prepare_hab_long(att, lg_area = StudyAreaID)
 }
 \arguments{
 \item{att}{attribute table}
+
+\item{lg_area}{Column for larger area. Either study area or region}
 }
 \value{
 

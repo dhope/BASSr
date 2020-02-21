@@ -10,3 +10,4 @@
 ^\.github$          # Contributing guidelines, CoC, issue templates, etc.
 ^output$       # rds files created from vignettes
 ^output$
+^JUNK

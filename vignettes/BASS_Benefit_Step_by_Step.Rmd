@@ -13,7 +13,7 @@ vignette: >
   %\VignetteEncoding{UTF-8}
 ---
 
-```{r setup, include=F, echo=T}
+```{r setup, include=T, warning=F, message =F}
 knitr::opts_chunk$set(
   eval=T,
   collapse = TRUE,
@@ -28,29 +28,24 @@ library(raster)
 library(rlang)
 library(patchwork)
 ont.proj <- 3161
-ontario <- read_sf("//int.ec.gc.ca/Shares/C/CWS_ON/Shared_Data/Base_Data/Boundaries/Canada/canada.shp") %>%
-  filter(PROV == "ON") %>%
-  st_transform(st_crs(ont.proj), partial = F, check = T)
-lcc2015_codes <- read_csv(here::here("inst/extdata/LCC2010_LandCoverCodeDescriptions.csv"))
 
-
-clrfile <- read_delim("//int.ec.gc.ca/sys/InGEO/GW/EC1130MigBirds_OiseauxMig/ON_CWS/THEMES/BorealApproach/SANDBOX/dhdev/CAN_NALCMS_LC_30m_LAEA_mmu12_urb05.clr", col_names = c("Value", "red", "green", "blue"), delim = " ") %>% 
-  mutate(rgb = pmap_chr(.l = list(red, green, blue),
-                    .f = rgb,maxColorValue = 255 )) %>% 
-  left_join(lcc2015_codes, by = c("Value" = "LCC_CODE"))
 ```
 
 
 This is an example of how we calculate the benefit for one sample unit in a study area. The same approach applies to all other sample unit hexagons in the study area and also to calculating benefits for the study area hexagons in a region.
 
+
 ## Step 1 - Load in data
 
 Here you will need a simple features (package sf) layer of hexagons for the study areas and sample units. Code to create the hexagons is available in `Hexagon Creation` vignette. The first step is to create or load both the study area and sample units. 
+
+The data for the vignette is included in the package. It should load with the `BASSr` package. You'll need the objects `ontario`, `clrfile`, `lcc2015_codes`, `all_study_areas`, and `StudyArea_hexes`. Documentation for these objects is found by using the help function (eg `BASSr?ontario`). The raster for the example study area can be found in the system data (see chunk `raster-plot` below).
+
 ```{r load-data}
-all_study_areas <- read_rds(here::here("output/hexagons_cropped.rds"))
+
 
 study_area_id  <- "ONT_SA_0740"
-StudyArea_hexes <- read_rds(here::here(glue::glue("output/StudyArea_{study_area_id}_BassPrep.rds") ) )
+
 SA_sum <- StudyArea_hexes$landcover %>% as_tibble() %>% 
   summarize_at( .vars = vars(contains("LC")), .funs = sum) %>% 
    pivot_longer(cols = contains("LC"), names_to = "lc", values_to = "pHab_SA") %>% 
@@ -63,7 +58,7 @@ SA_sum <- StudyArea_hexes$landcover %>% as_tibble() %>%
   mutate(lcc_fac = forcats::fct_reorder(LCC_NAME, pHab_SA))
 ```
 
-```{r, fig.cap='Map of Ontario study areas with example study area shown in red', fig.width=8, fig.height=8}
+```{r ontario-map, fig.cap='Map of Ontario study areas with example study area shown in red', fig.width=8, fig.height=8}
 ggplot(all_study_areas) +
   geom_sf(data = ontario) +
   geom_sf(fill = 'white')+
@@ -77,14 +72,14 @@ ggplot(all_study_areas) +
 This example study area is shown below. The habitat is shown from the National Land Cover Classification 2015. The study area is `r nrow(StudyArea_hexes$landcover)` sample unit hexagons of `r round(mean(st_area(StudyArea_hexes$landcover)),0)`$m^2$.
 
 ```{r raster-plot, fig.cap = "Fig 1. The distribution of land cover classes across an example study area"}
-r <- raster::raster(
-    glue::glue(here::here("output/{study_area_id}.tif")) ) %>%
+r <- raster::raster(system.file("extdata", glue("{study_area_id}.tif"),
+  package = "BASSr", mustWork = T)) %>% 
+   
   raster::as.data.frame(xy=T, long =T) %>% as_tibble() %>%
     filter(!is.na(value)) %>% 
   left_join(lcc2015_codes, by = c("value" = "LCC_CODE"))
 
-  # pal_ <- viridis::viridis(19)
-  # names(pal_) <- as.character(1:19)
+
   pal_ <- clrfile$rgb
   names(pal_) <- as.character(clrfile$LCC_NAME)
 
@@ -212,7 +207,7 @@ knitr::kable(samp_com, digits = 2)
 As mentioned above, adding the focal sample unit to the sample set, shifts the habitat composition slightly and more so when the focal sample unit is quite different from the sample set. We now want to see if adding the sample unit to the hypothetical sample set will make the *updated* sample set more representative of the study area.
 
 
-```{r, fig.cap = "Fig 5. Distribution of land cover by hexagon, sample, sample plus hexagon and study area", fig.width=12, fig.height=8}
+```{r, fig.cap = "Fig 5. Distribution of land cover by hexagon, sample, sample plus hexagon and study area", fig.width=14, fig.height=8}
 
 
 d <- 
@@ -421,7 +416,11 @@ ggplot(benefits2 %>% right_join(landcover_ha) %>% st_as_sf) +
 benefit_sf
 ```
 
-## Analysis of Benefit Calculation
+
+---------------
+---------------
+
+## Appendix - Analysis of Benefit Calculation
 
 How does this arise? If we examine the difference between a sample unit's percentage of habitat and that percent found in the study area, we see that on average
 
@@ -491,18 +490,19 @@ ggplot(ben_diffs,
   xlim(0, 13.1)
 ```
 
+So sample units that are more different than the Study Area on average have a higher benefit. 
 
 ```{r}
 ARU_locs <- run_grts_on_BASS(200, study_area_results = 
                     left_join(landcover_ha,benefits2) %>% 
-                   mutate(inclpr = benefit),
-                 30, os = 0, idcol = "StudyAreaID")
+                   mutate(inclpr = benefit),hexid = SampleUnitID,
+                   nARUs =  30, os = 0, idcol = "StudyAreaID")
 ```
 
 
 
 
-```{r, fig.cap="The number of draws a sample unit was selected out of 200 GRTS runs of 30 ARUs based on the benefit (left) and absolute difference from the study area (right)"}
+```{r, fig.cap="Fig. 12. The number of draws a sample unit was selected out of 200 GRTS runs of 30 ARUs based on the benefit (left) and absolute difference from the study area (right)"}
 
 
 
@@ -531,6 +531,8 @@ ben_ben + diff_ben
 ```
 
 
+This does lead to an increased chance of being selected (when ignoring cost), but the effect is fairly small. It does mean that hexagons that closely mimic the study area are less likely to be selected. We can see that even when cost is included, in this study area the chances of being selected do not vary much across all sample units.
+
 ```{r}
 grts_res <- 
 left_join(StudyArea_hexes$landcover, z_200) %>% 
@@ -544,8 +546,10 @@ benefit_sf+grts_res
 
 ```
 
+And habitat representivity in each draw remains pretty good. 
 
-```{r}
+
+```{r, fig.width=8, fig.height=12}
 diff_withSA_draws <- 
 z_out %>% 
   pivot_longer(cols = matches("LC\\d"), values_to = "ha", names_to = "lc") %>% 
@@ -563,7 +567,7 @@ ggplot(diff_withSA_draws, aes(lcc_fac, phab)) +
   
 ```
 
-
+Here we see the sum of squared error of habitat surveyed to that across the study area in proportion of study area.
 
 ```{r}
 errors <- diff_withSA_draws %>% 
@@ -577,6 +581,8 @@ errors <- diff_withSA_draws %>%
   theme_minimal() +
   labs(x = "Sum of Squared Error from Study Area")
 ```
+
+This is the mean absolute error of study area percent between each GRTS sample and the study area, averaged across all habitat types.
 
 ```{r}
 ggplot(errors, aes(MAE))+

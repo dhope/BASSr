@@ -14,6 +14,8 @@ calculate_benefit(
 )
 }
 \arguments{
+\item{grts_res}{Results from GRTS random sample set.}
+
 \item{HexID}{column for hexagons}
 
 \item{att_long}{Data frame with habitat information, in long format}
@@ -21,6 +23,8 @@ calculate_benefit(
 \item{output}{if not using quick. Output format}
 
 \item{quick}{should you run it fast?}
+
+\item{non_random_set}{Set of hexagons to include as a non randomly selected set}
 }
 \value{
 

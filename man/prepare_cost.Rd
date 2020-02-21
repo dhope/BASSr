@@ -48,7 +48,7 @@ prepare_cost(
 Propare hexagons for cost calculations
 }
 \examples{
-prepare_cost(truck_roads = NA, atv_roads = NA, winter_roads = NA, all_roads = NA, airports = airports_official, basecamps = tourism, hexagons =  study_area_hexagons_in_brandt \%>\%
+\dontrun{prepare_cost(truck_roads = NA, atv_roads = NA, winter_roads = NA, all_roads = NA, airports = airports_official, basecamps = tourism, hexagons =  study_area_hexagons_in_brandt \%>\%
 left_join(road_info, by = c("StudyAreaID" = "StudyArea")),idcol_ = StudyAreaID, calc_roads = F, airport_cols =  c("NAME", "AIRPORT_TY", "OGF_ID"),
-  basecamp_cols = c("OFFICIAL_N", "OGF_ID", "CLASS_SUBT") )
+  basecamp_cols = c("OFFICIAL_N", "OGF_ID", "CLASS_SUBT") )}
 }

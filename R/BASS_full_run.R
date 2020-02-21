@@ -15,7 +15,6 @@
 #' @return a table with inclusion probabilities
 #' @export
 #'
-#' @examples
 full_BASS_run <- function(num_runs, nsamples, att, att.sp, cost, return_all=F, seed_ = as.integer(Sys.time()),
                           HexID_ = HEX100,stratumID = StudyAreaID, q=F, non_ran_set = NULL) {
   set.seed(seed_)
@@ -45,7 +44,7 @@ full_BASS_run <- function(num_runs, nsamples, att, att.sp, cost, return_all=F, s
 
 #' A calculate BASS from random samples
 #'
-#' @param grts_output
+#' @param grts_output Hypothetical sample set
 #' @param num_runs The number of times to draw random samples from hexagons
 #' @param nsamples The number of samples to draw in each sample
 #' @param att  the attribute table correctly formatted
@@ -57,7 +56,6 @@ full_BASS_run <- function(num_runs, nsamples, att, att.sp, cost, return_all=F, s
 #' @return a table with inclusion probabilities
 #' @export
 #'
-#' @examples
 noGRTS_BASS_run <- function(grts_output, num_runs, nsamples, att, att.sp, cost, return_all=F, seed_ = as.integer(Sys.time())) {
 
   att_cleaned_long <- prepare_hab_long(att)

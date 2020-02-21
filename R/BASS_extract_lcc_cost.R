@@ -1,6 +1,8 @@
 ## Functions to extract data for a study area
 #' Extract Habitat and Cost
 #'
+#' ** Depreciated ** This function is no longer useful and too specific to be widely used. Leaving in as may be useful.
+#'
 #' @param number_iterations Number of iterations to draw samples from full GRTS
 #' @param n_samples_per_iter Number of samples to pull per iteration
 #' @param sample_hexes Sample hexagon file
@@ -18,6 +20,14 @@
 #'     \item{camp_locations}{ sf points with camp locations}
 #'     }
 #' @param return_all_ Logical to return a full results or just the inclusion probabilities
+#' @param nARUs number of ARUs to deploy
+#' @param hexid_col hexagon identification column
+#' @param calc_cost Logical - calculate cost
+#' @param calc_hab Logical - calculate habitat
+#' @param write_hexes Logical - write hexagons
+#' @param load_hexes Logical load hexagons
+#' @param rds.loc RDS location
+#' @param sa.rast.loc Study area location
 #' @param quick Run using cpp
 #'
 #' @return
@@ -33,6 +43,7 @@ extract_habitat_cost <- function(number_iterations,
                                  calc_cost = F, calc_hab = F,
                                  write_hexes =F, load_hexes = T,
                                  rds.loc="output", sa.rast.loc = "output", quick =T) {
+  warning("This function is depreciated and not recommended as it may contain non-generalizable routines.")
   message(glue::glue("Starting {id}"))
 
   if( isTRUE(load_hexes) &  file.exists(glue::glue("{rds.loc}/studyArea_{id}_BassPrep.rds"))){
@@ -101,13 +112,13 @@ extract_habitat_cost <- function(number_iterations,
   if(!isTRUE(load_hexes)| isTRUE(calc_cost)){
   message("Calculating costs")
   # browser()
-  list2env(shape_file_list, env = environment())
+  list2env(shape_file_list, envir =  environment())
   all_costvars <-
     prepare_cost(truck_roads = primary_roads, atv_roads = secondary_roads,
                  winter_roads = winter_roads, all_roads = total_roads,
                  airports = airport_locations, basecamps = camp_locations,
                  hexagons =  samplehexes1,idcol_ = {{hexid_col}}, calc_roads = T )
-  if(!exists("cost_vars")) data("cost_vars")
+  if(!exists("cost_vars")) cost_vars <- BASSr::cost_vars#data("cost_vars", package = 'BASSr')
 
   cost_est2 <- estimate_cost_study_area(narus = nARUs, StudyAreas =  all_costvars,
                                         pr  = p_pr, sr = p_sr, dist_base_sa = basecamps,

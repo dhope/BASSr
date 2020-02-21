@@ -11,7 +11,6 @@
 #' @return
 #' @export
 #'
-#' @examples
 clean_forBass <- function(df, s, id_col = StudyAreaID, f_vec = brandtStudyAreas_list, appended = ""){
   df %>%
     rename_at(.vars= vars(contains(glue::glue("{s}_"))),

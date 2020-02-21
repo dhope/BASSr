@@ -1,7 +1,8 @@
-## ----setup, include=F, echo=T-------------------------------------------------
+## ----setup, include=T, warning=F, message=F-----------------------------------
 knitr::opts_chunk$set(
   eval=T,
   collapse = TRUE,
+  message =F, warning =F,
   fig.width = 8,
   fig.height = 8,
   comment = "#>"
@@ -14,13 +15,11 @@ library(BASSr)
 library(raster)
 library(rlang)
 library(patchwork)
-spatialworks <- "//int.ec.gc.ca/sys/InGEO/GW/EC1130MigBirds_OiseauxMig/ON_CWS/THEMES/BorealApproach/SPATIAL/BaldwinHexLandCov/Data/ExportedDataTables"
+
 
 bcv <- BASSr::cost_vars
 
-StudyArea_cost_30arus <-
-  read_rds(here::here("output/2020-02-05_StudyAreaCost.rds"))$StudyArea_CostModel %>%
-  as_tibble %>% dplyr::select(-geometry)
+
 
 ## -----------------------------------------------------------------------------
 maxARUs <- 200
@@ -85,6 +84,6 @@ ggplot(cost_test, aes(narus,scLogCost, colour = StudyAreaID )) +
   scale_colour_viridis_d(direction = -1) +
   labs(colour = "Access type", x = "Number of ARUs deployed", y = "Scaled Log Cost")
 
-## -----------------------------------------------------------------------------
-BASSr::cost_vars
+## ---- results='asis'----------------------------------------------------------
+BASSr::cost_vars %>% as_tibble() %>% pivot_longer(names_to = "Variable", values_to = "Value", cols = everything()) %>% knitr::kable()
 

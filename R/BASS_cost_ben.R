@@ -15,7 +15,6 @@
 #' @return A data frame with full inclusion probabilities for each raster.
 #' @export
 #'
-#' @examples
 calculate_inclusion_probs <- function(cost, hexagon_benefits, HexID, StratumID = StudyAreaID ) {
   if(!"RawCost" %in% names(cost)){
     cost <- cost %>%

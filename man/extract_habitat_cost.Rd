@@ -52,11 +52,27 @@ extract_habitat_cost(
 
 \item{return_all_}{Logical to return a full results or just the inclusion probabilities}
 
+\item{nARUs}{number of ARUs to deploy}
+
+\item{hexid_col}{hexagon identification column}
+
+\item{calc_cost}{Logical - calculate cost}
+
+\item{calc_hab}{Logical - calculate habitat}
+
+\item{write_hexes}{Logical - write hexagons}
+
+\item{load_hexes}{Logical load hexagons}
+
+\item{rds.loc}{RDS location}
+
+\item{sa.rast.loc}{Study area location}
+
 \item{quick}{Run using cpp}
 }
 \value{
 
 }
 \description{
-Extract Habitat and Cost
+** Depreciated ** This function is no longer useful and too specific to be widely used. Leaving in as may be useful.
 }

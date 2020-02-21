@@ -7,7 +7,11 @@
 getresults_BASS(grts_output, study_area_results, nARUs)
 }
 \arguments{
-\item{nARUs}{}
+\item{grts_output}{Hypothetical sample set}
+
+\item{study_area_results}{Study area results of BASS}
+
+\item{nARUs}{Number of ARUs to deploy}
 }
 \value{
 

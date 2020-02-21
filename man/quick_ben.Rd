@@ -9,6 +9,12 @@ quick_ben(d, samples, land_cover_summary, col_, pd)
 \arguments{
 \item{d}{Hexagon data.frame}
 
+\item{samples}{Hypothetical sample set}
+
+\item{land_cover_summary}{Land cover summary for larger area}
+
+\item{col_}{ID column}
+
 \item{pd}{print details}
 }
 \value{

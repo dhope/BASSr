@@ -13,7 +13,6 @@
 #' @return Returns a sample output in long and wide formats.
 #' @export
 #'
-#' @examples
 draw_random_samples <- function(att_cleaned, att.sf, num_runs, nsamples) {
   equaldesgn <- list(None = list # a list named 'None" that contains:
   (

@@ -2,6 +2,17 @@
 # December 9, 2019
 # David Hope
 
+#' Create Study Area
+#'
+#' @param landscape larger area
+#' @param study_area_diam study area diameter
+#' @param hex_diam hexagon diameter
+#' @param output output type
+#'
+#' @return
+#' @export
+#'
+#' @examples
 create_study_area <- function(landscape, study_area_diam, hex_diam, output='small') {
 
   x <- raster::rasterToPoints(landscape, spatial = T)
