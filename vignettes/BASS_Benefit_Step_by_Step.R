@@ -13,18 +13,7 @@ library(raster)
 library(rlang)
 library(patchwork)
 ont.proj <- 3161
-# ontario <- read_sf("//int.ec.gc.ca/Shares/C/CWS_ON/Shared_Data/Base_Data/Boundaries/Canada/canada.shp") %>%
-#   filter(PROV == "ON") %>%
-#   st_transform(st_crs(ont.proj), partial = F, check = T)
-# lcc2015_codes <- read_csv(here::here("inst/extdata/LCC2010_LandCoverCodeDescriptions.csv"))
-# 
-# 
-# clrfile <- read_delim("//int.ec.gc.ca/sys/InGEO/GW/EC1130MigBirds_OiseauxMig/ON_CWS/THEMES/BorealApproach/SANDBOX/dhdev/CAN_NALCMS_LC_30m_LAEA_mmu12_urb05.clr", col_names = c("Value", "red", "green", "blue"), delim = " ") %>% 
-#   mutate(rgb = pmap_chr(.l = list(red, green, blue),
-#                     .f = rgb,maxColorValue = 255 )) %>% 
-#   left_join(lcc2015_codes, by = c("Value" = "LCC_CODE"))
-# all_study_areas <- read_rds(here::here("output/hexagons_cropped.rds"))
-# StudyArea_hexes <- read_rds(here::here(glue::glue("output/StudyArea_{study_area_id}_BassPrep.rds") ) )
+
 
 ## ----load-data----------------------------------------------------------------
 
@@ -49,7 +38,7 @@ ggplot(all_study_areas) +
   theme_linedraw() +
   geom_sf(data = filter(all_study_areas, StudyAreaID == study_area_id), fill = 'red')
 
-## ----raster-plot, fig.cap = "Fig 1. The distribution of land cover classes across an example study area"----
+## ----raster-plot, fig.cap = "Fig 1. The distribution of land cover classes across an example study area."----
 r <- raster::raster(system.file("extdata", glue("{study_area_id}.tif"),
   package = "BASSr", mustWork = T)) %>% 
    
@@ -100,7 +89,7 @@ ggplot(hex_LC, aes(lcc_fac, cpHab, group = SampleUnitID)) +
                                    angle= 75, vjust = 1, hjust = 1))
 
 
-## ---- fig.cap="Fig 3. Example Hexagon"----------------------------------------
+## ---- fig.cap="Fig 3. Example sample unit hexagon (in red). Used as the focal sample unit for the next steps."----
 ggplot(exampleHex) + geom_sf(fill = 'red') +
   geom_sf(data = StudyArea_hexes$landcover, fill = NA) + theme_minimal()
 
@@ -113,7 +102,7 @@ ggplot(exampleHex) + geom_sf(fill = 'red') +
   knitr::kable(col.names = c("Land Cover", "% Example Sample Unit", "% Example Study Area"), digits = 2)
 
 
-## ---- fig.cap = "Fig 4. Plot of focal sample unit (red) and the hypothetical sample set (grey)"----
+## ---- fig.cap = "Fig 4. Plot of focal sample unit (red) and the hypothetical sample set (grey) within the study area (all hexagons)."----
 
 sample_hexes <- BASSr::draw_random_samples(att_cleaned = as_tibble(StudyArea_hexes$landcover), 
                                            att.sf = st_centroid(StudyArea_hexes$landcover), 
@@ -145,19 +134,20 @@ samp_com <-
 left_join( exLC %>% dplyr::select(lcc_fac,pHab, pHab_SA), sample_hexes_phab) %>% 
   mutate(pHab_Sample_plus_hex = 100*( (pHab*hexsize + pHab_samp*hexsize*10)/
                                         (sum(pHab*hexsize) + sum(pHab_samp*hexsize*10))),
-         pHab_SA = pHab_SA * 100)
+         pHab_SA = pHab_SA * 100) %>% 
+  dplyr::select(lcc_fac,pHab, pHab_samp, pHab_Sample_plus_hex, pHab_SA )
 
-names(samp_com) <- c("lcFac", "Sample Unit", "Study Area", "Hypothetical Sample Set", "Sample Set + Sample Unit")
+names(samp_com) <- c("lcFac", "Focal Sample Unit",  "Hypothetical Sample Set", "Sample Set + Sample Unit","Study Area")
 
 knitr::kable(samp_com, digits = 2)
 
-## ---- fig.cap = "Fig 5. Distribution of land cover by hexagon, sample, sample plus hexagon and study area", fig.width=14, fig.height=8----
+## ---- fig.cap = "Fig 5. Distribution of land cover by focal sample unit, hypothetical sample set, hypothetical sample set plus focal sample unit and study area", fig.width=14, fig.height=8----
 
 
 d <- 
   samp_com %>%  
   pivot_longer(names_to = "sampletype", values_to = "phabitat", cols = -lcFac) %>% 
-  mutate(sampletype = factor(sampletype, levels = c("Sample Unit", "Hypothetical Sample Set", "Sample Set + Sample Unit", "Study Area")))
+  mutate(sampletype = factor(sampletype, levels = c("Focal Sample Unit", "Hypothetical Sample Set", "Sample Set + Sample Unit", "Study Area")))
                                # c("Hexagon",  "Sample", "Sample + Hex","Study Area")))
 
 
@@ -184,14 +174,16 @@ rep_tabl <- samp_com %>%
          `Land Cover Benefit` = case_when(`Observed Direction` == "None"~"No Benefit",
            `Desired Direction`== `Observed Direction`~ "Benefit",
          TRUE~"No Benefit"), 
-         Benefit = case_when(`Land Cover Benefit`== "Benefit"~abs(`Hypothetical Sample Set` - `Sample Set + Sample Unit`)/100,
-                             TRUE~0) )
+         benefit = case_when(`Land Cover Benefit`== "Benefit"~abs(`Hypothetical Sample Set` - `Sample Set + Sample Unit`)/100,
+                             TRUE~0) ) %>% 
+  mutate(Benefit = ifelse(benefit == 0,"0", ifelse(benefit<0.001, "<0.001", as.character(round(benefit,3))))) 
 
 
-knitr::kable(rep_tabl, digits = 2)
+knitr::kable(rep_tabl %>%
+  dplyr::select(-benefit), digits = 2)
 
 ## ---- include =F, results = 'asis'--------------------------------------------
-a <- sum(rep_tabl$Benefit )
+a <- sum(rep_tabl$benefit )
 b <- quick_ben(d = exampleHex%>% as_tibble %>% 
              mutate_at(.vars = vars(contains("LC")),.funs = ~(.*hexsize)), 
           samples = sample_hexes$grts_random_sample %>% 
@@ -203,27 +195,27 @@ print(glue::glue("The benefit is {round(a,3)}. If it is calculated using the scr
 
 
 
-## ---- fig.cap ="Fig 6. Example Sample Unit benefit, calculated 100 times. Mean benefit is shown in the vertical dotted line."----
+## ---- fig.cap ="Fig 6. Example focal sample unit benefit, calculated using 200 randomly drawn hypothetical sample sets. Mean benefit is shown in the vertical dotted line."----
 
 landcover_ha <- StudyArea_hexes$landcover %>% 
   mutate_at(.vars = vars(contains("LC")),.funs = ~(.*area)) %>% ungroup
 att.long <- BASSr::prepare_hab_long(as_tibble(landcover_ha))
-
-sample_hexes100 <- BASSr::draw_random_samples(att_cleaned = as_tibble(landcover_ha), 
+set.seed(1234)
+sample_hexes200 <- BASSr::draw_random_samples(att_cleaned = as_tibble(landcover_ha), 
                                            att.sf = st_centroid(landcover_ha), 
-                                           num_runs = 100, nsamples = 10) 
+                                           num_runs = 200, nsamples = 10) 
 
-multi_ex <- BASSr::calculate_benefit(grts_res = sample_hexes100, 
+multi_ex <- BASSr::calculate_benefit(grts_res = sample_hexes200, 
                                      HexID = SampleUnitID,
                                      att_long = att.long[att.long$SampleUnitID==exampleHex$SampleUnitID,], 
                                      q=T )
 
-multi_exbroken <- map_df(1:100, 
+multi_exbroken <- map_df(1:200, 
                          ~quick_ben(d = exampleHex %>% as_tibble %>%
                                       dplyr::select(-geometry) %>%
                                       mutate_at(.vars = vars(contains("LC")),
                                                 .funs = ~(.*hexsize)), 
-          samples = sample_hexes100$grts_random_sample %>% 
+          samples = sample_hexes200$grts_random_sample %>% 
             filter(run == .x) %>% 
              summarize_at(.vars = vars(contains("LC")),.funs = ~sum(.)), 
           land_cover_summary = SA_sum %>% mutate(ha = pHab_SA*study_area_size), 
@@ -238,7 +230,7 @@ ggplot(multi_exbroken, aes(benefit)) +
   xlim(0, 0.15)
   
 
-## ----all-benefits, fig.lab = "Fig 7. Single sample set used to calculate benefit estimates across all sample units in a study area"----
+## ----all-benefits, fig.lab = "Fig 7. Single hypothetical sample set used to calculate benefit estimates across all sample units in a study area"----
 
 one_sample <- quick_ben(
   d = StudyArea_hexes$landcover %>% as_tibble %>% 
@@ -256,18 +248,25 @@ ggplot(one_sample, aes(benefit)) +
   xlim(0, 0.15)
 
 
-## ----200iterations-1, fig.cap="Fig 7. Mean benefit distribution across 200 iterations of the benefit calculation. The mean benefit for the example hexagon is shown in the dotted line"----
+## ----200iterations-1, fig.cap="Fig 7. Distribution across all sample units in a study area of the mean benefit calculated using 200 randomly drawn (with replacment; black) hypothetical sample sets or 100 hypothetical sample sets (grey), each consisting of 10 sample units. The mean benefit for the example focal sample unit described above is shown in the dotted line"----
 
-set.seed(1234)
-sample_hexes2 <- BASSr::draw_random_samples(att_cleaned = as_tibble(landcover_ha), 
-                                           att.sf = st_centroid(landcover_ha), 
-                                           num_runs = 200, nsamples = 10) 
+# set.seed(1234)
+# sample_hexes2 <- BASSr::draw_random_samples(att_cleaned = as_tibble(landcover_ha), 
+#                                            att.sf = st_centroid(landcover_ha), 
+#                                            num_runs = 200, nsamples = 10) 
 
-benefits2 <- calculate_benefit(sample_hexes2, HexID = SampleUnitID,att_long =  att.long, quick = T, 
+benefits2 <- calculate_benefit(sample_hexes200, HexID = SampleUnitID,att_long =  att.long, quick = T, 
+                               output = 'mean.benefit')
+
+sample_hexes100 <- list(grts_random_sample = sample_hexes200$grts_random_sample %>%  filter(run <=100),
+                        grts_random_sample_long = sample_hexes200$grts_random_sample_long %>%  filter(run <=100))
+
+benefits1 <- calculate_benefit(sample_hexes100, HexID = SampleUnitID,att_long =  att.long, quick = T, 
                                output = 'mean.benefit')
 
 ggplot(benefits2, aes(benefit)) + 
-  geom_density(fill= 'grey') + 
+  geom_density(fill= 'black', alpha = 1) + 
+  geom_density(data = benefits1,fill= 'grey', alpha = 0.5) +
   geom_vline(xintercept = benefits2$benefit[benefits2$SampleUnitID==exampleHex$SampleUnitID], 
              linetype =2) +
   labs(x= "Benefit", y = "Density") +
@@ -275,7 +274,12 @@ ggplot(benefits2, aes(benefit)) +
 
 
 
-## ----200iterations-2, fig.cap="Fig 8. Mean benefit distribution across 200 iterations of the benefit calculation. The mean benefit for the example hexagon is shown in the dotted line. 20 samples are drawn per iteration"----
+
+
+
+
+
+## ----200iterations-2, fig.cap="Fig 8. Distribution of mean benefit distribution across all sample units. Calculation of benefit completed using 200 randomly drawn hypothetical sample sets of 20 sample units each. The mean benefit for the example hexagon is shown in the dotted line."----
 set.seed(1234)
 sample_hexes3 <- BASSr::draw_random_samples(att_cleaned = as_tibble(landcover_ha), 
                                            att.sf = st_centroid(landcover_ha), 

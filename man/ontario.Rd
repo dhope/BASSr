@@ -4,20 +4,19 @@
 \name{ontario}
 \alias{ontario}
 \title{Polygon SF of Ontario}
-\format{A data frame with 53940 rows and 10 variables:
+\format{A simple feature data frame with 1 rows and 2 variables:
 \describe{
-  \item{price}{price, in US dollars}
-  \item{carat}{weight of the diamond, in carats}
-  ...
+  \item{PROV}{Two letter code for Ontario}
+  \item{NAME}{Name of Province}
+  \item{geometry}{SF geometry}
 }}
 \source{
-\url{http://www.diamondse.info/}
+Map of Canadian Jurisdictions
 }
 \usage{
 ontario
 }
 \description{
-A dataset containing the prices and other attributes of almost 54,000
-diamonds.
+A poloygon with the outline of Ontario
 }
 \keyword{datasets}

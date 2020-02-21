@@ -18,16 +18,15 @@ NULL
 
 #' Polygon SF of Ontario
 #'
-#' A dataset containing the prices and other attributes of almost 54,000
-#' diamonds.
+#' A poloygon with the outline of Ontario
 #'
-#' @format A data frame with 53940 rows and 10 variables:
+#' @format A simple feature data frame with 1 rows and 2 variables:
 #' \describe{
-#'   \item{price}{price, in US dollars}
-#'   \item{carat}{weight of the diamond, in carats}
-#'   ...
+#'   \item{PROV}{Two letter code for Ontario}
+#'   \item{NAME}{Name of Province}
+#'   \item{geometry}{SF geometry}
 #' }
-#' @source \url{http://www.diamondse.info/}
+#' @source Map of Canadian Jurisdictions
 "ontario"
 
 #' rgb colour codes to plot 2015 National Land Cover.
@@ -46,21 +45,20 @@ NULL
 #'   \item{LCC_NAME}{weight of the diamond, in carats}
 #'
 #' }
-#' @source \url{http://www.diamondse.info/}
+#' @source \url{https://open.canada.ca/data/en/dataset/4e615eae-b90c-420b-adee-2ca35896caf6}
 "clrfile"
 
 #' 2015 National Landcover Classification Table
 #'
-#' A dataset containing the prices and other attributes of almost 54,000
-#' diamonds.
+#' Key for land cover codes and names
 #'
-#' @format A data frame with 53940 rows and 10 variables:
+#' @format A data frame with 19 rows and 2 variables:
 #' \describe{
-#'   \item{price}{price, in US dollars}
-#'   \item{carat}{weight of the diamond, in carats}
+#'   \item{LCC_CODE}{Land cover code}
+#'   \item{LCC_NAME}{Land cover name}
 #'   ...
 #' }
-#' @source \url{http://www.diamondse.info/}
+#' @source \url{https://open.canada.ca/data/en/dataset/4e615eae-b90c-420b-adee-2ca35896caf6}
 "lcc2015_codes"
 
 #' All of Ontario's Study Areas
@@ -76,7 +74,7 @@ NULL
 #'   ...
 #'   \item{geometry}{SF geometry}
 #' }
-#' @source Hexagons generated in R, landcover extracted from National Land Cover 2015.
+#' @source Hexagons generated in R, landcover extracted from National Land Cover 2015 (\url{https://open.canada.ca/data/en/dataset/4e615eae-b90c-420b-adee-2ca35896caf6}).
 "all_study_areas"
 
 #' BASSr data needed for example study area
@@ -89,7 +87,7 @@ NULL
 #'   \item{landcover}{SF polygon with land cover in percentages for each sample unit}
 #'   \item{study_area}{Unique identifier for Study Area}
 #' }
-#' @source \url{http://www.diamondse.info/}
+#' @source BASSr analysis for N. Ontario
 "StudyArea_hexes"
 
 
