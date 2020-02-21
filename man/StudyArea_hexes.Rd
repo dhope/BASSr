@@ -11,7 +11,7 @@
   \item{study_area}{Unique identifier for Study Area}
 }}
 \source{
-\url{http://www.diamondse.info/}
+BASSr analysis for N. Ontario
 }
 \usage{
 StudyArea_hexes

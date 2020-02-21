@@ -14,7 +14,7 @@
   \item{geometry}{SF geometry}
 }}
 \source{
-Hexagons generated in R, landcover extracted from National Land Cover 2015.
+Hexagons generated in R, landcover extracted from National Land Cover 2015 (\url{https://open.canada.ca/data/en/dataset/4e615eae-b90c-420b-adee-2ca35896caf6}).
 }
 \usage{
 all_study_areas

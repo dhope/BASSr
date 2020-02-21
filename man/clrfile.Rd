@@ -15,7 +15,7 @@
 
 }}
 \source{
-\url{http://www.diamondse.info/}
+\url{https://open.canada.ca/data/en/dataset/4e615eae-b90c-420b-adee-2ca35896caf6}
 }
 \usage{
 clrfile

@@ -61,7 +61,7 @@ $$
 Where $T_d$ is the daily cost of truck usage, set initially to `r bcv$truck_cost_per_day`. $N_T$ is the number of ARUs a truck crew can deploy (`r bcv$truck_arus_per_crew_per_day`). This can be changed later to allow for differing daily costs based on the number of truck crews, however as written now, the number of crews ($n_c$) increases deployment rate and cost equivanetly and therefore drops out of the equation.
 
 
-The cost of ATV deployment is equivalent to truck costs:
+The cost of ATV deployment is equivalent to truck costs in structure, but the rate of deployment and costs are different between deployment types:
 $$
 C_{A} = \frac{A_dn_c N}{N_An_c} = \frac{A_d N}{N_A}
 $$
