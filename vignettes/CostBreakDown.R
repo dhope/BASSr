@@ -21,7 +21,7 @@ bcv <- BASSr::cost_vars
 
 
 
-## -----------------------------------------------------------------------------
+## ----fig1, fig.cap = "The cost of deploying a given number of ARUs in a Study Area by ATV, Truck, Helicopter, or a mixed method. The helicopter includes, with a base camp ('Helicopter'; 100km from base camp to study area, 250 from study area to airport, and 200 km from airport to base camp), with no basecamp required (100km from base camp to study area, 130 from study area to airport, and 200 km from airport to base camp), and with a base camp and secondary fuel cach required (200km from base camp to study area, 250 km from study area to airport, and 200 km from airport to base camp). The 'Mixed' method involves 1/3 of truck, ATV, and Helicopter access types to survey the area."----
 maxARUs <- 200
  d_heli <- tibble(StudyAreaID  = "Helicopter", 
         pr= 0,
@@ -71,14 +71,14 @@ bind_rows(cost_heli, cost_truck, cost_atv, cost_heli2,cost_heli3, cost_mixed) %>
          scLogCost = logcost / max(logcost)) %>% ungroup
 ggplot(cost_test, aes(narus,RawCost, colour = StudyAreaID )) + geom_line(size = 1) +
   scale_colour_viridis_d(direction = -1) +
-  labs(colour = "Access type", x = "Number of ARUs deployed")
+  labs(colour = "Access type", x = "Number of ARUs deployed", y = "Raw Cost Value")
   # scale_y_continuous(trans = 'log1p')
 
 
 
 
 
-## -----------------------------------------------------------------------------
+## ----fig2, fig.cap = "The same calculation shown in the figure above but now cost is shown as the cost relative to the most expensive access type for each ARU deployment size (here it is 'Helicopter - Fuel Cache' for all ARU numbers). The scaled cost is calculated as the raw cost divided by the maximum raw cost for that ARU number."----
 ggplot(cost_test, aes(narus,scLogCost, colour = StudyAreaID )) + 
   geom_line(size = 1) +
   scale_colour_viridis_d(direction = -1) +

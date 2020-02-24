@@ -31,14 +31,14 @@ SA_sum <- StudyArea_hexes$landcover %>% as_tibble() %>%
   left_join(lcc2015_codes, by = c("lc_n" = "LCC_CODE")) %>% 
   mutate(lcc_fac = forcats::fct_reorder(LCC_NAME, pHab_SA))
 
-## ----ontario-map, fig.cap='Map of Ontario study areas with example study area shown in red', fig.width=8, fig.height=8----
+## ----ontario-map, fig.cap='Figure 1. Map of Ontario study areas with example study area shown in red', fig.width=8, fig.height=8----
 ggplot(all_study_areas) +
   geom_sf(data = ontario) +
   geom_sf(fill = 'white')+
   theme_linedraw() +
   geom_sf(data = filter(all_study_areas, StudyAreaID == study_area_id), fill = 'red')
 
-## ----raster-plot, fig.cap = "Fig 1. The distribution of land cover classes across an example study area."----
+## ----raster-plot, fig.cap = "Figure 2. The distribution of land cover classes across an example study area."----
 r <- raster::raster(system.file("extdata", glue("{study_area_id}.tif"),
   package = "BASSr", mustWork = T)) %>% 
    
@@ -63,7 +63,7 @@ r <- raster::raster(system.file("extdata", glue("{study_area_id}.tif"),
 
 lc + ggspatial::annotation_scale(location = "bl", width_hint = 0.4) 
 
-## ----land-cover-hexes, fig.cap = "Fig 2. The cumulative proportion of land cover classes within sample hexagons (grey) and the study area (black). The red line shows the example hexagon used in the initial benefit calculation.", fig.width= 8, fig.height=12----
+## ----land-cover-hexes, fig.cap = "Figure 3. The cumulative proportion of land cover classes within sample hexagons (grey) and the study area (black). The red line shows the example hexagon used in the initial benefit calculation.", fig.width= 8, fig.height=12----
 hex_LC <- 
 StudyArea_hexes$landcover %>% 
   as_tibble() %>% dplyr::select(-geometry) %>% 
@@ -89,7 +89,7 @@ ggplot(hex_LC, aes(lcc_fac, cpHab, group = SampleUnitID)) +
                                    angle= 75, vjust = 1, hjust = 1))
 
 
-## ---- fig.cap="Fig 3. Example sample unit hexagon (in red). Used as the focal sample unit for the next steps."----
+## ---- fig.cap="Figure 4. Example sample unit hexagon (in red). Used as the focal sample unit for the next steps."----
 ggplot(exampleHex) + geom_sf(fill = 'red') +
   geom_sf(data = StudyArea_hexes$landcover, fill = NA) + theme_minimal()
 
@@ -102,7 +102,7 @@ ggplot(exampleHex) + geom_sf(fill = 'red') +
   knitr::kable(col.names = c("Land Cover", "% Example Sample Unit", "% Example Study Area"), digits = 2)
 
 
-## ---- fig.cap = "Fig 4. Plot of focal sample unit (red) and the hypothetical sample set (grey) within the study area (all hexagons)."----
+## ---- fig.cap = "Figure 5. Plot of focal sample unit (red) and the hypothetical sample set (grey) within the study area (all hexagons)."----
 
 sample_hexes <- BASSr::draw_random_samples(att_cleaned = as_tibble(StudyArea_hexes$landcover), 
                                            att.sf = st_centroid(StudyArea_hexes$landcover), 
@@ -141,7 +141,7 @@ names(samp_com) <- c("lcFac", "Focal Sample Unit",  "Hypothetical Sample Set", "
 
 knitr::kable(samp_com, digits = 2)
 
-## ---- fig.cap = "Fig 5. Distribution of land cover by focal sample unit, hypothetical sample set, hypothetical sample set plus focal sample unit and study area", fig.width=14, fig.height=8----
+## ---- fig.cap = "Figure 6. Distribution of land cover by focal sample unit, hypothetical sample set, hypothetical sample set plus focal sample unit and study area", fig.width=14, fig.height=8----
 
 
 d <- 
@@ -195,7 +195,7 @@ print(glue::glue("The benefit is {round(a,3)}. If it is calculated using the scr
 
 
 
-## ---- fig.cap ="Fig 6. Example focal sample unit benefit, calculated using 200 randomly drawn hypothetical sample sets. Mean benefit is shown in the vertical dotted line."----
+## ---- fig.cap ="Figure 7. Example focal sample unit benefit, calculated using 200 randomly drawn hypothetical sample sets. Mean benefit is shown in the vertical dotted line."----
 
 landcover_ha <- StudyArea_hexes$landcover %>% 
   mutate_at(.vars = vars(contains("LC")),.funs = ~(.*area)) %>% ungroup
@@ -230,7 +230,7 @@ ggplot(multi_exbroken, aes(benefit)) +
   xlim(0, 0.15)
   
 
-## ----all-benefits, fig.lab = "Fig 7. Single hypothetical sample set used to calculate benefit estimates across all sample units in a study area"----
+## ----all-benefits, fig.lab = "Figure 8. Single hypothetical sample set used to calculate benefit estimates across all sample units in a study area"----
 
 one_sample <- quick_ben(
   d = StudyArea_hexes$landcover %>% as_tibble %>% 
@@ -248,7 +248,7 @@ ggplot(one_sample, aes(benefit)) +
   xlim(0, 0.15)
 
 
-## ----200iterations-1, fig.cap="Fig 7. Distribution across all sample units in a study area of the mean benefit calculated using 200 randomly drawn (with replacment; black) hypothetical sample sets or 100 hypothetical sample sets (grey), each consisting of 10 sample units. The mean benefit for the example focal sample unit described above is shown in the dotted line"----
+## ----200iterations-1, fig.cap="Figure 9. Distribution across all sample units in a study area of the mean benefit calculated using 200 randomly drawn (with replacment; black) hypothetical sample sets or 100 hypothetical sample sets (grey), each consisting of 10 sample units. The mean benefit for the example focal sample unit described above is shown in the dotted line"----
 
 # set.seed(1234)
 # sample_hexes2 <- BASSr::draw_random_samples(att_cleaned = as_tibble(landcover_ha), 
@@ -279,7 +279,7 @@ ggplot(benefits2, aes(benefit)) +
 
 
 
-## ----200iterations-2, fig.cap="Fig 8. Distribution of mean benefit distribution across all sample units. Calculation of benefit completed using 200 randomly drawn hypothetical sample sets of 20 sample units each. The mean benefit for the example hexagon is shown in the dotted line."----
+## ----200iterations-2, fig.cap="Figure 10. Distribution of mean benefit distribution across all sample units. Calculation of benefit completed using 200 randomly drawn hypothetical sample sets of 20 sample units each (grey distribution).This is compared with the distribution of 200 sample sets of 10 sample units each (black distribution). The mean benefit for the example hexagon with sample sets of 20 sample units is shown in the dotted line."----
 set.seed(1234)
 sample_hexes3 <- BASSr::draw_random_samples(att_cleaned = as_tibble(landcover_ha), 
                                            att.sf = st_centroid(landcover_ha), 
@@ -289,7 +289,8 @@ benefits3 <- calculate_benefit(sample_hexes3, HexID = SampleUnitID,att_long =  a
                                output = 'mean.benefit')
 
 ggplot(benefits3, aes(benefit)) + 
-  geom_density(fill= 'grey') + 
+  geom_density(data = benefits2, fill = 'black') + 
+  geom_density(fill= 'grey', alpha = 0.5) + 
   geom_vline(xintercept = benefits3$benefit[benefits3$SampleUnitID==exampleHex$SampleUnitID], 
              linetype =2) +
   labs(x= "Benefit", y = "Density") +
@@ -297,146 +298,10 @@ ggplot(benefits3, aes(benefit)) +
 
 
 
-## ---- fig.width=4, fig.height=4, fig.align='center', fig.cap = "Fig 9. The plotted mean benefit estimate running 200 iterations of hypothetical sample sets each of 10 sample units."----
+## ---- fig.width=4, fig.height=4, fig.align='center', fig.cap = "Figure 11. The plotted mean benefit estimate running 200 iterations of hypothetical sample sets each of 10 sample units."----
 benefit_sf <- 
 ggplot(benefits2 %>% right_join(landcover_ha) %>% st_as_sf) +
   geom_sf(aes(fill = benefit)) + scale_fill_viridis_c() + theme_linedraw() +
    ggspatial::annotation_scale(location = "bl", width_hint = 0.4) 
 benefit_sf
-
-## ---- fig.width=4, fig.height=4, fig.cap = "Fig 10. Smoothed curves of how the difference between a sample unit and study area land cover percentage affects the mean benefit for that sample unit. Black line shows the smoothed curve across all land cover types, while the grey line shows the individual land cover types. Only land cover types with greater than 1\\% coverage of study area are show individually here."----
-benefits2 %>% right_join(hex_LC) %>% 
-  # filter(pHab_SA > 0.05) %>% 
-ggplot(
-  aes(#round((
-    pHab - pHab_SA*100,
-    # )5,1)/5, 
-benefit )) +
-  geom_point(alpha = 0.2, colour = 'grey')+
-  geom_smooth(
-    data = . %>% filter(pHab_SA > 0.01),
-    aes(group = lc), 
-              colour= 'darkgrey',
-               alpha = 0.5, 
-              se=F) +
-  geom_smooth(colour = 'black') +
-  theme_minimal() +
-  labs(x = "Difference  in % between Sample Unit and Study Area", y = "Mean Benefit") 
-
-# + 
-#   stat_summary(fun.data = 'mean_cl_boot', geom = 'ribbon', fill = 'grey', na.rm=T, alpha = 0.5) +
-#   stat_summary(fun.y = 'mean', geom = 'line') +
-#   
-#   theme_minimal()
-
-## ---- fig.cap=" Fig 11. Maximum absolute difference across all land cover classes between sample unit and study area and how that relelates to benefit estimate for that hexagon."----
-benefits2 %>% right_join(hex_LC) %>% 
-  group_by(SampleUnitID) %>% 
-  slice(which.max(abs(pHab-pHab_SA*100))) %>% 
-  # filter(pHab_SA > 0.05) %>% 
-ggplot(
-  aes(#round((
-    abs(pHab - pHab_SA*100),
-    # )5,1)/5, 
-benefit )) +
-  geom_point(alpha = 0.2, colour = 'grey')+
- 
-  geom_smooth(colour = 'black') +
-  theme_minimal() +
-  labs(x = "Difference  in % between Sample Unit and Study Area", y = "Mean Benefit") 
-
-## ---- fig.cap="Fig. 12. Mean absolute difference across all land cover classes between sample unit and study area and how that relelates to benefit estimate for that hexagon."----
-ben_diffs <- benefits2 %>% right_join(hex_LC) %>% 
-  group_by(SampleUnitID, benefit) %>% 
-  summarize(phabD = mean(abs(pHab-pHab_SA*100))) %>% 
-  ungroup #%>% 
-  # filter(pHab_SA > 0.05) %>% 
-ggplot(ben_diffs,
-  aes(
-    phabD,benefit )) +
-  geom_point(alpha = 0.2, colour = 'grey')+
-  geom_smooth(colour = 'black') +
-  theme_minimal() +
-  labs(x = "Mean Absolute Difference in % between Sample Unit and Study Area", y = "Mean Benefit") +
-  xlim(0, 13.1)
-
-## -----------------------------------------------------------------------------
-ARU_locs <- run_grts_on_BASS(200, study_area_results = 
-                    left_join(landcover_ha,benefits2) %>% 
-                   mutate(inclpr = benefit),hexid = SampleUnitID,
-                   nARUs =  30, os = 0, idcol = "StudyAreaID")
-
-## ---- fig.cap="Fig. 12. The number of draws a sample unit was selected out of 200 GRTS runs of 30 ARUs based on the benefit (left) and absolute difference from the study area (right)"----
-
-
-
-z <-map(1:200,~ARU_locs[[.x]]@data %>% filter(panel == "PanelOne") %>% 
-  .[["SampleUnitID"]] %>%  as.character)
-z_out <- map_df(1:200,~ARU_locs[[.x]]@data %>% filter(panel == "PanelOne") %>% mutate(r = .x) )
-
-z_200 <- 
-z_out %>% group_by(SampleUnitID) %>% 
-  summarize(n=n())
-diff_ben <- 
-left_join(ben_diffs, z_200) %>% 
-  replace_na(list(n=0)) %>% 
-  ggplot(aes(phabD, n)) + geom_point()+
-  labs(x = "Mean absolute percentage difference from study area", y = "Number of times chosen for sampling out of 200")
-
-ben_ben <- left_join(ben_diffs, z_200) %>% 
-  replace_na(list(n=0)) %>% 
-  ggplot(aes(benefit, n)) + geom_point() +
-  labs(x = "Mean benefit", y = "Number of times chosen for sampling out of 200")
-
-
-ben_ben + diff_ben
-
-
-
-## -----------------------------------------------------------------------------
-grts_res <- 
-left_join(StudyArea_hexes$landcover, z_200) %>% 
-  ggplot() +
-  geom_sf(aes(fill = n)) +
-  scale_fill_viridis_c()+
-  theme_linedraw() +
-   ggspatial::annotation_scale(location = "bl", width_hint = 0.4) 
-
-benefit_sf+grts_res
-
-
-## ---- fig.width=8, fig.height=12----------------------------------------------
-diff_withSA_draws <- 
-z_out %>% 
-  pivot_longer(cols = matches("LC\\d"), values_to = "ha", names_to = "lc") %>% 
-  group_by(r, lc) %>% 
-  summarize(ha = sum(ha)) %>% 
-  group_by(r) %>% 
-  mutate(phab = ha / sum(ha)) %>% ungroup %>% 
-  left_join(SA_sum, by = "lc")
-
-ggplot(diff_withSA_draws, aes(lcc_fac, phab)) + 
-  geom_point(position = position_jitter(width = 0.2), alpha = 0.5) +
-  geom_point(aes(y = pHab_SA), colour = 'red', shape = "-", size = 10)+
-    theme(axis.text.x = element_text(family = 'mono', 
-                                   angle= 75, vjust = 1, hjust = 1))
-  
-
-## -----------------------------------------------------------------------------
-errors <- diff_withSA_draws %>% 
-  mutate(E = ((phab - pHab_SA))**2,
-         ae = abs(phab-pHab_SA)*100) %>% 
-  group_by(r) %>% 
-  summarize(SSE = sum(E),
-            MAE = mean(ae)) 
-  ggplot(errors,aes(SSE)) +
-  geom_density(fill = 'grey') +
-  theme_minimal() +
-  labs(x = "Sum of Squared Error from Study Area")
-
-## -----------------------------------------------------------------------------
-ggplot(errors, aes(MAE))+
-    geom_density(fill = 'grey') +
-  theme_minimal() +
-  labs(x = "Mean Absolute Error from Study Area Percent")
 

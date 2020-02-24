@@ -12,7 +12,6 @@
 #' @return
 #' @export
 #'
-#' @examples
 create_study_area <- function(landscape, study_area_diam, hex_diam, output='small') {
 
   x <- raster::rasterToPoints(landscape, spatial = T)

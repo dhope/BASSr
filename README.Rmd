@@ -35,7 +35,7 @@ devtools::install_github("dhope/BASSr")
 
 See vignettes for now. Details to come.
 
-```{r}
+```{r, eval=F}
 devtools::install_github("dhope/BASSr", build_vignettes = TRUE)
 ```
 

@@ -17,3 +17,11 @@ Install the development version from [GitHub](https://github.com/):
 ``` r
 devtools::install_github("dhope/BASSr")
 ```
+
+## Usage
+
+See vignettes for now. Details to come.
+
+``` r
+devtools::install_github("dhope/BASSr", build_vignettes = TRUE)
+```

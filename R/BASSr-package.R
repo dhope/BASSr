@@ -11,6 +11,7 @@
 #' @import sf
 #' @importFrom methods as
 #' @importFrom utils capture.output data
+#' @importFrom Rcpp sourceCpp
 #' @useDynLib BASSr, .registration = TRUE
 #'
 NULL
