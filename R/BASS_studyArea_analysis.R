@@ -23,8 +23,10 @@ run_grts_on_BASS <- function(n_grts_tests, study_area_results,nARUs, os, idcol, 
     dplyr::select(-geometry) %>% filter(!is.na(X))
   }
     } else{
+      if("geometry" %in% names(study_area_results)){
     attframe <- as_tibble(study_area_results) %>%
       dplyr::select(-geometry) %>% filter(!is.na(X))
+      } else{   attframe <- as_tibble(study_area_results) }
     }
   attframe <- filter(attframe, ! {{hexid}} %in% removedhexes )
   Stratdesgn <- rep(list(PanelOne = list # a list named 'None" that contains:

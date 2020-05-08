@@ -4,12 +4,14 @@
 \name{lcc2015_codes}
 \alias{lcc2015_codes}
 \title{2015 National Landcover Classification Table}
-\format{A data frame with 19 rows and 2 variables:
+\format{
+A data frame with 19 rows and 2 variables:
 \describe{
   \item{LCC_CODE}{Land cover code}
   \item{LCC_NAME}{Land cover name}
   ...
-}}
+}
+}
 \source{
 \url{https://open.canada.ca/data/en/dataset/4e615eae-b90c-420b-adee-2ca35896caf6}
 }

@@ -4,7 +4,8 @@
 \name{cost_vars}
 \alias{cost_vars}
 \title{Variables for cost estimation}
-\format{A list with 18 variables used to calculate the cost model for N Ontario:
+\format{
+A list with 18 variables used to calculate the cost model for N Ontario:
 \describe{
   \item{truck_cost_per_day}{Cost of truck use per day per crew, in dollars}
   \item{truck_n_crews}{Number of crews for truck surveys}
@@ -24,7 +25,8 @@
   \item{helicopter_2nd_base_cost_per_l}{Cost of heli fuel from a a remote fuel cache, in dollars per litre}
   \item{helicopter_hours_flying_within_sa_per_day}{Number of hours a helicopter spends flying in the study area per day.}
   ...
-}}
+}
+}
 \source{
 Advice from Rich Russell
 }

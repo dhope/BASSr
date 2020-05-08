@@ -4,12 +4,14 @@
 \name{ontario}
 \alias{ontario}
 \title{Polygon SF of Ontario}
-\format{A simple feature data frame with 1 rows and 2 variables:
+\format{
+A simple feature data frame with 1 rows and 2 variables:
 \describe{
   \item{PROV}{Two letter code for Ontario}
   \item{NAME}{Name of Province}
   \item{geometry}{SF geometry}
-}}
+}
+}
 \source{
 Map of Canadian Jurisdictions
 }

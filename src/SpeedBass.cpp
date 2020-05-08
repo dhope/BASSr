@@ -61,6 +61,7 @@ double speedbass(NumericVector hex, NumericVector sample, NumericVector total, b
   double ben = 0;
   for(int i = 0; i < nc; ++i) {
     // Rcout << i;
+    if(total[i] != 0.){
     double z = (hex[i] + sample[i]) / (tot + totHex); // prop habitat of sample plus hex
     double tp =  total[i] / tt; // prop habitat for larger region
     double sp = sample[i] / tot; // prop habitat for sample alone.
@@ -96,7 +97,7 @@ double speedbass(NumericVector hex, NumericVector sample, NumericVector total, b
       }   else {
         if(printDets){Rcout << "Not" << "\n" ;}
       }
-
+    }
   }
   // Rcout << goodben << "-----------------\n" ;
   return ben;

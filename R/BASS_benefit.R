@@ -167,6 +167,12 @@ quick_ben <- function(d,samples, land_cover_summary, col_, pd ){
                 This will not calculate accurate benefit values.")
   }
   samp <- samples %>% dplyr::select_at(vars( matches("LC\\d")))
+  # browser()
+  if(!all(names(hexes)%in% names(samp))){
+    extraN <- dplyr::select(hexes, names(hexes)[!names(hexes)%in% names(samp)]) %>%
+      mutate_all(.funs = ~.*0)
+    samp <- bind_cols(samp,extraN)
+    }
   samp <- samp[names(hexes)]
 
   if(all(round(rowSums(samp),0)==100)| all(round(rowSums(samp),0)==1)){

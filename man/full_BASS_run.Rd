@@ -15,7 +15,10 @@ full_BASS_run(
   HexID_ = HEX100,
   stratumID = StudyAreaID,
   q = F,
-  non_ran_set = NULL
+  non_ran_set = NULL,
+  lakeN = 18,
+  benefit_weight = 0.5,
+  noCost = F
 )
 }
 \arguments{
@@ -40,6 +43,12 @@ full_BASS_run(
 \item{q}{Run the benefit calculation quickly}
 
 \item{non_ran_set}{Non random set that is added to the hypothetical sample set in benefit calculation.}
+
+\item{lakeN}{The land cover number to represent open water. 1 for FNLC, 18 for CLC}
+
+\item{benefit_weight}{The weight assigned to benefit in the selection probabilities.0.5 is equal weighting of cost and benefits. 1.0 is zero weighting to cost.}
+
+\item{noCost}{Do you only want to run the benefit calculation?}
 }
 \value{
 a table with inclusion probabilities

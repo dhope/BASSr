@@ -8,7 +8,8 @@ calculate_inclusion_probs(
   cost,
   hexagon_benefits,
   HexID,
-  StratumID = StudyAreaID
+  StratumID = StudyAreaID,
+  benefit_weight = 0.5
 )
 }
 \arguments{
@@ -19,6 +20,8 @@ calculate_inclusion_probs(
 \item{HexID}{column of hexagon ids}
 
 \item{StratumID}{Column of larger area id}
+
+\item{benefit_weight}{The weight assigned to benefit in the selection probabilities.0.5 is equal weighting of cost and benefits. 1.0 is zero weighting to cost.}
 }
 \value{
 A data frame with full inclusion probabilities for each raster.

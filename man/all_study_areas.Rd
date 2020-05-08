@@ -4,7 +4,8 @@
 \name{all_study_areas}
 \alias{all_study_areas}
 \title{All of Ontario's Study Areas}
-\format{A data frame with 746 rows and 19 variables:
+\format{
+A data frame with 746 rows and 19 variables:
 \describe{
   \item{StudyAreaID}{Unique Identifier for each study area}
   \item{TOT_HA}{Total hectares in study area}
@@ -12,7 +13,8 @@
   \item{LC..}{Hectares covered by landcover type (00-18)}
   ...
   \item{geometry}{SF geometry}
-}}
+}
+}
 \source{
 Hexagons generated in R, landcover extracted from National Land Cover 2015 (\url{https://open.canada.ca/data/en/dataset/4e615eae-b90c-420b-adee-2ca35896caf6}).
 }

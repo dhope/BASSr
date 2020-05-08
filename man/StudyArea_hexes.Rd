@@ -4,12 +4,14 @@
 \name{StudyArea_hexes}
 \alias{StudyArea_hexes}
 \title{BASSr data needed for example study area}
-\format{A list of 2 dataframes and one character string:
+\format{
+A list of 2 dataframes and one character string:
 \describe{
   \item{cost}{cost estimates for each sample unit}
   \item{landcover}{SF polygon with land cover in percentages for each sample unit}
   \item{study_area}{Unique identifier for Study Area}
-}}
+}
+}
 \source{
 BASSr analysis for N. Ontario
 }

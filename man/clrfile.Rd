@@ -4,7 +4,8 @@
 \name{clrfile}
 \alias{clrfile}
 \title{rgb colour codes to plot 2015 National Land Cover.}
-\format{A data frame with 20 rows and 6 variables:
+\format{
+A data frame with 20 rows and 6 variables:
 \describe{
   \item{Value}{price, in US dollars}
   \item{red}{weight of the diamond, in carats}
@@ -13,7 +14,8 @@
   \item{rgb}{weight of the diamond, in carats}
   \item{LCC_NAME}{weight of the diamond, in carats}
 
-}}
+}
+}
 \source{
 \url{https://open.canada.ca/data/en/dataset/4e615eae-b90c-420b-adee-2ca35896caf6}
 }
