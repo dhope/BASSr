@@ -29,30 +29,32 @@ BEGIN_RCPP
 END_RCPP
 }
 // speedbass
-double speedbass(NumericVector hex, NumericVector sample, NumericVector total, bool printDets);
-RcppExport SEXP _BASSr_speedbass(SEXP hexSEXP, SEXP sampleSEXP, SEXP totalSEXP, SEXP printDetsSEXP) {
+double speedbass(NumericVector hex, NumericVector w, NumericVector sample, NumericVector total, bool printDets);
+RcppExport SEXP _BASSr_speedbass(SEXP hexSEXP, SEXP wSEXP, SEXP sampleSEXP, SEXP totalSEXP, SEXP printDetsSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< NumericVector >::type hex(hexSEXP);
+    Rcpp::traits::input_parameter< NumericVector >::type w(wSEXP);
     Rcpp::traits::input_parameter< NumericVector >::type sample(sampleSEXP);
     Rcpp::traits::input_parameter< NumericVector >::type total(totalSEXP);
     Rcpp::traits::input_parameter< bool >::type printDets(printDetsSEXP);
-    rcpp_result_gen = Rcpp::wrap(speedbass(hex, sample, total, printDets));
+    rcpp_result_gen = Rcpp::wrap(speedbass(hex, w, sample, total, printDets));
     return rcpp_result_gen;
 END_RCPP
 }
 // allhexes
-NumericVector allhexes(NumericMatrix hexes, NumericMatrix samples, NumericVector total, bool printDets);
-RcppExport SEXP _BASSr_allhexes(SEXP hexesSEXP, SEXP samplesSEXP, SEXP totalSEXP, SEXP printDetsSEXP) {
+NumericVector allhexes(NumericMatrix hexes, NumericMatrix samples, NumericVector total, NumericVector w, bool printDets);
+RcppExport SEXP _BASSr_allhexes(SEXP hexesSEXP, SEXP samplesSEXP, SEXP totalSEXP, SEXP wSEXP, SEXP printDetsSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< NumericMatrix >::type hexes(hexesSEXP);
     Rcpp::traits::input_parameter< NumericMatrix >::type samples(samplesSEXP);
     Rcpp::traits::input_parameter< NumericVector >::type total(totalSEXP);
+    Rcpp::traits::input_parameter< NumericVector >::type w(wSEXP);
     Rcpp::traits::input_parameter< bool >::type printDets(printDetsSEXP);
-    rcpp_result_gen = Rcpp::wrap(allhexes(hexes, samples, total, printDets));
+    rcpp_result_gen = Rcpp::wrap(allhexes(hexes, samples, total, w, printDets));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -72,8 +74,8 @@ END_RCPP
 static const R_CallMethodDef CallEntries[] = {
     {"_BASSr_sumC", (DL_FUNC) &_BASSr_sumC, 1},
     {"_BASSr_oppositeSigns", (DL_FUNC) &_BASSr_oppositeSigns, 2},
-    {"_BASSr_speedbass", (DL_FUNC) &_BASSr_speedbass, 4},
-    {"_BASSr_allhexes", (DL_FUNC) &_BASSr_allhexes, 4},
+    {"_BASSr_speedbass", (DL_FUNC) &_BASSr_speedbass, 5},
+    {"_BASSr_allhexes", (DL_FUNC) &_BASSr_allhexes, 5},
     {"_BASSr_sumH", (DL_FUNC) &_BASSr_sumH, 2},
     {NULL, NULL, 0}
 };

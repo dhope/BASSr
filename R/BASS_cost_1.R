@@ -64,12 +64,12 @@ cost_vars <- list(
 #' @return
 #' @export
 estimate_cost_study_area <- function(narus, StudyAreas, pr, sr, dist_base_sa, dist_airport_sa, dist2airport_base, vars) {
-  list2env(vars, envir  = environment())
+  list2env(vars, envir = environment())
 
   StudyAreas %>% mutate(
 
     # Cost of survey the study area by truck
-    primary_cost = truck_cost_per_day * narus / (truck_arus_per_crew_per_day ),#* truck_n_crews),
+    primary_cost = truck_cost_per_day * narus / (truck_arus_per_crew_per_day), #* truck_n_crews),
     # Cost of surveying the study area by atv
     atv_cost = atv_cost_per_day * narus / (atv_arus_per_crew_per_day * atv_n_crews),
     # # Distance between airport and basecamp
@@ -147,50 +147,75 @@ estimate_cost_study_area <- function(narus, StudyAreas, pr, sr, dist_base_sa, di
 #' @return Returns a tibble with area covered by each road types and their proportion of the study area
 #' @export
 #'
-getroaddensity <- function(hexes,sa, pr,sr,wr, r,idcol,...){
+getroaddensity <- function(hexes, sa, pr, sr, wr, r, idcol, ...) {
   # message(sa)
-  if(exists("pb")){pb$tick()$print()}
-  hex <- filter(hexes, {{idcol}} == sa)
+  if (exists("pb")) {
+    pb$tick()$print()
+  }
+  hex <- filter(hexes, {{ idcol }} == sa)
   saa <- as.numeric(st_area(hex))
-  if("r_lg" %in% colnames(hex)){ # Shortcut to avoid calculating road densitys where there are no roads in SA
-    if(!isTRUE(any(hex$r_lg))){
+  if ("r_lg" %in% colnames(hex)) { # Shortcut to avoid calculating road densitys where there are no roads in SA
+    if (!isTRUE(any(hex$r_lg))) {
       return(
-        tibble(saa = saa,
-               pr = 0,
-               sr = 0,
-               r = 0,
-               wr = 0,
-               {{idcol}} := as.character(sa),
-               p_pr = 0, # Covert to proportion of area
-                 p_sr = 0,
-                 p_wr = 0)
+        tibble(
+          saa = saa,
+          pr = 0,
+          sr = 0,
+          r = 0,
+          wr = 0,
+          {{ idcol }} := as.character(sa),
+          p_pr = 0, # Covert to proportion of area
+          p_sr = 0,
+          p_wr = 0
+        )
       )
-    }}
+    }
+  }
 
-  sr_h <- dplyr::filter(hex, {{idcol}} == "CLIMATE ACTION NOW")
-  pr_h <- dplyr::filter(hex, {{idcol}} == "CATBURGLER")
+  sr_h <- dplyr::filter(hex, {{ idcol }} == "CLIMATE ACTION NOW")
+  pr_h <- dplyr::filter(hex, {{ idcol }} == "CATBURGLER")
 
-  if(any((st_intersects(hex, pr, sparse = F) ))){pr_h <-  st_intersection(pr, hex)}#else{print("No Prime")}#,
-                # %>% st_area() %>% sum#ifelse(isTRUE(st_contains(hex, pr), sparse =F),, 0)
-  if(any((st_intersects(hex, sr, sparse = F) )) ){ sr_h <- st_intersection(sr, hex)}#else{print("No Sec")}
-                 ## %>% st_area() %>% sum#ifelse(isTRUE(st_contains(hex, sr, sparse =F)), ,0)
-  if((nrow(pr_h) == 0) |(nrow(sr_h) == 0 )){
-    sr_h_noP <-  sr_h
-  } else{   sr_h_noP <- st_difference(sr_h, pr_h) }
-  pr_a <- st_area(pr_h) %>% as.numeric %>% sum
-  sr_a <- st_area(sr_h_noP) %>% as.numeric %>% sum
-  r_h <- st_intersection(r, hex) %>% st_area() %>% as.numeric %>% sum# ifelse(isTRUE(st_contains(hex, r, sparse =F)), ,0)
-  wr_h <- st_intersection(wr, hex) %>% st_area() %>% as.numeric %>% sum# ifelse(isTRUE(st_contains(hex, r, sparse =F)), ,0)
+  if (any((st_intersects(hex, pr, sparse = F)))) {
+    pr_h <- st_intersection(pr, hex)
+  } # else{print("No Prime")}#,
+  # %>% st_area() %>% sum#ifelse(isTRUE(st_contains(hex, pr), sparse =F),, 0)
+  if (any((st_intersects(hex, sr, sparse = F)))) {
+    sr_h <- st_intersection(sr, hex)
+  } # else{print("No Sec")}
+  ## %>% st_area() %>% sum#ifelse(isTRUE(st_contains(hex, sr, sparse =F)), ,0)
+  if ((nrow(pr_h) == 0) | (nrow(sr_h) == 0)) {
+    sr_h_noP <- sr_h
+  } else {
+    sr_h_noP <- st_difference(sr_h, pr_h)
+  }
+  pr_a <- st_area(pr_h) %>%
+    as.numeric() %>%
+    sum()
+  sr_a <- st_area(sr_h_noP) %>%
+    as.numeric() %>%
+    sum()
+  r_h <- st_intersection(r, hex) %>%
+    st_area() %>%
+    as.numeric() %>%
+    sum() # ifelse(isTRUE(st_contains(hex, r, sparse =F)), ,0)
+  wr_h <- st_intersection(wr, hex) %>%
+    st_area() %>%
+    as.numeric() %>%
+    sum() # ifelse(isTRUE(st_contains(hex, r, sparse =F)), ,0)
 
-  tibble(saa = saa,
-         pr = ifelse(length(pr_a)==0,0, pr_a),
-         sr = ifelse(length(sr_a)==0,0,sr_a),
-         r = ifelse(length(r_h)==0, 0, r_h),
-         wr = ifelse(length(wr_h)==0, 0, wr_h),
-         {{idcol}} := as.character(sa) ) %>%
-    mutate(p_pr = pr / saa, # Covert to proportion of area
-           p_sr = sr / saa,
-           p_wr = wr /saa)
+  tibble(
+    saa = saa,
+    pr = ifelse(length(pr_a) == 0, 0, pr_a),
+    sr = ifelse(length(sr_a) == 0, 0, sr_a),
+    r = ifelse(length(r_h) == 0, 0, r_h),
+    wr = ifelse(length(wr_h) == 0, 0, wr_h),
+    {{ idcol }} := as.character(sa)
+  ) %>%
+    mutate(
+      p_pr = pr / saa, # Covert to proportion of area
+      p_sr = sr / saa,
+      p_wr = wr / saa
+    )
 }
 
 
@@ -211,45 +236,54 @@ getroaddensity <- function(hexes,sa, pr,sr,wr, r,idcol,...){
 #' @return
 #' @export
 #'
-#' @examples \dontrun{prepare_cost(truck_roads = NA, atv_roads = NA, winter_roads = NA, all_roads = NA, airports = airports_official, basecamps = tourism, hexagons =  study_area_hexagons_in_brandt %>%
-#' left_join(road_info, by = c("StudyAreaID" = "StudyArea")),idcol_ = StudyAreaID, calc_roads = F, airport_cols =  c("NAME", "AIRPORT_TY", "OGF_ID"),
-#'   basecamp_cols = c("OFFICIAL_N", "OGF_ID", "CLASS_SUBT") )}
-prepare_cost <- function( truck_roads, atv_roads, winter_roads,all_roads, airports, basecamps, hexagons, idcol_,
-                          calc_roads = T,
-                          airport_cols =  c("NAME", "AIRPORT_TY", "OGF_ID"),
-                          basecamp_cols = c("OFFICIAL_N", "OGF_ID", "CLASS_SUBT")
-
-){
-  ids <- dplyr::select(hexagons,{{idcol_}})[[1]]
-    #unique(hexagons[[as_string(quote(idcol_))]]) # Hexagon IDs
-  if(isTRUE(calc_roads)){
-    #1 Calculate the proportion of each hexagon covered by roads
+#' @examples
+#' \dontrun{
+#' prepare_cost(
+#'   truck_roads = NA, atv_roads = NA, winter_roads = NA, all_roads = NA, airports = airports_official, basecamps = tourism, hexagons = study_area_hexagons_in_brandt %>%
+#'     left_join(road_info, by = c("StudyAreaID" = "StudyArea")), idcol_ = StudyAreaID, calc_roads = F, airport_cols = c("NAME", "AIRPORT_TY", "OGF_ID"),
+#'   basecamp_cols = c("OFFICIAL_N", "OGF_ID", "CLASS_SUBT")
+#' )
+#' }
+prepare_cost <- function(truck_roads, atv_roads, winter_roads, all_roads, airports, basecamps, hexagons, idcol_,
+                         calc_roads = T,
+                         airport_cols = c("NAME", "AIRPORT_TY", "OGF_ID"),
+                         basecamp_cols = c("OFFICIAL_N", "OGF_ID", "CLASS_SUBT")) {
+  ids <- dplyr::select(hexagons, {{ idcol_ }})[[1]]
+  # unique(hexagons[[as_string(quote(idcol_))]]) # Hexagon IDs
+  if (isTRUE(calc_roads)) {
+    # 1 Calculate the proportion of each hexagon covered by roads
     message("Getting road density")
     pb <<- progress_estimated(length(ids))
-    hexagons_w_roads <- map_df(ids, getroaddensity, hexes = hexagons, wr = winter_buff,
-                               pr= truck_roads,sr = atv_roads, r = all_roads, idcol = {{idcol_}}) %>%
-      left_join(x = hexagons, y = .) %>% st_as_sf
-  } else{hexagons_w_roads <- hexagons}
+    hexagons_w_roads <- map_df(ids, getroaddensity,
+      hexes = hexagons, wr = winter_buff,
+      pr = truck_roads, sr = atv_roads, r = all_roads, idcol = {{ idcol_ }}
+    ) %>%
+      left_join(x = hexagons, y = .) %>%
+      st_as_sf()
+  } else {
+    hexagons_w_roads <- hexagons
+  }
 
   # Hexagon centroids
   hexagon_centroids <- st_centroid(hexagons_w_roads)
 
-  min_dist <- function(x,y){
+  min_dist <- function(x, y) {
     (st_distance(x, y, by_element = F) %>%
-       apply(., 1, FUN = min, na.rm=T) %>% as.numeric
-    ) /1000
+      apply(., 1, FUN = min, na.rm = T) %>% as.numeric()
+    ) / 1000
   }
 
   centroids_with_road_air <- hexagon_centroids %>%
     mutate(
-      airportdist_km= min_dist(., airports),
-      basecamps  = min_dist(., basecamps))
+      airportdist_km = min_dist(., airports),
+      basecamps = min_dist(., basecamps)
+    )
 
   tst <-
     basecamps %>%
     st_nearest_feature(y = airports)
 
-  basecamps[c("nearest_airport", "airporttype", "airportID")] <- airports[tst,airport_cols] %>%
+  basecamps[c("nearest_airport", "airporttype", "airportID")] <- airports[tst, airport_cols] %>%
     as_tibble() %>%
     dplyr::select(-geometry)
   basecamps$dist_to_air <- min_dist(tourism, airports_official)
@@ -259,31 +293,36 @@ prepare_cost <- function( truck_roads, atv_roads, winter_roads,all_roads, airpor
     st_nearest_feature(y = basecamps)
 
 
-  centroids_with_road_air[c("NearestCabin",
-                            "CabinID",
-                            "CabinTYPE",
-                            "cabin_nearest_airport",
-                            "cabin_airporttype",
-                            "cabin_airportID",
-                            "cabin_dist_to_air")]  <- as_tibble(basecamps)[(basecamp_order), c(basecamp_cols, "nearest_airport",
-                                                                                               "airporttype",
-                                                                                               "airportID",
-                                                                                               "dist_to_air")]
+  centroids_with_road_air[c(
+    "NearestCabin",
+    "CabinID",
+    "CabinTYPE",
+    "cabin_nearest_airport",
+    "cabin_airporttype",
+    "cabin_airportID",
+    "cabin_dist_to_air"
+  )] <- as_tibble(basecamps)[(basecamp_order), c(
+    basecamp_cols, "nearest_airport",
+    "airporttype",
+    "airportID",
+    "dist_to_air"
+  )]
 
 
   nearest_airport <- centroids_with_road_air %>%
     st_nearest_feature(y = airports_official)
 
 
-  centroids_with_road_air[c("nearest_airport", "airporttype", "airportID")] <- as_tibble(airports)[nearest_airport,
-                                                                                                   airport_cols]
+  centroids_with_road_air[c("nearest_airport", "airporttype", "airportID")] <- as_tibble(airports)[
+    nearest_airport,
+    airport_cols
+  ]
 
 
-  left_join(hexagons,
-            dplyr::select(as_tibble(centroids_with_road_air), -geometry)
+  left_join(
+    hexagons,
+    dplyr::select(as_tibble(centroids_with_road_air), -geometry)
   )
-
-
 }
 
 # Test

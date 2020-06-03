@@ -32,6 +32,41 @@ ont.proj <- 3161
 ```
 
 
+## Benefit definition
+
+The process of calculating benefit can be defined below:
+
+1 .Calculate percentage of land cover type in:	
+  a. Study area ($p_{SA}$)
+  b. Hypothetical sample set ($p_{HSS}$)
+  c. Hypothetical sample set plus focal sample unit ($p_{HSS}^*$)
+2.Calculate difference between Study area and sample sets:
+  a. $\DeltaHSS = p_{SA} - p_{HSS}$
+  b. $\DeltaHSS^*=p_{SA} - p_{HSS}^*$
+
+Calculate benefit for land cover type $i$ in sample unit $j$ with a given hypothetical sample set $H$  as:
+	$$
+	\beta_{Hij} = 	\begin{cases}
+	| p_{HSS} - p_{HSS}^*| ,& \text{if } sgn(\Delta HSS) = sgn(\Delta HSS^*) \\
+	0,& \text{if } sgn(\Delta HSS) \neq sgn(\Delta HSS^*)
+  \end{cases}
+  $$
+
+If we consider the proportion of a land cover type as the value of interest:
+  **If**:
+	    the difference between the `value` for the study area and the `value` for the hypothetical sample set 
+	    **and**
+	    the difference between the `value` for the study area and the `value` for the hypothetical sample set *plus* the focal sample unit 
+	    **are either both positive or both negative** 
+  **then**:
+	    The benefit for a land cover type is:
+	      the difference between the `value` for the hypothetical sample set and `value` for the hypothetical sample set plus the focal sample unit.
+**otherwise**:
+    the benefit is 0.
+
+
+## Example work through
+
 This is an example of how we calculate the benefit for one sample unit in a study area. The same approach applies to all other sample unit hexagons in the study area and also to calculating benefits for the study area hexagons in a region.
 
 
@@ -56,6 +91,20 @@ SA_sum <- StudyArea_hexes$landcover %>% as_tibble() %>%
          lc_n = as.numeric(stringr::str_extract(lc, "\\d\\d") ))%>% 
   left_join(lcc2015_codes, by = c("lc_n" = "LCC_CODE")) %>% 
   mutate(lcc_fac = forcats::fct_reorder(LCC_NAME, pHab_SA))
+
+set.seed(2277)
+exampleHex <- sample_n(StudyArea_hexes$landcover, 1)
+
+hex_LC <- 
+StudyArea_hexes$landcover %>% 
+  as_tibble() %>% dplyr::select(-geometry) %>% 
+  pivot_longer(cols = contains("LC"), names_to = "lc", values_to = "pHab") %>% 
+  left_join(SA_sum, by =c( "lc")) %>% arrange(SampleUnitID, pHab_SA) %>% 
+  group_by(SampleUnitID) %>% 
+  mutate(cpHab = cumsum(pHab/100)) %>% ungroup %>% 
+  mutate(lc_n = as.numeric(stringr::str_extract(lc, "\\d\\d") ))
+
+exLC <- hex_LC %>% filter(SampleUnitID %in% exampleHex$SampleUnitID)
 ```
 
 ```{r ontario-map, fig.cap='Figure 1. Map of Ontario study areas with example study area shown in red', fig.width=8, fig.height=8}
@@ -66,12 +115,18 @@ ggplot(all_study_areas) +
   geom_sf(data = filter(all_study_areas, StudyAreaID == study_area_id), fill = 'red')
 ```
 
+The sample unit will focus on a single sample unit within the study area, shown below in red. We will call this the 'focal sample unit'.
+
+```{r, fig.cap="Figure 2. Example sample unit hexagon (in red). Used as the focal sample unit for the next steps."}
+ggplot(exampleHex) + geom_sf(fill = 'red') +
+  geom_sf(data = StudyArea_hexes$landcover, fill = NA) + theme_minimal()
+```
 
 
 ## Step 2 Calculate Habitat Composition 
 This example study area is shown below. The habitat is shown from the National Land Cover Classification 2015. The study area is `r nrow(StudyArea_hexes$landcover)` sample unit hexagons of `r round(mean(st_area(StudyArea_hexes$landcover)),0)`$m^2$.
 
-```{r raster-plot, fig.cap = "Figure 2. The distribution of land cover classes across an example study area."}
+```{r raster-plot, fig.cap = "Figure 3. The distribution of land cover classes across an example study area."}
 r <- raster::raster(system.file("extdata", glue("{study_area_id}.tif"),
   package = "BASSr", mustWork = T)) %>% 
    
@@ -81,11 +136,12 @@ r <- raster::raster(system.file("extdata", glue("{study_area_id}.tif"),
 
 
   pal_ <- clrfile$rgb
-  names(pal_) <- as.character(clrfile$LCC_NAME)
+  names(pal_) <- (clrfile$LCC_NAME)
+  pal_ <- pal_[!is.na(names(pal_))]
 
 
   lc <- ggplot() + geom_raster(data = r, aes(x, y, fill = LCC_NAME)) +
-    scale_fill_manual(values = pal_) +
+    ggplot2::scale_discrete_manual(aesthetics = 'fill', values = pal_) +
     geom_sf(data = StudyArea_hexes$landcover, fill = NA) +
     labs(x = "", y = "", fill = "LCC2015") + theme_linedraw()
   
@@ -98,20 +154,24 @@ lc + ggspatial::annotation_scale(location = "bl", width_hint = 0.4)
 ``` 
 
 
-There is variation in the composition of land cover classes amongst sample units. If we examine the increasing cumulative proportion of a sample unit hexagon covered by a given land cover type, we see a lot of variation in this distribtion between the `r nrow(StudyArea_hexes$landcover)` hexagons. To explore how this translates into a benefit we will focus on a single sample unit hexagon (shown in red below).
+Overall, the study area is primarily classified as "Sub-polar or polar grassland-lichen-moss" or "Wetland", however there are `n_distinct(exLC$lc)` classes in the study area.
 
-```{r land-cover-hexes, fig.cap = "Figure 3. The cumulative proportion of land cover classes within sample hexagons (grey) and the study area (black). The red line shows the example hexagon used in the initial benefit calculation.", fig.width= 8, fig.height=12}
-hex_LC <- 
-StudyArea_hexes$landcover %>% 
-  as_tibble() %>% dplyr::select(-geometry) %>% 
-  pivot_longer(cols = contains("LC"), names_to = "lc", values_to = "pHab") %>% 
-  left_join(SA_sum, by =c( "lc")) %>% arrange(SampleUnitID, pHab_SA) %>% 
-  group_by(SampleUnitID) %>% 
-  mutate(cpHab = cumsum(pHab/100)) %>% ungroup %>% 
-  mutate(lc_n = as.numeric(stringr::str_extract(lc, "\\d\\d") ))
-set.seed(2277)
-exampleHex <- sample_n(StudyArea_hexes$landcover, 1)
-exLC <- hex_LC %>% filter(SampleUnitID %in% exampleHex$SampleUnitID)
+```{r study-area-landcover-plot, fig.cap="Figure 4. The distribution of National Land Cover Classes within example Study Area"}
+exLC%>%  dplyr::select(lcc_fac, pHab_SA) %>% 
+  mutate(pHab_SA = pHab_SA * 100) %>% 
+  pivot_longer(names_to = "sampletype_s", values_to = "phabitat", cols = c("pHab_SA" )) %>% 
+  mutate(sampletype = ifelse(sampletype_s == "pHab", "Example Sample Unit", "Study Area")) %>% 
+  ggplot(aes(sampletype, phabitat, fill = lcc_fac)) + geom_bar(stat= 'identity', position = 'dodge') +
+   labs(x = "" , y = "Percentage of total", fill = "Land Cover") + 
+  cowplot::theme_cowplot() +
+  scale_fill_manual(values = pal_)
+```
+
+
+There is variation in the composition of land cover classes among sample units. If we examine the increasing cumulative proportion of a sample unit hexagon covered by a given land cover type, we see a lot of variation in this distribution between the `r nrow(StudyArea_hexes$landcover)` hexagons. The focal sample unit is shown in red below.
+
+```{r land-cover-hexes, fig.cap = "Figure 5. The cumulative proportion of land cover classes within sample hexagons (grey) and the study area (black). The red line shows the example hexagon used in the initial benefit calculation.", fig.width= 8, fig.height=12}
+
 
 ggplot(hex_LC, aes(lcc_fac, cpHab, group = SampleUnitID)) + 
   geom_step(colour = 'grey', 
@@ -133,16 +193,65 @@ ggplot(hex_LC, aes(lcc_fac, cpHab, group = SampleUnitID)) +
 
 ### A. - Select a sample unit to calculate benefit for
 
-Lets focus on one sample unit hexagon for now. It is shown in Figure 3 above in red and below (Figure 4) it is the red-shaded hexagon. We will call it the *focal sample unit* for now. 
+Lets focus on one sample unit hexagon for now. It is shown in Figure 2 and 5 and with the land cover below (Figure 6). As mentioned above, we will call it the *focal sample unit* for now. 
 
-```{r, fig.cap="Figure 4. Example sample unit hexagon (in red). Used as the focal sample unit for the next steps."}
-ggplot(exampleHex) + geom_sf(fill = 'red') +
-  geom_sf(data = StudyArea_hexes$landcover, fill = NA) + theme_minimal()
+```{r, fig.cap="Figure 6. Example sample unit hexagon (in outline). Used as the focal sample unit for the next steps. See Figure 3 for legend."}
+r2 <- r %>% filter(x<st_bbox(exampleHex)[[3]]&x>st_bbox(exampleHex)[[1]]&y<st_bbox(exampleHex)[[4]]&y>st_bbox(exampleHex)[[2]])
+ ggplot() + geom_raster(data = r2, aes(x, y, fill = LCC_NAME)) +
+    ggplot2::scale_discrete_manual(aesthetics = 'fill', values = pal_) +
+    labs(x = "", y = "", fill = "LCC2015") + theme_linedraw() +
+   ggspatial::annotation_scale(location = "bl", width_hint = 0.4)  +
+  geom_sf(data = exampleHex, fill =NA, colour= 'red', size = 2) + theme(legend.position = 'none')+
+  coord_sf(xlim =st_bbox(exampleHex)[c(1,3)], ylim = st_bbox(exampleHex)[c(2,4)])
 
 
 ```
 
-The focal sample unit varies in many ways from the study area. The table below compares how the percentages of land cover types differs between the example sample unit and the study area. In this example, the focal sample unit has a large proportion of "Temperate or sub-polar shrubland" relative to the study area, but the percentage of "Sub-polar or polar grassland-lichen-moss" is much lower than the study area. These differences with the study area will form the backbone of the benefit calculation for this focal sample unit.
+The focal sample unit varies in many ways from the study area. If we compare the 'focal sample unit' proportion of "Sub-polar or polar grassland-lichen-moss" to that found throughout the study area we can see the focal sample unit has a much lower percentage than the study area.
+
+```{r}
+exLC%>%  dplyr::select(lcc_fac,pHab, pHab_SA) %>% 
+  mutate(pHab_SA = pHab_SA * 100) %>% 
+  pivot_longer(names_to = "sampletype_s", values_to = "phabitat", cols = c("pHab_SA", "pHab")) %>% 
+  mutate(sampletype = ifelse(sampletype_s == "pHab", "Focal Sample Unit", "Study Area")) %>% 
+  filter(grepl("grassland-lichen-moss",lcc_fac)) %>% 
+  ggplot(aes(sampletype, phabitat, fill = lcc_fac)) + geom_bar(stat= 'identity') +
+   labs(x = "" , y = "Percentage of total", fill = "Land Cover", title = exLC$LCC_NAME[grepl("grassland-lichen-moss",exLC$LCC_NAME)]) + 
+  cowplot::theme_cowplot() + theme(legend.position = 'none')+
+  scale_fill_manual(values = pal_) + lims(y = c(0,100))
+
+```
+
+```{r}
+exLC%>%  dplyr::select(lcc_fac,pHab, pHab_SA) %>% 
+  mutate(pHab_SA = pHab_SA * 100) %>% 
+  pivot_longer(names_to = "sampletype_s", values_to = "phabitat", cols = c("pHab_SA", "pHab")) %>% 
+  mutate(sampletype = ifelse(sampletype_s == "pHab", "Focal Sample Unit", "Study Area")) %>% 
+  filter(grepl("grassland-lichen-moss|Wetland",lcc_fac)) %>% 
+  ggplot(aes(sampletype, phabitat, fill = lcc_fac)) + geom_bar(stat= 'identity') +
+   labs(x = "" , y = "Percentage of total", fill = "Land Cover",
+        title = glue::glue("{exLC$LCC_NAME[grepl('grassland-lichen-moss',exLC$LCC_NAME)]} and Wetland")) + 
+  cowplot::theme_cowplot() +theme(legend.position = 'none')+
+  scale_fill_manual(values = pal_) + lims(y = c(0,100))
+```
+
+
+```{r}
+exLC%>%  dplyr::select(lcc_fac,pHab, pHab_SA) %>% 
+  mutate(pHab_SA = pHab_SA * 100) %>% 
+  pivot_longer(names_to = "sampletype_s", values_to = "phabitat", cols = c("pHab_SA", "pHab")) %>% 
+  mutate(sampletype = ifelse(sampletype_s == "pHab", "Focal Sample Unit", "Study Area")) %>% 
+  ggplot(aes(sampletype, phabitat, fill = lcc_fac)) + 
+  geom_bar(stat= 'identity') +
+   labs(x = "" , y = "Percentage of total",
+        fill = "Land Cover") + 
+  cowplot::theme_cowplot() +
+  scale_fill_manual(values = pal_)
+```
+
+
+
+The table below compares how the percentages of land cover types differs between the example sample unit and the study area. In this example, the focal sample unit has a large proportion of "Temperate or sub-polar shrubland" relative to the study area, but the percentage of "Sub-polar or polar grassland-lichen-moss" is much lower than the study area. These differences with the study area will form the backbone of the benefit calculation for this focal sample unit.
 
 
 ```{r example-hex-table, results='asis'}
@@ -167,19 +276,17 @@ sample_hexes <- BASSr::draw_random_samples(att_cleaned = as_tibble(StudyArea_hex
 sample_hexes_sf <- StudyArea_hexes$landcover %>% 
   filter(SampleUnitID %in% (sample_hexes$grts_random_sample %>% filter(panel == "PanelOne"))$SampleUnitID)
 
+hex_wHHS <- 
 ggplot(exampleHex) + geom_sf(fill = 'red') +
   geom_sf(data = StudyArea_hexes$landcover, fill = NA) + 
   geom_sf(data = sample_hexes_sf, fill = 'grey')+
   theme_minimal()
 
-
+hex_wHHS
 ```
-
-The next step is to compare how the habitat representivity differs between the focal sample unit, the hypothetical sample set, the hypothetical sample set with the focal sample unit included and the study area as a whole. Here we can see that the hypothetical sample set has a larger percentage of "Sub-polar taiga needleleaf forest" than the study area, while the focal sample unit has a lower percentage than the study area. When the focal sample unit is added to the sample set, the percentage shifts downwards and closer to the percentage for the study area. The opposite is true for "Temperate or sub-polar shrubland", where adding the focal sample unit moves the sample set plus focal sample unit away from the percentage observed at the study area. This is the fundamental measure of representivity for the focal sample unit. 
 
 
 ```{r}
-
 sample_hexes_phab <-  hex_LC %>% filter(SampleUnitID %in% sample_hexes_sf$SampleUnitID) %>% 
   group_by(lcc_fac) %>% 
   summarize(pHab_samp = sum(pHab)) %>% ungroup %>% 
@@ -199,6 +306,79 @@ left_join( exLC %>% dplyr::select(lcc_fac,pHab, pHab_SA), sample_hexes_phab) %>%
 
 names(samp_com) <- c("lcFac", "Focal Sample Unit",  "Hypothetical Sample Set", "Sample Set + Sample Unit","Study Area")
 
+
+d <- 
+  samp_com %>%  
+  pivot_longer(names_to = "sampletype", values_to = "phabitat", cols = -lcFac) %>% 
+  mutate(sampletype = factor(sampletype, levels = c("Focal Sample Unit", "Hypothetical Sample Set", "Sample Set + Sample Unit", "Study Area")))
+                               # c("Hexagon",  "Sample", "Sample + Hex","Study Area")))
+plot_single <- function(x) {d%>% filter(lcFac == names(pal_[x])) %>% 
+  ggplot(aes(sampletype, phabitat)) + 
+  geom_bar(stat= 'identity', fill =pal_[x]) +
+  # scale_fill_viridis_d() + 
+   # scale_fill_manual(values = pal_)+
+  labs(x = "" , y = "Percentage of total", fill = "Land Cover", title = names(pal_[x])) + 
+    geom_text(aes(label = glue::glue("{round(phabitat,1)} %")), position = position_nudge(y = -1))+
+  cowplot::theme_cowplot()}
+```
+
+```{r}
+hexplot <- function(fill_){ggplot(exampleHex) + geom_sf(fill = fill_) +
+  theme(panel.background =  element_blank(),
+        axis.ticks = element_blank(),
+        axis.text = element_blank())}
+hhs_plot <- 
+ggplot( StudyArea_hexes$landcover) + geom_sf(fill = NA, colour = 'white') +
+  cowplot::theme_cowplot() +
+  theme(axis.text = element_blank(), axis.line = element_blank(),
+        axis.ticks = element_blank())
+  
+
+key_row <- (hhs_plot + geom_sf(data = exampleHex, fill = 'red')) +
+  hhs_plot + geom_sf(data =  sample_hexes_sf) + 
+  (hhs_plot + geom_sf(data = exampleHex, fill = 'red') + geom_sf(data = sample_hexes_sf)) +
+     hhs_plot +geom_sf(fill = NA) +
+  plot_layout(ncol = 4)
+
+# (hex_wHHS + theme(axis.text = element_blank())) / 
+  
+(plot_single(8)  / ( key_row ) )  + plot_layout(heights = c(2,1))
+
+```
+Hypothetical Sample Set 9.9% less Wetland than Study Area
+Only 8.1% less than Study Area with inclusion of Focal Sample Unit
+Therefore Focal Sample Unit makes Sample Set more like Study Area
+Therefore Benefit!
+Benefit = 0.18 or 1.8% 
+
+
+
+```{r}
+(plot_single(14)  / ( key_row ) ) + plot_layout(heights = c(2,1))
+
+```
+
+Hypothetical Sample Set 2.6% greater shrubland than Study Area
+5.1% greater than Study Area with inclusion of Focal Sample Unit
+Therefore Focal Sample Unit makes Sample Set less like Study Area
+Therefore NO Benefit
+Benefit = 0
+
+```{r, fig.cap = "Figure 6. Distribution of land cover by focal sample unit, hypothetical sample set, hypothetical sample set plus focal sample unit and study area", fig.width=14, fig.height=8}
+fullplot <- d%>% 
+  ggplot(aes(sampletype, phabitat, fill = lcFac)) + geom_bar(stat= 'identity') +
+  scale_fill_manual(values = pal_)+ labs(x = "" , y = "Percentage of total", fill = "Land Cover") + 
+  cowplot::theme_cowplot()
+(fullplot  / ( key_row ) ) + plot_layout(heights = c(2,1))
+
+```
+
+
+The next step is to compare how the habitat representivity differs between the focal sample unit, the hypothetical sample set, the hypothetical sample set with the focal sample unit included and the study area as a whole. Here we can see that the hypothetical sample set has a larger percentage of "Sub-polar taiga needleleaf forest" than the study area, while the focal sample unit has a lower percentage than the study area. When the focal sample unit is added to the sample set, the percentage shifts downwards and closer to the percentage for the study area. The opposite is true for "Temperate or sub-polar shrubland", where adding the focal sample unit moves the sample set plus focal sample unit away from the percentage observed at the study area. This is the fundamental measure of representivity for the focal sample unit. 
+
+
+```{r}
+
 knitr::kable(samp_com, digits = 2)
 ```
 
@@ -208,27 +388,7 @@ knitr::kable(samp_com, digits = 2)
 As mentioned above, adding the focal sample unit to the sample set, shifts the habitat composition slightly and more so when the focal sample unit is quite different from the sample set. We now want to see if adding the sample unit to the hypothetical sample set will make the *updated* sample set more representative of the study area.
 
 
-```{r, fig.cap = "Figure 6. Distribution of land cover by focal sample unit, hypothetical sample set, hypothetical sample set plus focal sample unit and study area", fig.width=14, fig.height=8}
 
-
-d <- 
-  samp_com %>%  
-  pivot_longer(names_to = "sampletype", values_to = "phabitat", cols = -lcFac) %>% 
-  mutate(sampletype = factor(sampletype, levels = c("Focal Sample Unit", "Hypothetical Sample Set", "Sample Set + Sample Unit", "Study Area")))
-                               # c("Hexagon",  "Sample", "Sample + Hex","Study Area")))
-
-
-d%>% 
-  ggplot(aes(sampletype, phabitat, fill = lcFac)) + geom_bar(stat= 'identity') +
-  scale_fill_viridis_d() + labs(x = "" , y = "Percentage of total", fill = "Land Cover") + 
-  cowplot::theme_cowplot()
-
-
-
-
-
-
-```
 
 -----
 
@@ -239,6 +399,9 @@ d%>%
 To calculate the benefit for the focal sample unit, we determine for each land cover class if including the focal sample unit to the hypothetical sample set makes the sample set more or less representative. If, for a given land cover class, the hypothetical sample set becomes more similar to the study area, the benefit is the difference between the hypothetical sample set's representivity (here percentage of a land cover class) and the representivity if the sample unit is added into the sample set. Otherwise, the benefit for that land cover class is zero.
 
 The benefit across all land cover types is summed to make the benefit value for that focal sample unit with that hypothetical sample set.
+
+$$\beta_{Hj} = \sum_{i = 1}^{i = k}\beta_{Hij} $$
+
 
 
 
@@ -290,6 +453,9 @@ The benefit for the focal sample unit with this hypothetical sample unit is `r r
 
 To get a more useful measure of benefit, we calculate the benefit from this focal sample unit across 200 randomly drawn hypothetical sample sets.
 
+$$\bar\beta_{j} =  \frac{\sum_{j = 1}^{j = N}\beta_{Hj}}{N} $$
+
+
 ```{r, fig.cap ="Figure 7. Example focal sample unit benefit, calculated using 200 randomly drawn hypothetical sample sets. Mean benefit is shown in the vertical dotted line."}
 
 landcover_ha <- StudyArea_hexes$landcover %>% 
@@ -322,7 +488,8 @@ ggplot(multi_exbroken, aes(benefit)) +
   geom_vline(xintercept = multi_ex$benefit, linetype =2) +
   theme_minimal() +
   labs(x= "Benefit of Example Sample Unit", y = "Density") +
-  xlim(0, 0.15)
+  xlim(0, 0.15) +
+  geom_text(aes(x = multi_ex$benefit +0.004, y = 16), label = "bar(beta)[j]", parse = T)
   
 ```
 
@@ -349,10 +516,11 @@ one_sample <- quick_ben(
 
 ggplot(one_sample, aes(benefit)) + 
   geom_density(fill= 'grey') + 
-  geom_vline(xintercept = b$benefit, linetype =2) +
+  geom_vline(xintercept = multi_ex$benefit, linetype =2) +
   labs(x= "Benefit", y = "Density") +
   theme_minimal() +
-  xlim(0, 0.15)
+  xlim(0, 0.15)  + 
+  geom_text(aes(x = multi_ex$benefit +0.01, y = 16), label = "bar(beta)[example]", parse = T)
 
 ```
 
@@ -435,6 +603,7 @@ After running multiple iterations of drawing hypothetical sample sets we can the
 benefit_sf <- 
 ggplot(benefits2 %>% right_join(landcover_ha) %>% st_as_sf) +
   geom_sf(aes(fill = benefit)) + scale_fill_viridis_c() + theme_linedraw() +
+  geom_sf(data = exampleHex, fill = NA, colour = 'red')+
    ggspatial::annotation_scale(location = "bl", width_hint = 0.4) 
 benefit_sf
 ```

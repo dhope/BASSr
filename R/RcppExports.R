@@ -21,12 +21,13 @@ oppositeSigns <- function(x, y) {
 #' The internal BASSr benefit algorithm
 #'
 #' @param hex A vector of land cover values
+#' @param w A vector of weights for each land cover value
 #' @param sample a vector of land cover values from random sample
 #' @param total a vector of land cover values from total of study area
 #' @param printDets logical - should you print the details - messy for now.
 #' @export
-speedbass <- function(hex, sample, total, printDets = FALSE) {
-    .Call(`_BASSr_speedbass`, hex, sample, total, printDets)
+speedbass <- function(hex, w, sample, total, printDets = FALSE) {
+    .Call(`_BASSr_speedbass`, hex, w, sample, total, printDets)
 }
 
 #' Run speed bass on all hexagons and all samples
@@ -34,9 +35,11 @@ speedbass <- function(hex, sample, total, printDets = FALSE) {
 #' @param hexes Matrix of hexagon land covers. Rows are hexagons, columns are land cover types
 #' @param samples Matrix of hexagon land covers from random sample. Rows are hexagons, columns are land cover types
 #' @param total Vector of total land cover. values are individual land cover types
+#' @param w A vector of weights for each land cover value
+#' @param printDets print details of function calculation. For debugging.
 #' @export
-allhexes <- function(hexes, samples, total, printDets = FALSE) {
-    .Call(`_BASSr_allhexes`, hexes, samples, total, printDets)
+allhexes <- function(hexes, samples, total, w, printDets = FALSE) {
+    .Call(`_BASSr_allhexes`, hexes, samples, total, w, printDets)
 }
 
 #' Add a number to a sum of vector

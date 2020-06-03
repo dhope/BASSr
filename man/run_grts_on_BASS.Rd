@@ -11,7 +11,8 @@ run_grts_on_BASS(
   os,
   idcol,
   hexid,
-  removedhexes = c("None")
+  removedhexes = c("None"),
+  return_points = F
 )
 }
 \arguments{
@@ -28,6 +29,8 @@ run_grts_on_BASS(
 \item{hexid}{Column for hexagon identification}
 
 \item{removedhexes}{Vector of names of hexagons to remove}
+
+\item{return_points}{}
 }
 \value{
 

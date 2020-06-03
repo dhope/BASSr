@@ -90,5 +90,3 @@ NULL
 #' }
 #' @source BASSr analysis for N. Ontario
 "StudyArea_hexes"
-
-

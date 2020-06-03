@@ -4,10 +4,12 @@
 \alias{speedbass}
 \title{The internal BASSr benefit algorithm}
 \usage{
-speedbass(hex, sample, total, printDets = FALSE)
+speedbass(hex, w, sample, total, printDets = FALSE)
 }
 \arguments{
 \item{hex}{A vector of land cover values}
+
+\item{w}{A vector of weights for each land cover value}
 
 \item{sample}{a vector of land cover values from random sample}
 

@@ -4,10 +4,10 @@
 \alias{quick_ben}
 \title{Quick Benefits}
 \usage{
-quick_ben(d, samples, land_cover_summary, col_, pd)
+quick_ben(d, samples, land_cover_summary, col_, pd, land_cover_weights = NULL)
 }
 \arguments{
-\item{d}{Hexagon data.frame}
+\item{d}{Hexagon data.frame - Needs to include Land Cover types in format LC__}
 
 \item{samples}{Hypothetical sample set}
 
@@ -16,6 +16,8 @@ quick_ben(d, samples, land_cover_summary, col_, pd)
 \item{col_}{ID column}
 
 \item{pd}{print details}
+
+\item{land_cover_weights}{a data frame with lc specifying land cover and 'weights' specifying weight.}
 }
 \value{
 

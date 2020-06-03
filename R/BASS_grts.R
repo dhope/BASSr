@@ -31,13 +31,12 @@ draw_random_samples <- function(att_cleaned, att.sf, num_runs, nsamples) {
       DesignID = "sample", # the prefix for each point name
       shapefile = FALSE,
     ) # no shapefile created here, will be created below)
-  )
-  ))
+  )))
 
   grts_random_sample <- as.list(grts_output) %>%
     do.call("rbind", .) %>%
     as_tibble() %>%
-    mutate(run = rep(1:num_runs, each = nsamples), num_runs=num_runs, nsamples= nsamples)
+    mutate(run = rep(1:num_runs, each = nsamples), num_runs = num_runs, nsamples = nsamples)
 
   grts_random_sample_long <- pivot_longer(grts_random_sample,
     cols = matches("LC\\d"),

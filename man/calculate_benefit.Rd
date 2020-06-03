@@ -10,7 +10,8 @@ calculate_benefit(
   att_long,
   output = "all",
   quick = F,
-  non_random_set = NULL
+  non_random_set = NULL,
+  land_cover_weights = NULL
 )
 }
 \arguments{
@@ -25,6 +26,8 @@ calculate_benefit(
 \item{quick}{should you run it fast?}
 
 \item{non_random_set}{Set of hexagons to include as a non randomly selected set}
+
+\item{land_cover_weights}{Data table with 'lc' and 'weights' column. Or could be NULL to have all equal.}
 }
 \value{
 

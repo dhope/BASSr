@@ -11,14 +11,18 @@ run_full_BASS_w_selection(
   Number_of_sample_units,
   Size_of_HSS,
   Number_of_HSS,
-  Weight_of_benfit,
+  Weight_of_benefit,
   LandCoverType,
   RemovedLayers_,
   Area_of_interest,
   RandomSeed,
   calculate_benefits = list(SA = F, SU = F),
   only_calculate_benefits = list(SA = F, SU = F),
-  benefit_dfs = list(SA = NULL, SU = NULL)
+  benefit_dfs = list(SA = NULL, SU = NULL),
+  returnGRTS = F,
+  oversample = 0,
+  weighted_benefits_df = list(SA = NULL, SU = NULL),
+  non_ran = list(SA = NULL, SU = NULL)
 )
 }
 \arguments{
@@ -32,13 +36,29 @@ run_full_BASS_w_selection(
 
 \item{Number_of_HSS}{Number of iterations in the hypothetical sample set}
 
-\item{Weight_of_benfit}{Weight of benefit in selection probabilties.}
-
 \item{LandCoverType}{String with identifer for both the land cover hexagons and their code within that tibble}
 
 \item{RemovedLayers_}{Layers to remove from benefit calculation must be in format of c(-var1, -var2, -var3)}
 
-\item{RandomSeed}{}
+\item{Area_of_interest}{Area of interest in tibble with StudyAreaID}
+
+\item{RandomSeed}{Random seet to use in GRTS}
+
+\item{calculate_benefits}{Should you calculate benefits or are they included in benefit_df}
+
+\item{only_calculate_benefits}{Do you only want to calculate benefits or complete the full run}
+
+\item{benefit_dfs}{If calculate_benefits is TRUE need some data.frames with benefits.}
+
+\item{returnGRTS}{do you return the GRTS object. (Can be used later to calculate spatial balance)}
+
+\item{oversample}{Proportion of sites to oversample, used for both study areas and sample units}
+
+\item{weighted_benefits_df}{list of data frames with weight and land covers for benefit calculation}
+
+\item{Weight_of_benfit}{Weight of benefit in selection probabilties.}
+
+\item{Non}{random set of study areas and sample units in form of named list.}
 }
 \value{
 List of sample units and a summary comparing land cover to the local area

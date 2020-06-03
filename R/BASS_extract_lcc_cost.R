@@ -41,106 +41,121 @@ extract_habitat_cost <- function(number_iterations,
                                  nARUs = 30,
                                  hexid_col = SampleUnitID,
                                  calc_cost = F, calc_hab = F,
-                                 write_hexes =F, load_hexes = T,
-                                 rds.loc="output", sa.rast.loc = "output", quick =T) {
+                                 write_hexes = F, load_hexes = T,
+                                 rds.loc = "output", sa.rast.loc = "output", quick = T) {
   warning("This function is depreciated and not recommended as it may contain non-generalizable routines.")
   message(glue::glue("Starting {id}"))
 
-  if( isTRUE(load_hexes) &  file.exists(glue::glue("{rds.loc}/studyArea_{id}_BassPrep.rds"))){
+  if (isTRUE(load_hexes) & file.exists(glue::glue("{rds.loc}/studyArea_{id}_BassPrep.rds"))) {
     put_a_hex_on_u <- read_rds(glue::glue("{rds.loc}/studyArea_{id}_BassPrep.rds"))
     message("Loading hexes")
     with(put_a_hex_on_u, {
       cost ->> study_hexes_cost
       landcover ->> sample_hexes_lcc
-      study_area ->> id})
-    samplehexes1 <- sample_hexes %>% filter({{id_col}} == id)
+      study_area ->> id
+    })
+    samplehexes1 <- sample_hexes %>% filter({{ id_col }} == id)
   }
 
-  if(!isTRUE(load_hexes)| isTRUE(calc_hab)){
+  if (!isTRUE(load_hexes) | isTRUE(calc_hab)) {
+    if (!file.exists(glue::glue("{sa.rast.loc}/{id}.tif"))) {
+      message("Generating Raster!")
+      genraster(
+        id_col = StudyAreaID, studyareas = study_area_hexes, hab_rast_location = hab_rast_location,
+        id = id, outpath = sa.rast.loc, writeout = T
+      )
+    } else {
+      message("Raster exists, not generating")
+    }
 
-  if(!file.exists(glue::glue("{sa.rast.loc}/{id}.tif"))) {
-    message("Generating Raster!")
-    genraster(id_col = StudyAreaID,studyareas = study_area_hexes,hab_rast_location = hab_rast_location,
-              id = id, outpath =  sa.rast.loc,writeout = T)  } else{message("Raster exists, not generating")}
 
-
-  samplehexes1 <- sample_hexes %>% filter({{id_col}} == id)
-  sa1 <- study_area_hexes %>% filter({{id_col}} == id)
-  sa1_lcc <- raster(glue::glue(glue::glue("{sa.rast.loc}/{id}.tif")))
-
-  f_ <- function(x,...){
-    d <- as_tibble(x)
-    if(length(d)!=1){return(NA)}
-    names(d) <- "value"
-    # print(head(d))
-    d %>% mutate(t = n()) %>%
-      group_by(
-        value, t
-        # {{idcol}}
-        ) %>%
-      summarize(n=n()) %>%
-      ungroup %>%
-      # rename(value = {{idcol}}) %>%
-      mutate(p = n/t,
-             id = as.character( glue::glue("LC{str_pad(value,2, pad=0)}")) )%>%
-      dplyr::select(id, p) %>%
-      pivot_wider(names_from = id,
-                  values_from = p)
-  }
-
-  sa1_samples_lcc <- raster::extract( sa1_lcc,samplehexes1,fun = f_, df = F, sp =F)
-  message("Done first extract")
-  study_hexes_lcc2015 <-
-    bind_rows(sa1_samples_lcc) %>% replace(is.na(.),0) %>%
-    bind_cols(samplehexes1,.) %>%
-    mutate(area = units::drop_units(st_area(.)*0.0001))
-
-  study_hexes_lcc2015_ha <-
-    study_hexes_lcc2015 %>%
-    mutate_at(vars(matches("LC\\d")) , ~.*area)
-
-  hex_centroids <- st_centroid(study_hexes_lcc2015_ha)
-
-  inlake <- raster::extract(sa1_lcc, hex_centroids)
-  hex_centroids$inlake_YN <- ifelse(inlake == 18, TRUE, FALSE)
-
-  sample_hexes_lcc <- study_hexes_lcc2015_ha %>%
-    bind_cols(as_tibble(st_coordinates(hex_centroids)))
-
-  }
-
-  if(!isTRUE(load_hexes)| isTRUE(calc_cost)){
-  message("Calculating costs")
-  # browser()
-  list2env(shape_file_list, envir =  environment())
-  all_costvars <-
-    prepare_cost(truck_roads = primary_roads, atv_roads = secondary_roads,
-                 winter_roads = winter_roads, all_roads = total_roads,
-                 airports = airport_locations, basecamps = camp_locations,
-                 hexagons =  samplehexes1,idcol_ = {{hexid_col}}, calc_roads = T )
-  if(!exists("cost_vars")) cost_vars <- BASSr::cost_vars#data("cost_vars", package = 'BASSr')
-
-  cost_est2 <- estimate_cost_study_area(narus = nARUs, StudyAreas =  all_costvars,
-                                        pr  = p_pr, sr = p_sr, dist_base_sa = basecamps,
-                                        dist_airport_sa = airportdist_km, dist2airport_base = cabin_dist_to_air,
-                                        vars = cost_vars)
-
-  if(!("inlake_YN" %in% names(sample_hexes_lcc))){
-    hex_centroids <- st_centroid(sample_hexes_lcc)
+    samplehexes1 <- sample_hexes %>% filter({{ id_col }} == id)
+    sa1 <- study_area_hexes %>% filter({{ id_col }} == id)
     sa1_lcc <- raster(glue::glue(glue::glue("{sa.rast.loc}/{id}.tif")))
+
+    f_ <- function(x, ...) {
+      d <- as_tibble(x)
+      if (length(d) != 1) {
+        return(NA)
+      }
+      names(d) <- "value"
+      # print(head(d))
+      d %>%
+        mutate(t = n()) %>%
+        group_by(
+          value, t
+          # {{idcol}}
+        ) %>%
+        summarize(n = n()) %>%
+        ungroup() %>%
+        # rename(value = {{idcol}}) %>%
+        mutate(
+          p = n / t,
+          id = as.character(glue::glue("LC{str_pad(value,2, pad=0)}"))
+        ) %>%
+        dplyr::select(id, p) %>%
+        pivot_wider(
+          names_from = id,
+          values_from = p
+        )
+    }
+
+    sa1_samples_lcc <- raster::extract(sa1_lcc, samplehexes1, fun = f_, df = F, sp = F)
+    message("Done first extract")
+    study_hexes_lcc2015 <-
+      bind_rows(sa1_samples_lcc) %>%
+      replace(is.na(.), 0) %>%
+      bind_cols(samplehexes1, .) %>%
+      mutate(area = units::drop_units(st_area(.) * 0.0001))
+
+    study_hexes_lcc2015_ha <-
+      study_hexes_lcc2015 %>%
+      mutate_at(vars(matches("LC\\d")), ~ . * area)
+
+    hex_centroids <- st_centroid(study_hexes_lcc2015_ha)
+
     inlake <- raster::extract(sa1_lcc, hex_centroids)
-    sample_hexes_lcc$inlake_YN <- ifelse(inlake == 18, TRUE, FALSE)
+    hex_centroids$inlake_YN <- ifelse(inlake == 18, TRUE, FALSE)
+
+    sample_hexes_lcc <- study_hexes_lcc2015_ha %>%
+      bind_cols(as_tibble(st_coordinates(hex_centroids)))
   }
+
+  if (!isTRUE(load_hexes) | isTRUE(calc_cost)) {
+    message("Calculating costs")
+    # browser()
+    list2env(shape_file_list, envir = environment())
+    all_costvars <-
+      prepare_cost(
+        truck_roads = primary_roads, atv_roads = secondary_roads,
+        winter_roads = winter_roads, all_roads = total_roads,
+        airports = airport_locations, basecamps = camp_locations,
+        hexagons = samplehexes1, idcol_ = {{ hexid_col }}, calc_roads = T
+      )
+    if (!exists("cost_vars")) cost_vars <- BASSr::cost_vars # data("cost_vars", package = 'BASSr')
+
+    cost_est2 <- estimate_cost_study_area(
+      narus = nARUs, StudyAreas = all_costvars,
+      pr = p_pr, sr = p_sr, dist_base_sa = basecamps,
+      dist_airport_sa = airportdist_km, dist2airport_base = cabin_dist_to_air,
+      vars = cost_vars
+    )
+
+    if (!("inlake_YN" %in% names(sample_hexes_lcc))) {
+      hex_centroids <- st_centroid(sample_hexes_lcc)
+      sa1_lcc <- raster(glue::glue(glue::glue("{sa.rast.loc}/{id}.tif")))
+      inlake <- raster::extract(sa1_lcc, hex_centroids)
+      sample_hexes_lcc$inlake_YN <- ifelse(inlake == 18, TRUE, FALSE)
+    }
 
     inlake_df <- as_tibble(sample_hexes_lcc) %>%
-      dplyr::select({{hexid_col}}, inlake_YN, X, Y)
+      dplyr::select({{ hexid_col }}, inlake_YN, X, Y)
 
 
 
-  study_hexes_cost <- cost_est2 %>%
-    left_join(y= inlake_df) %>%
-    rename(INLAKE = inlake_YN)
-
+    study_hexes_cost <- cost_est2 %>%
+      left_join(y = inlake_df) %>%
+      rename(INLAKE = inlake_YN)
   }
   # sa1_hex_lcc <- raster::extract( sa1_lcc,sa1,fun = f_, df = F, sp =F)
   #   # raster::extract( sa1_lcc,sa1,df=T)#,#fun = f_, df = T, sp =F)
@@ -183,10 +198,12 @@ extract_habitat_cost <- function(number_iterations,
 
 
 
-  if(isTRUE(write_hexes)){
+  if (isTRUE(write_hexes)) {
     message("Writing Hexagons")
-    write_rds(list( cost = study_hexes_cost, landcover = sample_hexes_lcc, study_area = id),
-              glue::glue("{rds.loc}/studyArea_{id}_BassPrep.rds"))
+    write_rds(
+      list(cost = study_hexes_cost, landcover = sample_hexes_lcc, study_area = id),
+      glue::glue("{rds.loc}/studyArea_{id}_BassPrep.rds")
+    )
   }
 
   message("Running BASS")
@@ -195,35 +212,33 @@ extract_habitat_cost <- function(number_iterations,
     select_at(vars(contains("LC"))) %>%
     rowSums()
   # print(unique(sa_test))
-  if(all(round(sa_test,0) == 100) | all(round(sa_test,0) == 1)) {
+  if (all(round(sa_test, 0) == 100) | all(round(sa_test, 0) == 1)) {
     warning("Oops, you input percentages")
     sample_hexes_lcc <-
       sample_hexes_lcc %>%
-      mutate_at(vars(matches("LC\\d")) , ~.*area)
+      mutate_at(vars(matches("LC\\d")), ~ . * area)
   }
 
 
-  fbr <- full_BASS_run(num_runs = number_iterations ,nsamples =  n_samples_per_iter,
-                       att = sample_hexes_lcc %>% as.data.frame() %>%
-                         dplyr::select(-geometry),
-                       att.sp = st_centroid(sample_hexes_lcc),
-                       HexID_ = SampleUnitID,
-                       cost = study_hexes_cost %>%
-                         as.data.frame() %>% dplyr::select(-geometry), return_all = return_all_, q = quick)
+  fbr <- full_BASS_run(
+    num_runs = number_iterations, nsamples = n_samples_per_iter,
+    att = sample_hexes_lcc %>% as.data.frame() %>%
+      dplyr::select(-geometry),
+    att.sp = st_centroid(sample_hexes_lcc),
+    HexID_ = SampleUnitID,
+    cost = study_hexes_cost %>%
+      as.data.frame() %>% dplyr::select(-geometry), return_all = return_all_, q = quick
+  )
   message(glue::glue("Finished {id}"))
-  if(isTRUE(return_all_)) {
+  if (isTRUE(return_all_)) {
     # if(isTRUE(quick)){hexes_BASSr <- samplehexes1 %>% left_join(fbr)}
     # else{
-      hexes_BASSr <- samplehexes1 %>% left_join(fbr$inclusionPr) #}
+    hexes_BASSr <- samplehexes1 %>% left_join(fbr$inclusionPr) # }
     return(list(BASSoutput = fbr, inclusion_probs = hexes_BASSr, cost = study_hexes_cost, landcover = sample_hexes_lcc, study_area = id))
   }
 
   hexes_BASSr <- samplehexes1 %>% left_join(fbr)
   return(hexes_BASSr)
-
-
-
-
 }
 
 
@@ -238,12 +253,15 @@ extract_habitat_cost <- function(number_iterations,
 #'
 #' @return
 #' @export
-genraster <- function(id_col,studyareas, id, hab_rast_location, writeout = T, outpath = "output") {
+genraster <- function(id_col, studyareas, id, hab_rast_location, writeout = T, outpath = "output") {
   hab_raster <- raster::raster(hab_rast_location)
-  sa1 <- studyareas %>% dplyr::filter({{id_col}} == id)
-  sa1_lcc <- hab_raster %>% raster::crop(.,st_buffer(sa1, 1000)) %>% raster::mask(st_buffer(sa1, 1000))
-  if(isTRUE(writeout)) {raster::writeRaster(sa1_lcc,glue::glue("{outpath}/{id}.tif"),prj=T)
-    return(NULL)}
+  sa1 <- studyareas %>% dplyr::filter({{ id_col }} == id)
+  sa1_lcc <- hab_raster %>%
+    raster::crop(., st_buffer(sa1, 1000)) %>%
+    raster::mask(st_buffer(sa1, 1000))
+  if (isTRUE(writeout)) {
+    raster::writeRaster(sa1_lcc, glue::glue("{outpath}/{id}.tif"), prj = T)
+    return(NULL)
+  }
   return(sa1_lcc)
 }
-

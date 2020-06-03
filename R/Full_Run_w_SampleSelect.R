@@ -11,11 +11,15 @@
 #' @param Weight_of_benfit Weight of benefit in selection probabilties.
 #' @param LandCoverType String with identifer for both the land cover hexagons and their code within that tibble
 #' @param RemovedLayers_ Layers to remove from benefit calculation must be in format of c(-var1, -var2, -var3)
-#' @param Area_of_interest
-#' @param RandomSeed
+#' @param Area_of_interest Area of interest in tibble with StudyAreaID
+#' @param RandomSeed Random seet to use in GRTS
 #' @param calculate_benefits Should you calculate benefits or are they included in benefit_df
 #' @param only_calculate_benefits Do you only want to calculate benefits or complete the full run
 #' @param benefit_dfs If calculate_benefits is TRUE need some data.frames with benefits.
+#' @param returnGRTS do you return the GRTS object. (Can be used later to calculate spatial balance)
+#' @param oversample Proportion of sites to oversample, used for both study areas and sample units
+#' @param weighted_benefits_df list of data frames with weight and land covers for benefit calculation
+#' @param Non random set of study areas and sample units in form of named list.
 #'
 #' @return List of sample units and a summary comparing land cover to the local area
 #' @export
@@ -33,7 +37,11 @@ run_full_BASS_w_selection <- function(
                                       RandomSeed,
                                       calculate_benefits = list(SA = F, SU = F),
                                       only_calculate_benefits = list(SA = F, SU = F),
-                                      benefit_dfs = list(SA = NULL, SU = NULL)) {
+                                      benefit_dfs = list(SA = NULL, SU = NULL),
+                                      returnGRTS = F,
+                                      oversample = 0,
+                                      weighted_benefits_df = list(SA = NULL, SU=NULL),
+                                      non_ran = list(SA = NULL, SU=NULL)) {
   start_time1 <- start_time <- Sys.time()
   # Define layers to remove
   slvar <- enquos(RemovedLayers_)
@@ -70,10 +78,10 @@ run_full_BASS_w_selection <- function(
     st_centroid() %>%
     mutate(Province = "ON")
 
-    watervar <- case_when(LandCoverType=="CLC10"~18,
-                                      LandCoverType=="CLC15"~18,
-                                      LandCoverType=="FNLC"~1)
-    inlake <- filter_at(att_prep,vars(matches("^D_.+")), any_vars(.==watervar ))
+    if(LandCoverType=="CLC10") watervar <- c(18,19)
+    if(LandCoverType=="CLC15") watervar <- c(19,18)
+    if(LandCoverType=="FNLC") watervar <-  c(1,2,3)
+    inlake <- filter_at(att_prep,vars(matches("^D_.+")), any_vars(.%in% watervar ))
 
     local_cost <- mutate(local_cost, INLAKE = StudyAreaID %in% inlake$StudyAreaID) %>%
       bind_cols(as_tibble(
@@ -89,7 +97,8 @@ run_full_BASS_w_selection <- function(
     num_runs = Number_of_HSS, nsamples = Size_of_HSS,
     att = att_prep, att.sp = st_centroid(study_areas_local),
     cost = local_cost, return_all = T, benefit_weight = Weight_of_benefit,
-    seed_ = RandomSeed, HexID_ = StudyAreaID, stratumID = Province, q = T
+    seed_ = RandomSeed, HexID_ = StudyAreaID, stratumID = Province, q = T,
+    weighted_benefits = weighted_benefits_df$SA, non_ran_set = non_ran$SA
   )
 
   message(glue::glue("Running BASS on SA took {difftime(Sys.time(),start_time, units = 'mins')} minutes"))
@@ -107,7 +116,7 @@ run_full_BASS_w_selection <- function(
   StudyAreas_Selected <- run_grts_on_BASS(
     n_grts_tests = 1,
     study_area_results = bass_res,
-    nARUs = Number_of_Study_areas, os = 0,
+    nARUs = Number_of_Study_areas, os = oversample,
     idcol = "Province",
     hexid = StudyAreaID
   )
@@ -151,7 +160,7 @@ start_time <- Sys.time()
     mutate(Province = "ON") %>%
     st_centroid %>% bind_cols(as_tibble(st_coordinates(.))) %>% st_as_sf
 
-  inlake <- filter_at(att_prep_focalSA,vars(matches("^D_.+")), any_vars(.==watervar ))
+  inlake <- filter_at(att_prep_focalSA,vars(matches("^D_.+")), any_vars(.%in% watervar ))
 
   focal_SampleUnits_cost <- mutate(focal_SampleUnits_cost, INLAKE = SampleUnitID %in% inlake$SampleUnitID) %>%
     left_join(bind_cols(
@@ -171,7 +180,8 @@ start_time <- Sys.time()
       att = st_drop_geometry(att_prep_focalSA %>% filter(StudyAreaID == .x)),
       att.sp = att_prep_focalSA %>% filter(StudyAreaID == .x),
       cost = st_centroid(focal_SampleUnits_cost %>% filter(StudyAreaID == .x)), return_all = T,
-      seed_ = RandomSeed, HexID_ = SampleUnitID, stratumID = StudyAreaID, q = T
+      seed_ = RandomSeed, HexID_ = SampleUnitID, stratumID = StudyAreaID, q = T,
+      weighted_benefits = weighted_benefits_df$SU, non_ran_set = non_ran$SU
     )
   )
 
@@ -196,16 +206,21 @@ start_time <- Sys.time()
 
   FocalSA_SampleUnits <- run_grts_on_BASS(n_grts_tests = 1,
                                           study_area_results =pt,
-                                          nARUs = Number_of_sample_units, os = 0,
+                                          nARUs = Number_of_sample_units, os = oversample,
                                           idcol = "StudyAreaID",
                                           hexid = SampleUnitID)
   SampleUnitsIDs_select <-
       tibble(SampleUnitID = FocalSA_SampleUnits[[1]]$SampleUnitID)
 
+  os_SA <- as_tibble(StudyAreas_Selected[[1]]) %>% dplyr::select(StudyAreaID, SA_oversample = panel) %>%
+    mutate_all(.funs = as.character)
+  os_SU <- as_tibble(FocalSA_SampleUnits[[1]]) %>% dplyr::select(StudyAreaID=stratum,SampleUnitID, SU_oversample = panel) %>%
+    mutate_all(.funs = as.character)
   sampleUnits_final <- right_join(sample_units_w_hab$SampleUnits, SampleUnitsIDs_select)  %>%
     # filter(SampleUnitID %in% FocalSA_SampleUnits[[1]]$SampleUnitID) %>%
     left_join(st_drop_geometry(focal_SampleUnits_cost)) %>%
-    left_join(st_drop_geometry(att_prep_focalSA)) %>% mutate(ranNum = RandomSeed)
+    left_join(st_drop_geometry(att_prep_focalSA)) %>% mutate(ranNum = RandomSeed) %>%
+    left_join(os_SA,by = "StudyAreaID") %>% left_join(os_SU, by = c("StudyAreaID","SampleUnitID"))
 
   # browser()
   # Generate a summary table
@@ -227,16 +242,18 @@ start_time <- Sys.time()
     mutate(phab = ha/sum(ha)) %>% ungroup %>%
     mutate(nSU = Number_of_sample_units,
            nSA = Number_of_Study_areas,
-           RNum = RandomSeed)# %>%
+           RNum = RandomSeed) %>%
 
     # left_join(x= local_hab_summ, y =., by = 'lc') %>%
-    # left_join(tab_presLC, by = 'lc')
+    left_join(tab_presLC, by = 'lc')
 
   message(glue::glue("Completed run generating {Number_of_sample_units} sample units in {Number_of_Study_areas} study areas.\n\r
                      It took {difftime(Sys.time(),start_time1, units = 'mins')} minutes"))
-  return(list(SampleUnits = st_drop_geometry(sampleUnits_final),
+  if(isTRUE(returnGRTS)){
+  return(list(SampleUnits = st_drop_geometry(sampleUnits_final),grts_results = list(SA = StudyAreas_Selected,SU = FocalSA_SampleUnits[[1]]),
          summary = compare_table))
-
+  }
+  return(list(SampleUnits = st_drop_geometry(sampleUnits_final),summary = compare_table))
 
 
 

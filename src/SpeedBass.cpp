@@ -43,14 +43,15 @@ bool oppositeSigns(double x, int y)
 //' The internal BASSr benefit algorithm
 //'
 //' @param hex A vector of land cover values
+//' @param w A vector of weights for each land cover value
 //' @param sample a vector of land cover values from random sample
 //' @param total a vector of land cover values from total of study area
 //' @param printDets logical - should you print the details - messy for now.
 //' @export
 // [[Rcpp::export]]
-double speedbass(NumericVector hex, NumericVector sample, NumericVector total, bool printDets=false) {
+double speedbass(NumericVector hex,NumericVector w, NumericVector sample, NumericVector total, bool printDets=false) {
   int nc = hex.size();
-  if(nc != sample.size() || nc != total.size() || sample.size() != total.size()){
+  if(nc != sample.size() || nc != total.size() || sample.size() != total.size() || nc != w.size()){
     Rcout << "Error!: Hexagon, sample, and total are not the same size\n";
   }
   double tt = sumC(total); // Larger region (study area) area
@@ -90,7 +91,7 @@ double speedbass(NumericVector hex, NumericVector sample, NumericVector total, b
     // if((oppositeSigns(d, dd) == false) && (dd!=0)){
 
     if( ( (d < 0 ) && (dd < 0) ) || ( (d > 0) && (dd > 0) ) || ( (d == 0) && (dd == 0) ) ){
-      ben  += std::abs(d);
+      ben  += std::abs(d) * w[i];
       // goodben++;
       // Rcout << "Success\n";
       if(printDets){Rcout << "Included" << "\n" ;}
@@ -110,9 +111,11 @@ double speedbass(NumericVector hex, NumericVector sample, NumericVector total, b
 //' @param hexes Matrix of hexagon land covers. Rows are hexagons, columns are land cover types
 //' @param samples Matrix of hexagon land covers from random sample. Rows are hexagons, columns are land cover types
 //' @param total Vector of total land cover. values are individual land cover types
+//' @param w A vector of weights for each land cover value
+//' @param printDets print details of function calculation. For debugging.
 //' @export
 // [[Rcpp::export]]
-NumericVector allhexes(NumericMatrix hexes, NumericMatrix samples, NumericVector total, bool printDets=false) {
+NumericVector allhexes(NumericMatrix hexes, NumericMatrix samples, NumericVector total, NumericVector w, bool printDets=false) {
   int nhex = hexes.nrow();
   int nsamples = samples.nrow();
   NumericVector meanHexBen(nhex);
@@ -122,7 +125,7 @@ NumericVector allhexes(NumericMatrix hexes, NumericMatrix samples, NumericVector
     double samplebenefit = 0;
     for(int j = 0; j < nsamples; ++j){
       NumericVector sample = samples(j, _);
-      samplebenefit += speedbass(hex, sample, total, printDets = printDets);
+      samplebenefit += speedbass(hex,w, sample, total, printDets = printDets);
       // Rcout << samplebenefit << "\n" ;
     }
     // Rcout << nhex << "\t"<< nsamples << "\n" ;

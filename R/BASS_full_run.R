@@ -14,33 +14,36 @@
 #' @param lakeN The land cover number to represent open water. 1 for FNLC, 18 for CLC
 #' @param benefit_weight The weight assigned to benefit in the selection probabilities.0.5 is equal weighting of cost and benefits. 1.0 is zero weighting to cost.
 #' @param noCost Do you only want to run the benefit calculation?
+#' @param weighted_benefits data frame with lc and weights
 #'
 #' @return a table with inclusion probabilities
 #' @export
 #'
-full_BASS_run <- function(num_runs, nsamples, att, att.sp, cost, return_all=F, seed_ = as.integer(Sys.time()),
-                          HexID_ = HEX100,stratumID = StudyAreaID, q=F, non_ran_set = NULL, lakeN=18,benefit_weight = 0.5, noCost =F) {
+full_BASS_run <- function(num_runs, nsamples, att, att.sp, cost, return_all = F, seed_ = as.integer(Sys.time()),
+                          HexID_ = HEX100, stratumID = StudyAreaID, q = F, non_ran_set = NULL, lakeN = 18,
+                          benefit_weight = 0.5, noCost = F, weighted_benefits = NULL) {
   set.seed(seed_)
 
-  if(!"INLAKE" %in% names(cost)& !isTRUE(noCost)){
+  if (!"INLAKE" %in% names(cost) & !isTRUE(noCost)) {
     message("Did you forget to add a lake specification to the cost? I am addig it based on dominant land cover for now.")
     inlake <- NA
-    try(inlake <- filter_at(att,vars(matches("^D_.+")), any_vars(.==lakeN )) )
-    cost <- mutate(cost, INLAKE = {{HexID_}} %in% inlake[[as_label(enquo(HEXID_))]])
-
+    try(inlake <- filter_at(att, vars(matches("^D_.+")), any_vars(. == lakeN)))
+    cost <- mutate(cost, INLAKE = {{ HexID_ }} %in% inlake[[as_label(enquo(HEXID_))]])
   }
-  if(!"sf" %in% class(att.sp)){
+  if (!"sf" %in% class(att.sp)) {
     stop("Spatial object att.sp must be an object of package sf. Please fix and try again")
-  } else{
-    if(all(sf::st_is(att.sp, "POLYGON"))){
-    message("Spatial Feature object should be points not polygons or GRTS expects clusters. Don't worry, I'll fix it!")
-    att.sp <- st_centroid(att.sp)
-  }}
-  if(!"X" %in% names(cost) & !isTRUE(noCost)){
+  } else {
+    if (all(sf::st_is(att.sp, "POLYGON"))) {
+      message("Spatial Feature object should be points not polygons or GRTS expects clusters. Don't worry, I'll fix it!")
+      att.sp <- st_centroid(att.sp)
+    }
+  }
+  if (!"X" %in% names(cost) & !isTRUE(noCost)) {
     message("Did you forget to add coordinates? I am adding it based centroids of the att.sp for now.")
     cost <- cost %>%
       bind_cols(as_tibble(
-        st_coordinates(.)))
+        st_coordinates(.)
+      ))
   }
 
 
@@ -48,29 +51,45 @@ full_BASS_run <- function(num_runs, nsamples, att, att.sp, cost, return_all=F, s
   grts_output <- draw_random_samples(att_cleaned = att, att.sf = att.sp, num_runs = num_runs, nsamples = nsamples)
   message("sample draw complete")
 
-  att_cleaned_long <- prepare_hab_long(att,{{stratumID}})
+  att_cleaned_long <- prepare_hab_long(att, {{ stratumID }})
 
-  if(!isTRUE(return_all)){
-  benefits <- calculate_benefit(grts_res = grts_output, att_long = att_cleaned_long,non_random_set = non_ran_set,
-                                output = "benefit_by_run", HexID = {{HexID_}}, quick = q)
-  if(isTRUE(noCost)){return(benefits %>% mutate(num_runs = num_runs, nsamples = nsamples))}
+  if (!isTRUE(return_all)) {
+    benefits <- calculate_benefit(
+      grts_res = grts_output, att_long = att_cleaned_long, non_random_set = non_ran_set,
+      output = "benefit_by_run", HexID = {{ HexID_ }}, quick = q, land_cover_weights = weighted_benefits
+    )
+    if (isTRUE(noCost)) {
+      return(benefits %>% mutate(num_runs = num_runs, nsamples = nsamples))
+    }
 
-  pointswith_inclusion <- calculate_inclusion_probs(cost = cost, hexagon_benefits = benefits, HexID = {{HexID_}},StratumID = {{stratumID}}, benefit_weight = benefit_weight )
+    pointswith_inclusion <- calculate_inclusion_probs(cost = cost, hexagon_benefits = benefits, HexID = {{ HexID_ }}, StratumID = {{ stratumID }}, benefit_weight = benefit_weight)
 
-  return(pointswith_inclusion %>% mutate(num_runs = num_runs, nsamples = nsamples))
+    return(pointswith_inclusion %>% mutate(num_runs = num_runs, nsamples = nsamples))
   }
-  if(isTRUE(return_all)){
-    benefits <- calculate_benefit(grts_res = grts_output, att_long = att_cleaned_long,non_random_set = non_ran_set,
-                                  output = "all", HexID = {{HexID_}}, quick = q)
-    if(isTRUE(noCost)){return(benefits %>% mutate(num_runs = num_runs, nsamples = nsamples))}
-    if(isTRUE(q)){b <-  benefits}else{b <- benefits$hexagon_benefits}
-    pointswith_inclusion <- calculate_inclusion_probs(cost = cost, hexagon_benefits = b,
-                                                                                HexID = {{HexID_}},
-                                                      StratumID = {{stratumID}},
-                                                      benefit_weight = benefit_weight )
+  if (isTRUE(return_all)) {
+    benefits <- calculate_benefit(
+      grts_res = grts_output, att_long = att_cleaned_long, non_random_set = non_ran_set,
+      output = "all", HexID = {{ HexID_ }}, quick = q, land_cover_weights = weighted_benefits
+    )
+    if (isTRUE(noCost)) {
+      return(benefits %>% mutate(num_runs = num_runs, nsamples = nsamples))
+    }
+    if (isTRUE(q)) {
+      b <- benefits
+    } else {
+      b <- benefits$hexagon_benefits
+    }
+    pointswith_inclusion <- calculate_inclusion_probs(
+      cost = cost, hexagon_benefits = b,
+      HexID = {{ HexID_ }},
+      StratumID = {{ stratumID }},
+      benefit_weight = benefit_weight
+    )
 
-    return(list(inclusionPr = pointswith_inclusion %>% mutate(num_runs = num_runs, nsamples = nsamples),
-                benefits_full = benefits, grts_samples = grts_output, att_long = att_cleaned_long))
+    return(list(
+      inclusionPr = pointswith_inclusion %>% mutate(num_runs = num_runs, nsamples = nsamples),
+      benefits_full = benefits, grts_samples = grts_output, att_long = att_cleaned_long
+    ))
   }
 }
 
@@ -89,23 +108,24 @@ full_BASS_run <- function(num_runs, nsamples, att, att.sp, cost, return_all=F, s
 #' @return a table with inclusion probabilities
 #' @export
 #'
-noGRTS_BASS_run <- function(grts_output, num_runs, nsamples, att, att.sp, cost, return_all=F, seed_ = as.integer(Sys.time())) {
-
+noGRTS_BASS_run <- function(grts_output, num_runs, nsamples, att, att.sp, cost, return_all = F, seed_ = as.integer(Sys.time())) {
   att_cleaned_long <- prepare_hab_long(att)
 
-  if(!isTRUE(return_all)){
+  if (!isTRUE(return_all)) {
     benefits <- calculate_benefit(grts_res = grts_output, att_long = att_cleaned_long, output = "mean_benefit")
 
     pointswith_inclusion <- calculate_inclusion_probs(cost = cost, hexagon_benefits = benefits)
 
     return(pointswith_inclusion %>% mutate(num_runs = num_runs, nsamples = nsamples))
   }
-  if(isTRUE(return_all)){
+  if (isTRUE(return_all)) {
     benefits <- calculate_benefit(grts_res = grts_output, att_long = att_cleaned_long, output = "all")
 
     pointswith_inclusion <- calculate_inclusion_probs(cost = cost, hexagon_benefits = benefits$hexagon_benefits)
 
-    return(list(inclusionPr = pointswith_inclusion %>% mutate(num_runs = num_runs, nsamples = nsamples),
-                benefits_full = benefits, grts_samples = grts_output, att_long = att_cleaned_long))
+    return(list(
+      inclusionPr = pointswith_inclusion %>% mutate(num_runs = num_runs, nsamples = nsamples),
+      benefits_full = benefits, grts_samples = grts_output, att_long = att_cleaned_long
+    ))
   }
 }

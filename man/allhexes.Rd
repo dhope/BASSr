@@ -4,7 +4,7 @@
 \alias{allhexes}
 \title{Run speed bass on all hexagons and all samples}
 \usage{
-allhexes(hexes, samples, total, printDets = FALSE)
+allhexes(hexes, samples, total, w, printDets = FALSE)
 }
 \arguments{
 \item{hexes}{Matrix of hexagon land covers. Rows are hexagons, columns are land cover types}
@@ -12,6 +12,10 @@ allhexes(hexes, samples, total, printDets = FALSE)
 \item{samples}{Matrix of hexagon land covers from random sample. Rows are hexagons, columns are land cover types}
 
 \item{total}{Vector of total land cover. values are individual land cover types}
+
+\item{w}{A vector of weights for each land cover value}
+
+\item{printDets}{print details of function calculation. For debugging.}
 }
 \description{
 Run speed bass on all hexagons and all samples

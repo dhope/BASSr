@@ -18,7 +18,8 @@ full_BASS_run(
   non_ran_set = NULL,
   lakeN = 18,
   benefit_weight = 0.5,
-  noCost = F
+  noCost = F,
+  weighted_benefits = NULL
 )
 }
 \arguments{
@@ -49,6 +50,8 @@ full_BASS_run(
 \item{benefit_weight}{The weight assigned to benefit in the selection probabilities.0.5 is equal weighting of cost and benefits. 1.0 is zero weighting to cost.}
 
 \item{noCost}{Do you only want to run the benefit calculation?}
+
+\item{weighted_benefits}{data frame with lc and weights}
 }
 \value{
 a table with inclusion probabilities
