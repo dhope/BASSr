@@ -28,6 +28,7 @@
 #'   ...
 #' }
 #' @source Advice from Rich Russell
+#' @export
 cost_vars <- list(
   truck_cost_per_day = 600,
   truck_n_crews = 2,
@@ -43,12 +44,12 @@ cost_vars <- list(
   helicopter_aru_per_person_per_day = 5,
   # helicopter_base_cost_per_day = 100,
   helicopter_relocation_speed = 180, # km/hr
-  helicopter_airport_cost_per_l = 1.3,
+  helicopter_airport_cost_per_l = data.frame(AirportType = c("Highway","Secondary" , "Remote"),lCost=c( 1.3,1.5, 2.0)), #1.3,
   helicopter_base_cost_per_l = 5,
   helicopter_2nd_base_cost_per_l = 10,
   helicopter_hours_flying_within_sa_per_day = 5
 )
-# usethis::use_data(cost_vars, internal = F)
+# usethis::use_data(cost_vars, internal = F,overwrite=T)
 
 #' Cost model estimate
 #'
@@ -59,14 +60,22 @@ cost_vars <- list(
 #' @param dist_base_sa Column with distance between basecamp and study area
 #' @param dist_airport_sa Column with distance between airport and study area
 #' @param dist2airport_base Column with distance between airport and base camp
+#' @param AirportType Column with nearest airport type
 #' @param vars
 #'
 #' @return
 #' @export
-estimate_cost_study_area <- function(narus, StudyAreas, pr, sr, dist_base_sa, dist_airport_sa, dist2airport_base, vars) {
+estimate_cost_study_area <- function(narus, StudyAreas, pr, sr,
+                                     dist_base_sa, dist_airport_sa, dist2airport_base,
+                                     AirportType, vars) {
   list2env(vars, envir = environment())
-
-  StudyAreas %>% mutate(
+  # browser()
+  StudyAreas %>%
+    mutate(AT = {{AirportType}}) %>%
+    {if("lCost" %in% names(.)){.} else{
+    left_join(x=.,helicopter_airport_cost_per_l,
+              by = c("AT" = "AirportType") ) }} %>%
+    mutate(
 
     # Cost of survey the study area by truck
     primary_cost = truck_cost_per_day * narus / (truck_arus_per_crew_per_day), #* truck_n_crews),
@@ -84,7 +93,8 @@ estimate_cost_study_area <- function(narus, StudyAreas, pr, sr, dist_base_sa, di
     # Fuel cost
     # Based on distance to base from airport and distance from base to sa
     heli_cost_per_l = ifelse({{ dist_airport_sa }} < helicopter_max_km_from_base,
-      helicopter_airport_cost_per_l,
+                             lCost,
+      # helicopter_airport_cost_per_l,
       ifelse({{ dist_base_sa }} < helicopter_max_km_from_base,
         helicopter_base_cost_per_l, helicopter_2nd_base_cost_per_l
       )
@@ -107,7 +117,8 @@ estimate_cost_study_area <- function(narus, StudyAreas, pr, sr, dist_base_sa, di
 
     total_truck_cost = primary_cost * {{ pr }},
     total_atv_cost = atv_cost * {{ sr }},
-    total_heli_cost = (1 - {{ pr }} - {{ sr }}) * (cost_base + cost_to_SA + cost_within_SA),
+    p_heli = (1 - {{ pr }} - {{ sr }}),
+    total_heli_cost = p_heli * (cost_base + cost_to_SA + cost_within_SA),
     narus = narus,
     RawCost = total_truck_cost + total_atv_cost + total_heli_cost
   )
@@ -188,6 +199,7 @@ getroaddensity <- function(hexes, sa, pr, sr, wr, r, idcol, ...) {
   } else {
     sr_h_noP <- st_difference(sr_h, pr_h)
   }
+
   pr_a <- st_area(pr_h) %>%
     as.numeric() %>%
     sum()
@@ -203,6 +215,7 @@ getroaddensity <- function(hexes, sa, pr, sr, wr, r, idcol, ...) {
     as.numeric() %>%
     sum() # ifelse(isTRUE(st_contains(hex, r, sparse =F)), ,0)
 
+  if(sr_a>saa){browser()}
   tibble(
     saa = saa,
     pr = ifelse(length(pr_a) == 0, 0, pr_a),
@@ -263,7 +276,15 @@ prepare_cost <- function(truck_roads, atv_roads, winter_roads, all_roads, airpor
   } else {
     hexagons_w_roads <- hexagons
   }
-
+  if("Status" %in% names(airports)){
+    # browser()
+    ha <- airports %>% filter(Status == "Highway")
+    Hwy_airports <-  bind_cols(
+      dplyr::select(basecamps, basecamp_cols[[2]]),ha[
+      st_nearest_feature(basecamps, ha),] %>%
+        st_drop_geometry() %>%
+        transmute(HWY_AIRPORT = NAME )) %>% st_drop_geometry()
+  } else{Hwy_airports <- dplyr::select(basecamps, basecamp_cols) %>% st_drop_geometry()}
   # Hexagon centroids
   hexagon_centroids <- st_centroid(hexagons_w_roads)
 
@@ -282,11 +303,26 @@ prepare_cost <- function(truck_roads, atv_roads, winter_roads, all_roads, airpor
   tst <-
     basecamps %>%
     st_nearest_feature(y = airports)
-
+  # browser()
+  if(length(airport_cols) == 3){
   basecamps[c("nearest_airport", "airporttype", "airportID")] <- airports[tst, airport_cols] %>%
     as_tibble() %>%
     dplyr::select(-geometry)
-  basecamps$dist_to_air <- min_dist(tourism, airports_official)
+  } else  if(length(airport_cols) == 4){
+    basecamps[c("nearest_airport", "airporttype", "airportID", "AirportStatus")] <- airports[tst, airport_cols] %>%
+      as_tibble() %>%
+      dplyr::select(-geometry)
+  } else stop("Airport columns needs to be a vector 3 or 4 strings")
+
+  # browser()
+  basecamps$dist_to_air <- min_dist(basecamps, airports)
+  if("Status" %in% names(airports)){basecamps$dist_to_Hwy_air <- min_dist(basecamps, filter(airports,
+                                                                                            Status == "Highway"))
+  } else{
+    basecamps$dist_to_Hwy_air <- NA
+
+                                                                                            }
+
 
   basecamp_order <-
     centroids_with_road_air %>%
@@ -300,29 +336,38 @@ prepare_cost <- function(truck_roads, atv_roads, winter_roads, all_roads, airpor
     "cabin_nearest_airport",
     "cabin_airporttype",
     "cabin_airportID",
-    "cabin_dist_to_air"
+    "cabin_dist_to_air",
+    "cabin_dist_to_hwyair"
   )] <- as_tibble(basecamps)[(basecamp_order), c(
     basecamp_cols, "nearest_airport",
     "airporttype",
     "airportID",
-    "dist_to_air"
+    "dist_to_air",
+    "dist_to_Hwy_air"
   )]
 
 
   nearest_airport <- centroids_with_road_air %>%
-    st_nearest_feature(y = airports_official)
+    st_nearest_feature(y = airports)
 
-
+  if(length(airport_cols) == 3){
   centroids_with_road_air[c("nearest_airport", "airporttype", "airportID")] <- as_tibble(airports)[
     nearest_airport,
     airport_cols
   ]
+  } else  if(length(airport_cols) == 4){
+    centroids_with_road_air[c("nearest_airport", "airporttype", "airportID","AirportStatus")] <- as_tibble(airports)[
+      nearest_airport,
+      airport_cols
+    ]
+  } else stop("Airport columns needs to be a vector 3 or 4 strings")
 
 
   left_join(
     hexagons,
-    dplyr::select(as_tibble(centroids_with_road_air), -geometry)
-  )
+    st_drop_geometry(centroids_with_road_air)
+    # dplyr::select(as_tibble(centroids_with_road_air), -geometry)
+  ) %>% left_join(Hwy_airports, by = c("CabinID" = basecamp_cols[[2]]))
 }
 
 # Test

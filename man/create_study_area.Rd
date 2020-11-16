@@ -4,14 +4,22 @@
 \alias{create_study_area}
 \title{Create Study Area}
 \usage{
-create_study_area(landscape, study_area_diam, hex_diam, output = "small")
+create_study_area(
+  landscape,
+  study_area_size,
+  study_unit_size,
+  units,
+  output = "small"
+)
 }
 \arguments{
 \item{landscape}{larger area}
 
-\item{study_area_diam}{study area diameter}
+\item{study_area_size}{size of study area in area or diameter (valid values include 'm2', 'ha', 'km2','km', 'm')}
 
-\item{hex_diam}{hexagon diameter}
+\item{study_unit_size}{size of study unit in area or diameter (valid values include 'm2', 'ha', 'km2','km', 'm')}
+
+\item{units}{Units of study area and sample units (valid values include 'm2', 'ha', 'km2','km', 'm')}
 
 \item{output}{output type}
 }

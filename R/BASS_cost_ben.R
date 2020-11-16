@@ -27,6 +27,7 @@ calculate_inclusion_probs <- function(cost, hexagon_benefits, HexID, StratumID =
     filter(INLAKE == F) %>% ## delete any centroids that are in water
     ## any NA in the 'INLAKE' column will be converted to a 0
     dplyr::select({{ HexID }}, {{ StratumID }}, X, Y, RawCost, benefit) %>%
+    group_by({{StratumID}}) %>%
     mutate(
       LogCost = log10(RawCost),
       ScLogCost = LogCost / (max(LogCost, na.rm = T) + 1),
@@ -34,5 +35,5 @@ calculate_inclusion_probs <- function(cost, hexagon_benefits, HexID, StratumID =
       partIP = (1 - ScLogCost) * scale_ben, ## Inclusion probability
       weightedIP = (1 - (ScLogCost * (1 - benefit_weight))) * scale_ben * benefit_weight, # Benefit weighted by benefit weight
       inclpr = weightedIP / max(weightedIP, na.rm = T) ## scaled Inclusion probability
-    )
+    ) %>% ungroup
 }

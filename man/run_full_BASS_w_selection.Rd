@@ -19,10 +19,11 @@ run_full_BASS_w_selection(
   calculate_benefits = list(SA = F, SU = F),
   only_calculate_benefits = list(SA = F, SU = F),
   benefit_dfs = list(SA = NULL, SU = NULL),
-  returnGRTS = F,
+  returnALL = F,
   oversample = 0,
   weighted_benefits_df = list(SA = NULL, SU = NULL),
-  non_ran = list(SA = NULL, SU = NULL)
+  non_ran = list(SA = NULL, SU = NULL),
+  Stratum = Province
 )
 }
 \arguments{
@@ -50,7 +51,7 @@ run_full_BASS_w_selection(
 
 \item{benefit_dfs}{If calculate_benefits is TRUE need some data.frames with benefits.}
 
-\item{returnGRTS}{do you return the GRTS object. (Can be used later to calculate spatial balance)}
+\item{returnALL}{do you return the GRTS object, as well as the selection probs. (Can be used later to calculate spatial balance)}
 
 \item{oversample}{Proportion of sites to oversample, used for both study areas and sample units}
 

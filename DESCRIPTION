@@ -9,9 +9,9 @@ Description: More about what it does (maybe more than one line)
 License: CC0
 LinkingTo: Rcpp
 Depends:
-  R (>= 3.5),
+  R (>= 4.0),
 Imports:
-    dplyr (>= 0.8.3),
+    dplyr (>= 1.0),
     tidyr (>= 1.0.0),
     rlang (>= 0.4.0),
     spsurvey (>= 4.1),
@@ -24,4 +24,4 @@ Suggests:
 Encoding: UTF-8
 LazyData: true
 VignetteBuilder: knitr
-RoxygenNote: 7.1.0
+RoxygenNote: 7.1.1

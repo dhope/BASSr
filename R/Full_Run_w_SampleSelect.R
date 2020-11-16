@@ -16,7 +16,7 @@
 #' @param calculate_benefits Should you calculate benefits or are they included in benefit_df
 #' @param only_calculate_benefits Do you only want to calculate benefits or complete the full run
 #' @param benefit_dfs If calculate_benefits is TRUE need some data.frames with benefits.
-#' @param returnGRTS do you return the GRTS object. (Can be used later to calculate spatial balance)
+#' @param returnALL do you return the GRTS object, as well as the selection probs. (Can be used later to calculate spatial balance)
 #' @param oversample Proportion of sites to oversample, used for both study areas and sample units
 #' @param weighted_benefits_df list of data frames with weight and land covers for benefit calculation
 #' @param Non random set of study areas and sample units in form of named list.
@@ -38,10 +38,11 @@ run_full_BASS_w_selection <- function(
                                       calculate_benefits = list(SA = F, SU = F),
                                       only_calculate_benefits = list(SA = F, SU = F),
                                       benefit_dfs = list(SA = NULL, SU = NULL),
-                                      returnGRTS = F,
+                                      returnALL = F,
                                       oversample = 0,
                                       weighted_benefits_df = list(SA = NULL, SU=NULL),
-                                      non_ran = list(SA = NULL, SU=NULL)) {
+                                      non_ran = list(SA = NULL, SU=NULL),
+                                      Stratum = Province) {
   start_time1 <- start_time <- Sys.time()
   # Define layers to remove
   slvar <- enquos(RemovedLayers_)
@@ -62,21 +63,26 @@ run_full_BASS_w_selection <- function(
   study_areas_local <- study_areas_hab_cost$StudyAreas %>%
     filter(StudyAreaID %in% Area_of_interest$StudyAreaID) %>%
     left_join(att_prep) %>%
-    rename(geometry = x)
+    {
+      if("x" %in% names(.)) {
+      rename(.,geometry = x)
+    } else{.}}
+
 
   # Recalculate the cost of deployment based on the number of ARUs per study area.
-  local_cost <- BASSr::estimate_cost_study_area(
+  # {browser()}
+  local_cost <- estimate_cost_study_area(
     narus = Number_of_sample_units,
     StudyAreas = study_areas_hab_cost$StudyArea_cost_30arus %>%
       filter(StudyAreaID %in% Area_of_interest$StudyAreaID),
-    pr = p_pr, sr = p_sr,
+    pr = p_pr, sr = p_sr,AirportType = airporttype,
     dist_base_sa = basecamps, dist_airport_sa = airportdist_km,
-    dist2airport_base = cabin_dist_to_air, vars = BASSr::cost_vars
+    dist2airport_base = cabin_dist_to_air, vars = cost_vars
   ) %>%
     right_join(x = study_areas_hab_cost$StudyAreas) %>%
     rename(geometry = x) %>%
     st_centroid() %>%
-    mutate(Province = "ON")
+    mutate(Province = "ON")   ## TO FIX: ADD STRATUM DETAILS HERE
 
     if(LandCoverType=="CLC10") watervar <- c(18,19)
     if(LandCoverType=="CLC15") watervar <- c(19,18)
@@ -106,19 +112,21 @@ run_full_BASS_w_selection <- function(
 
   bass_res$inclusionPr$Province <- "ON"
   } else{
+    # browser()
     bass_res <- calculate_inclusion_probs(cost = local_cost,
                                                       hexagon_benefits = benefit_dfs$SA,
                                                       HexID = StudyAreaID,
-                                                      StratumID = Province,
+                                                      StratumID = {{Stratum}},
                                                       benefit_weight = Weight_of_benefit )
     # browser()
   }
+    # browser()
   StudyAreas_Selected <- run_grts_on_BASS(
     n_grts_tests = 1,
     study_area_results = bass_res,
     nARUs = Number_of_Study_areas, os = oversample,
-    idcol = "Province",
-    hexid = StudyAreaID
+    idcol = as_label(enquo(Stratum)),
+    hexid = StudyAreaID,Stratum = Stratum
   )
 start_time <- Sys.time()
   # Selected Study Areas
@@ -185,7 +193,7 @@ start_time <- Sys.time()
     )
   )
 
-  cat(glue::glue("Running BASS on SUs took {difftime(Sys.time(),start_time, units = 'mins')} minutes"))
+  message(glue::glue("Running BASS on SUs took {difftime(Sys.time(),start_time, units = 'mins')} minutes"))
   start_time <- Sys.time()
 
   pt <- bass_res_focalSA %>% purrr::transpose() %>%
@@ -195,14 +203,20 @@ start_time <- Sys.time()
 
 
   } else{
-    pt <- map_df(
-      unique(att_prep_focalSA$StudyAreaID),
-      ~ calculate_inclusion_probs(cost = st_centroid(focal_SampleUnits_cost %>% filter(StudyAreaID == .x)),
-                                          hexagon_benefits = benefit_dfs$SU %>% filter(StudyAreaID == .x),
-                                          HexID = SampleUnitID,
-                                          StratumID = StudyAreaID,
-                                          benefit_weight = Weight_of_benefit ) )
+    # pt <- map_df(
+    #   unique(att_prep_focalSA$StudyAreaID),
+    #   ~ calculate_inclusion_probs(cost = st_centroid(focal_SampleUnits_cost %>% filter(StudyAreaID == .x)),
+    #                                       hexagon_benefits = benefit_dfs$SU %>% filter(StudyAreaID == .x),
+    #                                       HexID = SampleUnitID,
+    #                                       StratumID = StudyAreaID,
+    #                                       benefit_weight = Weight_of_benefit ) )
+    pt <- calculate_inclusion_probs(cost = st_centroid(focal_SampleUnits_cost),
+                                  hexagon_benefits = benefit_dfs$SU,
+                                  HexID = SampleUnitID,
+                                  StratumID = StudyAreaID,
+                                  benefit_weight = Weight_of_benefit )
   }
+
 
   FocalSA_SampleUnits <- run_grts_on_BASS(n_grts_tests = 1,
                                           study_area_results =pt,
@@ -241,18 +255,26 @@ start_time <- Sys.time()
     # group_by(run) %>%
     mutate(phab = ha/sum(ha)) %>% ungroup %>%
     mutate(nSU = Number_of_sample_units,
-           nSA = Number_of_Study_areas,
            RNum = RandomSeed) %>%
+    {
+      if(as_label(enquo(Stratum)) == "None"){mutate(., nSA = Number_of_Study_areas)} else{
+        mutate(., nSA = sum(Number_of_Study_areas$N))
+      }
+    } %>%
 
     # left_join(x= local_hab_summ, y =., by = 'lc') %>%
     left_join(tab_presLC, by = 'lc')
 
+  if(as_label(enquo(Stratum)) == "None"){
   message(glue::glue("Completed run generating {Number_of_sample_units} sample units in {Number_of_Study_areas} study areas.\n\r
-                     It took {difftime(Sys.time(),start_time1, units = 'mins')} minutes"))
-  if(isTRUE(returnGRTS)){
+                     It took {difftime(Sys.time(),start_time1, units = 'mins')} minutes")) }
+  else{ message(glue::glue("Completed run generating {Number_of_sample_units} sample units in {sum(Number_of_Study_areas$N)} study areas.\n\r
+                     It took {difftime(Sys.time(),start_time1, units = 'mins')} minutes"))}
+  if(isTRUE(returnALL)){
   return(list(SampleUnits = st_drop_geometry(sampleUnits_final),grts_results = list(SA = StudyAreas_Selected,SU = FocalSA_SampleUnits[[1]]),
-         summary = compare_table))
+         summary = compare_table,SA_inclpr = bass_res, SU_inclpr = pt ))
   }
+
   return(list(SampleUnits = st_drop_geometry(sampleUnits_final),summary = compare_table))
 
 

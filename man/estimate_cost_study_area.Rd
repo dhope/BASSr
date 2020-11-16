@@ -12,6 +12,7 @@ estimate_cost_study_area(
   dist_base_sa,
   dist_airport_sa,
   dist2airport_base,
+  AirportType,
   vars
 )
 }
@@ -29,6 +30,8 @@ estimate_cost_study_area(
 \item{dist_airport_sa}{Column with distance between airport and study area}
 
 \item{dist2airport_base}{Column with distance between airport and base camp}
+
+\item{AirportType}{Column with nearest airport type}
 
 \item{vars}{}
 }

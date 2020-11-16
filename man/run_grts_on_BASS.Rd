@@ -12,7 +12,8 @@ run_grts_on_BASS(
   idcol,
   hexid,
   removedhexes = c("None"),
-  return_points = F
+  return_points = F,
+  Stratum = None
 )
 }
 \arguments{

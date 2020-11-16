@@ -43,7 +43,7 @@ draw_random_samples <- function(att_cleaned, att.sf, num_runs, nsamples) {
     names_to = "lc", values_to = "ha"
   )
 
-  cat(glue::glue("Finished GRTS draw of {num_runs} runs and {nsamples} samples\n\r"))
+  message(glue::glue("Finished GRTS draw of {num_runs} runs and {nsamples} samples\n\r"))
 
   return(list(grts_random_sample = grts_random_sample, grts_random_sample_long = grts_random_sample_long))
 }

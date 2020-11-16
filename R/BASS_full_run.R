@@ -22,6 +22,16 @@
 full_BASS_run <- function(num_runs, nsamples, att, att.sp, cost, return_all = F, seed_ = as.integer(Sys.time()),
                           HexID_ = HEX100, stratumID = StudyAreaID, q = F, non_ran_set = NULL, lakeN = 18,
                           benefit_weight = 0.5, noCost = F, weighted_benefits = NULL) {
+  ## Check if habitat and sp object have same numbers of rows
+  if(nrow(att.sp)!= nrow(att)) rlang::abort(message = "att.sp and att must be the same size. They do not currently have the same number of rows")
+  ## Check if any NA in habitat columns
+  if(!any(grepl("^LC\\d",names(att)))) rlang::abort(message = "Habitat data table not formatted correctly. Try running clean_forBass.")
+  if (!"sf" %in% class(att)){
+    if(is.na(rowSums(summarise(att , across( matches("^LC\\d"), sum))))) rlang::abort(message = "Habitat data table not formatted correctly. Try running clean_forBass.")
+  }else{
+    if(is.na(rowSums(summarise(st_drop_geometry(att) , across( matches("^LC\\d"), sum))))) rlang::abort(message = "Habitat data table not formatted correctly. Try running clean_forBass.")
+  }
+
   set.seed(seed_)
 
   if (!"INLAKE" %in% names(cost) & !isTRUE(noCost)) {

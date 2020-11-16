@@ -12,7 +12,8 @@
 #' @return
 #' @export
 #'
-run_grts_on_BASS <- function(n_grts_tests, study_area_results, nARUs, os, idcol, hexid, removedhexes = c("None"), return_points = F) {
+run_grts_on_BASS <- function(n_grts_tests, study_area_results, nARUs, os,
+                             idcol, hexid, removedhexes = c("None"), return_points = F, Stratum = None) {
   if (as_label(enquo(hexid)) == "<empty>") stop("run_grts_on_BASS now requires you to specify hexagon column under hexid. Please correct and try again.")
   if (is.list(study_area_results) & !is.data.frame(study_area_results)) {
     if (!is_null(study_area_results$inclusionPr)) {
@@ -37,6 +38,7 @@ run_grts_on_BASS <- function(n_grts_tests, study_area_results, nARUs, os, idcol,
     }
   }
   attframe <- filter(attframe, !{{ hexid }} %in% removedhexes)
+  if(as_label(enquo(Stratum)) == "None"){
   Stratdesgn <- rep(list(PanelOne = list # a list named 'None" that contains:
   (
     panel = c(PanelOne = rep(nARUs)),
@@ -44,7 +46,20 @@ run_grts_on_BASS <- function(n_grts_tests, study_area_results, nARUs, os, idcol,
     seltype = "Continuous"
   )), length(unique(attframe[[idcol]])))
   names(Stratdesgn) <- unique(attframe[[idcol]])
+  } else{
+    l_s <- unique(attframe[[idcol]])
+      Stratdesgn <-
+        map(l_s, ~list # a list named 'None" that contains:
+                             (
+                               panel = c(PanelOne =  nARUs$N[nARUs[[idcol]] == .x],
+                               over = max(round(nARUs$N[nARUs[[idcol]] == .x] * os,0),1)), # panelOne indicates the number of samples you want
+                               seltype = "Continuous" )
+                             )
+      names(Stratdesgn) <- l_s
+  }
 
+
+  # browser()
   invisible(capture.output(grts_output <- map(
     1:n_grts_tests,
     ~ grts(
