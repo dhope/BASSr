@@ -44,6 +44,14 @@ calculate_benefit <- function(grts_res, HexID, att_long, output = "all", quick =
       summarize_at(vars(matches("LC\\d")), sum) %>%
       mutate(across(matches("LC\\d"),replace_na,0))
     } else if(is.data.frame(non_random_set)){
+      if(is_null(grts_res)){
+      grts_random_sample_summary_widenest <-
+        expand_grid(non_random_set,
+                    run = 1:n_distinct(grts_res$grts_random_sample$run)  ) %>%
+        group_by(run) %>%
+        summarize_at(vars(matches("LC\\d")), sum) %>%
+        mutate(across(matches("LC\\d"), replace_na, 0))
+      } else{
       grts_random_sample_summary_widenest <-
         grts_res$grts_random_sample %>%
         bind_rows(
@@ -53,8 +61,9 @@ calculate_benefit <- function(grts_res, HexID, att_long, output = "all", quick =
         group_by(run) %>%
         summarize_at(vars(matches("LC\\d")), sum) %>%
         mutate(across(matches("LC\\d"),replace_na,0))
-    } else {stop("non_random_set should be NULL, a vector or a data.frame")}
+      } #else {stop("non_random_set should be NULL, a vector or a data.frame")}
     # browser()
+    }
   }
 
   hexes <- att_long %>%

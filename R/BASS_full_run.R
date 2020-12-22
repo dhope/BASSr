@@ -57,9 +57,11 @@ full_BASS_run <- function(num_runs, nsamples, att, att.sp, cost, return_all = F,
   }
 
 
-
+  if(nsamples ==0){grts_output <- NULL}
+  if(nsamples !=0){
   grts_output <- draw_random_samples(att_cleaned = att, att.sf = att.sp, num_runs = num_runs, nsamples = nsamples)
   message("sample draw complete")
+  }
 
   att_cleaned_long <- prepare_hab_long(att, {{ stratumID }})
 
