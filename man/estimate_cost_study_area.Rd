@@ -9,6 +9,7 @@ estimate_cost_study_area(
   StudyAreas,
   pr,
   sr,
+  wr = 0,
   dist_base_sa,
   dist_airport_sa,
   dist2airport_base,
@@ -24,6 +25,8 @@ estimate_cost_study_area(
 \item{pr}{Column with primary road buffer proportion of study area}
 
 \item{sr}{Column with secondary Road proportion of study area ( should not include primary road area)}
+
+\item{wr}{Column with Winter Road proportion of study area ( should not include primary or secondary road areas)}
 
 \item{dist_base_sa}{Column with distance between basecamp and study area}
 

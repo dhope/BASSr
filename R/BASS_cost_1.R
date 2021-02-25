@@ -57,6 +57,7 @@ cost_vars <- list(
 #' @param StudyAreas Tibble with study area information and distances
 #' @param pr Column with primary road buffer proportion of study area
 #' @param sr Column with secondary Road proportion of study area ( should not include primary road area)
+#' @param wr Column with Winter Road proportion of study area ( should not include primary or secondary road areas)
 #' @param dist_base_sa Column with distance between basecamp and study area
 #' @param dist_airport_sa Column with distance between airport and study area
 #' @param dist2airport_base Column with distance between airport and base camp
@@ -65,7 +66,7 @@ cost_vars <- list(
 #'
 #' @return
 #' @export
-estimate_cost_study_area <- function(narus, StudyAreas, pr, sr,
+estimate_cost_study_area <- function(narus, StudyAreas, pr, sr,wr = 0,
                                      dist_base_sa, dist_airport_sa, dist2airport_base,
                                      AirportType, vars) {
   list2env(vars, envir = environment())
@@ -117,10 +118,11 @@ estimate_cost_study_area <- function(narus, StudyAreas, pr, sr,
 
     total_truck_cost = primary_cost * {{ pr }},
     total_atv_cost = atv_cost * {{ sr }},
-    p_heli = (1 - {{ pr }} - {{ sr }}),
+    total_winter_cost = atv_cost * {{ wr }}, # CURRENTLY USING ATV COSTING FOR WINTER ROAD
+    p_heli = (1 - {{ pr }} - {{ sr }} - {{ wr }}),
     total_heli_cost = p_heli * (cost_base + cost_to_SA + cost_within_SA),
     narus = narus,
-    RawCost = total_truck_cost + total_atv_cost + total_heli_cost
+    RawCost = total_truck_cost + total_atv_cost + total_heli_cost + total_winter_cost
   )
 
 
@@ -160,9 +162,9 @@ estimate_cost_study_area <- function(narus, StudyAreas, pr, sr,
 #'
 getroaddensity <- function(hexes, sa, pr, sr, wr, r, idcol, ...) {
   # message(sa)
-  if (exists("pb")) {
-    pb$tick()$print()
-  }
+  # if (exists("pb")) {
+  #   pb$tick()#$print()
+  # }
   hex <- filter(hexes, {{ idcol }} == sa)
   saa <- as.numeric(st_area(hex))
   if ("r_lg" %in% colnames(hex)) { # Shortcut to avoid calculating road densitys where there are no roads in SA
@@ -265,11 +267,13 @@ prepare_cost <- function(truck_roads, atv_roads, winter_roads, all_roads, airpor
   # unique(hexagons[[as_string(quote(idcol_))]]) # Hexagon IDs
   if (isTRUE(calc_roads)) {
     # 1 Calculate the proportion of each hexagon covered by roads
-    message("Getting road density")
-    pb <<- progress_estimated(length(ids))
-    hexagons_w_roads <- map_df(ids, getroaddensity,
+    # message("Getting road density")
+    pb <- progress::progress_bar$new(total=length(ids),
+                                     format =
+                                       "Getting road density [:bar] :percent eta: :eta")
+    hexagons_w_roads <- map_df(ids, ~{pb$tick();getroaddensity(sa = .x,
       hexes = hexagons, wr = winter_buff,
-      pr = truck_roads, sr = atv_roads, r = all_roads, idcol = {{ idcol_ }}
+      pr = truck_roads, sr = atv_roads, r = all_roads, idcol = {{ idcol_ }} )}
     ) %>%
       left_join(x = hexagons, y = .) %>%
       st_as_sf()
