@@ -21,7 +21,7 @@ getroaddensity(hexes, sa, pr, sr, wr, r, idcol, ...)
 
 \item{idcol}{Column with hexagon ids}
 
-\item{...}{}
+\item{...}{You can include multisession with the furrr package. Needs to include Multicor=T}
 }
 \value{
 Returns a tibble with area covered by each road types and their proportion of the study area

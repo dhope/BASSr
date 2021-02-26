@@ -155,7 +155,7 @@ estimate_cost_study_area <- function(narus, StudyAreas, pr, sr,wr = 0,
 #' @param wr Winter roads buffer. Should be a polygon layer
 #' @param r Total roads buffer. Should be polygon
 #' @param idcol Column with hexagon ids
-#' @param ...
+#' @param ... You can include multisession with the furrr package. Needs to include Multicor=T
 #'
 #' @return Returns a tibble with area covered by each road types and their proportion of the study area
 #' @export
@@ -165,7 +165,17 @@ getroaddensity <- function(hexes, sa, pr, sr, wr, r, idcol, ...) {
   # if (exists("pb")) {
   #   pb$tick()#$print()
   # }
-  hex <- filter(hexes, {{ idcol }} == sa)
+  args_ <- list(...)
+  if(isTRUE(args_$Multcor)){
+    hex <- filter(hexes, .data[[idcol]] == sa)
+    sr_h <- dplyr::filter(hex, .data[[idcol]] == "CLIMATE ACTION NOW")
+    pr_h <- dplyr::filter(hex, .data[[ idcol ]] == "CATBURGLER")
+  }else{
+    hex <- filter(hexes, {{ idcol }} == sa)
+    sr_h <- dplyr::filter(hex, {{ idcol }} == "CLIMATE ACTION NOW")
+    pr_h <- dplyr::filter(hex, {{ idcol }} == "CATBURGLER")
+  }
+
   saa <- as.numeric(st_area(hex))
   if ("r_lg" %in% colnames(hex)) { # Shortcut to avoid calculating road densitys where there are no roads in SA
     if (!isTRUE(any(hex$r_lg))) {
@@ -185,22 +195,21 @@ getroaddensity <- function(hexes, sa, pr, sr, wr, r, idcol, ...) {
     }
   }
 
-  sr_h <- dplyr::filter(hex, {{ idcol }} == "CLIMATE ACTION NOW")
-  pr_h <- dplyr::filter(hex, {{ idcol }} == "CATBURGLER")
 
-  if (any((st_intersects(hex, pr, sparse = F)))) {
+  # browser()
+  #if (any((st_intersects(hex, pr, sparse = F)))) {
     pr_h <- st_intersection(pr, hex)
-  } # else{print("No Prime")}#,
+  #} # else{print("No Prime")}#,
   # %>% st_area() %>% sum#ifelse(isTRUE(st_contains(hex, pr), sparse =F),, 0)
-  if (any((st_intersects(hex, sr, sparse = F)))) {
+ # if (any((st_intersects(hex, sr, sparse = F)))) {
     sr_h <- st_intersection(sr, hex)
-  } # else{print("No Sec")}
+  #} # else{print("No Sec")}
   ## %>% st_area() %>% sum#ifelse(isTRUE(st_contains(hex, sr, sparse =F)), ,0)
-  if ((nrow(pr_h) == 0) | (nrow(sr_h) == 0)) {
+ if ((nrow(pr_h) == 0) | (nrow(sr_h) == 0)) {
     sr_h_noP <- sr_h
   } else {
     sr_h_noP <- st_difference(sr_h, pr_h)
-  }
+ }
 
   pr_a <- st_area(pr_h) %>%
     as.numeric() %>%
@@ -247,6 +256,8 @@ getroaddensity <- function(hexes, sa, pr, sr, wr, r, idcol, ...) {
 #' @param calc_roads Logical. Should you calculate roads or are they already included in hexagon layer
 #' @param airport_cols Columns to use extract airport info. See examples. Should be length of 3.
 #' @param basecamp_cols Columns to use extract basecamp info. See examples. Should be length of 3.
+#' @param ... You can include multisession with the furrr package. Needs to include Multicor=T & Cores = int
+#'
 #'
 #' @return
 #' @export
@@ -262,7 +273,8 @@ getroaddensity <- function(hexes, sa, pr, sr, wr, r, idcol, ...) {
 prepare_cost <- function(truck_roads, atv_roads, winter_roads, all_roads, airports, basecamps, hexagons, idcol_,
                          calc_roads = T,
                          airport_cols = c("NAME", "AIRPORT_TY", "OGF_ID"),
-                         basecamp_cols = c("OFFICIAL_N", "OGF_ID", "CLASS_SUBT")) {
+                         basecamp_cols = c("OFFICIAL_N", "OGF_ID", "CLASS_SUBT"), ...) {
+  args_ <- list(...)
   ids <- dplyr::select(hexagons, {{ idcol_ }})[[1]]
   # unique(hexagons[[as_string(quote(idcol_))]]) # Hexagon IDs
   if (isTRUE(calc_roads)) {
@@ -271,12 +283,27 @@ prepare_cost <- function(truck_roads, atv_roads, winter_roads, all_roads, airpor
     pb <- progress::progress_bar$new(total=length(ids),
                                      format =
                                        "Getting road density [:bar] :percent eta: :eta")
+    if(isTRUE(args_$Multicor)){
+      library(furrr)
+      plan(multisession, workers= max(as.numeric(args_$Cores), 2, na.rm=T))
+      # browser()
+      dfk <- as_label(enquo( idcol_ ))
+      hexagons_w_roads <- future_map(ids,
+                                     ~{pb$tick();getroaddensity_par(sa = .x,
+                                                                hexes = hexagons, wr = winter_buff,
+                                                                pr = truck_roads, sr = atv_roads,
+                                                                r = all_roads, idcol = dfk, ... )}
+      ) %>% do.call("rbind", .) %>%
+        left_join(x = hexagons, y = .) %>%
+        st_as_sf()
+    }else{
     hexagons_w_roads <- map_df(ids, ~{pb$tick();getroaddensity(sa = .x,
       hexes = hexagons, wr = winter_buff,
-      pr = truck_roads, sr = atv_roads, r = all_roads, idcol = {{ idcol_ }} )}
+      pr = truck_roads, sr = atv_roads, r = all_roads, idcol = {{ idcol_ }}, ... )}
     ) %>%
       left_join(x = hexagons, y = .) %>%
       st_as_sf()
+    }
   } else {
     hexagons_w_roads <- hexagons
   }
@@ -403,3 +430,5 @@ prepare_cost <- function(truck_roads, atv_roads, winter_roads, all_roads, airpor
 # plot(x, estimate_cost_study_area(30, x, min(1-x,0.3), sa, base, air, cost_vars, returnall = F, manualdist = T), type = 'l')
 # lines(x, estimate_cost_study_area(30, x, pmin(1-x,0.6), sa, base, air, cost_vars, returnall = F, manualdist = T), type = 'l', col='red')
 # plot(x, estimate_cost_study_area(30, x, min(1-x,1), sa, base, air, cost_vars, returnall = F, manualdist = T), type = 'l')
+
+

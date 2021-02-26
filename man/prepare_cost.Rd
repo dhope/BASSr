@@ -15,7 +15,8 @@ prepare_cost(
   idcol_,
   calc_roads = T,
   airport_cols = c("NAME", "AIRPORT_TY", "OGF_ID"),
-  basecamp_cols = c("OFFICIAL_N", "OGF_ID", "CLASS_SUBT")
+  basecamp_cols = c("OFFICIAL_N", "OGF_ID", "CLASS_SUBT"),
+  ...
 )
 }
 \arguments{
@@ -40,6 +41,8 @@ prepare_cost(
 \item{airport_cols}{Columns to use extract airport info. See examples. Should be length of 3.}
 
 \item{basecamp_cols}{Columns to use extract basecamp info. See examples. Should be length of 3.}
+
+\item{...}{You can include multisession with the furrr package. Needs to include Multicor=T & Cores = int}
 }
 \value{
 
