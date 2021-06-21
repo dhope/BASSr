@@ -119,7 +119,7 @@ estimate_cost_study_area <- function(narus, StudyAreas, pr, sr,wr = 0,
     total_truck_cost = primary_cost * {{ pr }},
     total_atv_cost = atv_cost * {{ sr }},
     total_winter_cost = atv_cost * {{ wr }}, # CURRENTLY USING ATV COSTING FOR WINTER ROAD
-    p_heli = (1 - {{ pr }} - {{ sr }} - {{ wr }}),
+    p_heli = pmax(0,(1 - {{ pr }} - {{ sr }} - {{ wr }})),
     total_heli_cost = p_heli * (cost_base + cost_to_SA + cost_within_SA),
     narus = narus,
     RawCost = total_truck_cost + total_atv_cost + total_heli_cost + total_winter_cost
@@ -205,11 +205,7 @@ getroaddensity <- function(hexes, sa, pr, sr, wr, r, idcol, ...) {
     sr_h <- st_intersection(sr, hex)
   #} # else{print("No Sec")}
   ## %>% st_area() %>% sum#ifelse(isTRUE(st_contains(hex, sr, sparse =F)), ,0)
- if ((nrow(pr_h) == 0) | (nrow(sr_h) == 0)) {
-    sr_h_noP <- sr_h
-  } else {
-    sr_h_noP <- st_difference(sr_h, pr_h)
- }
+    sr_h_noP <- if_else((nrow(pr_h) == 0) | (nrow(sr_h) == 0), sr_h, st_difference(sr_h, pr_h))
 
   pr_a <- st_area(pr_h) %>%
     as.numeric() %>%
@@ -226,7 +222,7 @@ getroaddensity <- function(hexes, sa, pr, sr, wr, r, idcol, ...) {
     as.numeric() %>%
     sum() # ifelse(isTRUE(st_contains(hex, r, sparse =F)), ,0)
 
-  if(sr_a>saa){browser()}
+  if(sr_a>saa){simpleError(glue::glue("Secondary Road {sr_a} is less than study area {saa}"))}
   tibble(
     saa = saa,
     pr = ifelse(length(pr_a) == 0, 0, pr_a),
@@ -289,16 +285,17 @@ prepare_cost <- function(truck_roads, atv_roads, winter_roads, all_roads, airpor
       # browser()
       dfk <- as_label(enquo( idcol_ ))
       hexagons_w_roads <- future_map(ids,
-                                     ~{pb$tick();getroaddensity_par(sa = .x,
-                                                                hexes = hexagons, wr = winter_buff,
+                                     ~{pb$tick();getroaddensity(sa = .x,
+                                                                hexes = hexagons, wr = winter_roads,
                                                                 pr = truck_roads, sr = atv_roads,
-                                                                r = all_roads, idcol = dfk, ... )}
+                                                                r = all_roads, idcol = dfk, ... )},
+                                     .options = furrr_options(seed = TRUE)
       ) %>% do.call("rbind", .) %>%
         left_join(x = hexagons, y = .) %>%
         st_as_sf()
     }else{
     hexagons_w_roads <- map_df(ids, ~{pb$tick();getroaddensity(sa = .x,
-      hexes = hexagons, wr = winter_buff,
+      hexes = hexagons, wr = winter_roads,
       pr = truck_roads, sr = atv_roads, r = all_roads, idcol = {{ idcol_ }}, ... )}
     ) %>%
       left_join(x = hexagons, y = .) %>%
