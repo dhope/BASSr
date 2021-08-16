@@ -20,7 +20,8 @@ Imports:
     methods,
     Rcpp
 Suggests:
-  knitr
+  knitr,
+  rmarkdown
 Encoding: UTF-8
 LazyData: true
 VignetteBuilder: knitr

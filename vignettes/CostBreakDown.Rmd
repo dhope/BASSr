@@ -133,7 +133,8 @@ maxARUs <- 200
         sr = 0,
         dist_base_sa = 100,
         dist_dist_airport_sa = 250,
-        dsit2airport_base = 200
+        dsit2airport_base = 200,
+        AT = "Highway"
         )
 runcost <- function(n,d) {map_df(1:n, estimate_cost_study_area,
                                    StudyAreas =d, 
@@ -148,7 +149,8 @@ cost_heli <-  runcost(maxARUs, d_heli)
                    StudyAreaID  = "Helicopter - No Base Camp",
         dist_base_sa = 100,
         dist_dist_airport_sa = 130,
-        dsit2airport_base = 200
+        dsit2airport_base = 200,
+        AT = "Highway"
         )
 cost_heli2 <-  runcost(maxARUs, d_heli2)
 
@@ -157,16 +159,18 @@ cost_heli2 <-  runcost(maxARUs, d_heli2)
         sr = 0,
         dist_base_sa = 200,
         dist_dist_airport_sa = 250,
-        dsit2airport_base = 200
+        dsit2airport_base = 200,
+        AT = "Highway"
         )
 cost_heli3 <-  runcost(maxARUs, d_heli3)
-d_truck <- mutate(d_heli, pr = 1, StudyAreaID  = "Truck" )
+d_truck <- mutate(d_heli, pr = 1, StudyAreaID  = "Truck",
+        AT = "Highway" )
 cost_truck <- runcost(maxARUs, d_truck)
 d_atv <- mutate(d_heli, sr = 1,StudyAreaID  = "ATV" )
 cost_atv <- runcost(maxARUs, d_atv)
 
 cost_mixed <- 
-  mutate(d_heli, pr = 0.3, sr = 0.3, StudyAreaID = "Mixed") %>% 
+  mutate(d_heli, pr = 0.3, sr = 0.3, StudyAreaID = "Mixed", AT = "Highway") %>% 
   runcost(maxARUs,.)
 
 cost_test <- 
@@ -204,6 +208,18 @@ ggplot(cost_test, aes(narus,scLogCost, colour = StudyAreaID )) +
 ## Baseline variables
 
 ```{r, results='asis'}
-BASSr::cost_vars %>% as_tibble() %>% pivot_longer(names_to = "Variable", values_to = "Value", cols = everything()) %>% knitr::kable()
+BASSr::cost_vars %>% as_tibble() %>% 
+  dplyr::select(-helicopter_airport_cost_per_l) %>% 
+  pivot_longer(names_to = "Variable", values_to = "Value", cols = everything()) %>% 
+  # BASSr::cost_vars$helicopter_airport_cost_per_l
+  knitr::kable()
 ```
 
+
+With current version, you can adjust cost of fuel based on airport type
+
+
+```{r, results='asis'}
+  BASSr::cost_vars$helicopter_airport_cost_per_l %>% 
+  knitr::kable()
+```
