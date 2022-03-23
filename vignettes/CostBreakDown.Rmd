@@ -142,7 +142,7 @@ runcost <- function(n,d) {map_df(1:n, estimate_cost_study_area,
                                    dist_base_sa = dist_base_sa, 
                                    dist_airport_sa = dist_dist_airport_sa,
                                    dist2airport_base = dsit2airport_base, 
-                                   vars = cost_vars)}
+                                   vars = cost_vars, AirportType = "Highway")}
 
 cost_heli <-  runcost(maxARUs, d_heli)
  d_heli2 <- mutate(d_heli,
