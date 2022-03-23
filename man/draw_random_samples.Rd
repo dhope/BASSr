@@ -4,7 +4,7 @@
 \alias{draw_random_samples}
 \title{Draw random sample}
 \usage{
-draw_random_samples(att_cleaned, att.sf, num_runs, nsamples)
+draw_random_samples(att_cleaned, att.sf, num_runs, nsamples, ...)
 }
 \arguments{
 \item{att_cleaned}{The attribute file for hexagons. Must include Habitat Layers and hexid}

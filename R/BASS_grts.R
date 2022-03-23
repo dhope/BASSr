@@ -13,7 +13,9 @@
 #' @return Returns a sample output in long and wide formats.
 #' @export
 #'
-draw_random_samples <- function(att_cleaned, att.sf, num_runs, nsamples) {
+draw_random_samples <- function(att_cleaned, att.sf, num_runs, nsamples, ...) {
+  args <- list(...)
+  if(packageVersion("spsurvey")<5){
   equaldesgn <- list(None = list # a list named 'None" that contains:
   (
     panel = c(PanelOne = nsamples), # panelOne indicates the number of samples you want
@@ -38,9 +40,50 @@ draw_random_samples <- function(att_cleaned, att.sf, num_runs, nsamples) {
     as_tibble() %>%
     mutate(run = rep(1:num_runs, each = nsamples), num_runs = num_runs, nsamples = nsamples)
 
+  }
+  if(packageVersion("spsurvey")>=5){
+    mindis <-  NULL
+    maxtry <-  10
+    DesignID <-  "Sample"
+    list2env(args, envir = environment())
+    # if(length(N)==1){
+    #   Stratdsgn <- rep(N, length(arus))
+    #   n_os <-  round(N*os)
+    #   names(Stratdsgn) <- arus
+    #   if(n_os==0) n_os <- NULL
+    # } else if ( all(arus %in% names(N)) ){
+    #   Stratdsgn <- N
+    #   if(length(os)==1){
+    #     if(n_os==0){ n_os <- NULL
+    #     } else  n_os <- lapply(FUN = function(x) x * os, X = N )
+    #   } else if ( all(arus %in% names(N)) ){
+    #     n_os <- os
+    #   } else{simpleError("OS should either be single value or list with all strata ID. Not all Strata found in OS and OS has length >1")}
+    # }
+
+    invisible(capture.output(grts_output <- map(
+      1:num_runs,
+      ~ spsurvey::grts(sframe = att.sf,
+                           # n_over = n_os,
+                           n_base = nsamples,
+                           # stratum_var = paste0(strat_),
+                           mindis = mindis,
+                           DesignID = "sample",
+                           maxtry = maxtry)
+    )
+    )
+    )
+
+    grts_random_sample <- transpose(grts_output) %>%
+      pluck("sites_base") |>
+      bind_rows() |>
+      mutate(run = rep(1:num_runs, each = nsamples), num_runs = num_runs, nsamples = nsamples)
+
+
+  }
   grts_random_sample_long <- pivot_longer(grts_random_sample,
-    cols = matches("LC\\d"),
-    names_to = "lc", values_to = "ha"
+                                          cols = matches("LC\\d"),
+                                          names_to = "lc", values_to = "ha"
   )
 
   message(glue::glue("Finished GRTS draw of {num_runs} runs and {nsamples} samples\n\r"))

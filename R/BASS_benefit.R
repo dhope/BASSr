@@ -22,6 +22,11 @@ calculate_benefit <- function(grts_res, HexID, att_long, output = "all", quick =
   if (!output %in% c("all", "full", "by_run", "mean_benefit")) {
     simpleError("output must be one of 'all'(default), 'full','by_run', or 'mean_benefit'")
   }
+  if("sf" %in% class(grts_res$grts_random_sample)){
+    grts_res$grts_random_sample <- st_drop_geometry(grts_res$grts_random_sample)
+  }
+
+
   pd <- F # ifelse(output == 'all',  T, F)
   if (is_null(non_random_set)) {
     grts_random_sample_summary_widenest <-

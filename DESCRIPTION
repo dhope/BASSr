@@ -1,7 +1,7 @@
 Package: BASSr
 Type: Package
 Title: Boreal Avian Sampling Strategy
-Version: 0.2.0
+Version: 0.3.0
 Author: David Hope
 Maintainer: David Hope <david.hope@canada.ca>
 Description: More about what it does (maybe more than one line)
@@ -25,4 +25,4 @@ Suggests:
 Encoding: UTF-8
 LazyData: true
 VignetteBuilder: knitr
-RoxygenNote: 7.1.1
+RoxygenNote: 7.1.2

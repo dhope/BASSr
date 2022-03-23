@@ -13,31 +13,33 @@
 #' @export
 #'
 run_grts_on_BASS <- function(n_grts_tests, study_area_results, nARUs, os,
-                             idcol, hexid, removedhexes = c("None"), return_points = F, Stratum = None) {
+                             idcol, hexid, removedhexes = c("None"), return_points = F, Stratum = None, ...) {
   if (as_label(enquo(hexid)) == "<empty>") stop("run_grts_on_BASS now requires you to specify hexagon column under hexid. Please correct and try again.")
-  if (is.list(study_area_results) & !is.data.frame(study_area_results)) {
-    if (!is_null(study_area_results$inclusionPr)) {
-      attframe <- study_area_results$inclusionPr
-    }
-    if (is_null(study_area_results$inclusionPr)) {
-      fbr_t <- study_area_results %>% transpose()
-      attframe <- fbr_t %>%
-        .[["inclusion_probs"]] %>%
-        do.call("rbind", .) %>%
-        as_tibble() %>%
-        dplyr::select(-geometry) %>%
-        filter(!is.na(X))
-    }
-  } else {
-    if ("geometry" %in% names(study_area_results)) {
-      attframe <- as_tibble(study_area_results) %>%
-        dplyr::select(-geometry) %>%
-        filter(!is.na(X))
+
+  if(packageVersion("spsurvey")<5){
+    if (is.list(study_area_results) & !is.data.frame(study_area_results)) {
+      if (!is_null(study_area_results$inclusionPr)) {
+        attframe <- study_area_results$inclusionPr
+      }
+      if (is_null(study_area_results$inclusionPr)) {
+        fbr_t <- study_area_results %>% transpose()
+        attframe <- fbr_t %>%
+          .[["inclusion_probs"]] %>%
+          do.call("rbind", .) %>%
+          as_tibble() %>%
+          dplyr::select(-geometry) %>%
+          filter(!is.na(X))
+      }
     } else {
-      attframe <- as_tibble(study_area_results)
+      if ("geometry" %in% names(study_area_results)) {
+        attframe <- as_tibble(study_area_results) %>%
+          dplyr::select(-geometry) %>%
+          filter(!is.na(X))
+      } else {
+        attframe <- as_tibble(study_area_results)
+      }
     }
-  }
-  attframe <- filter(attframe, !{{ hexid }} %in% removedhexes)
+    attframe <- filter(attframe, !{{ hexid }} %in% removedhexes)
   if(as_label(enquo(Stratum)) == "None"){
   Stratdesgn <- rep(list(PanelOne = list # a list named 'None" that contains:
   (
@@ -76,8 +78,73 @@ run_grts_on_BASS <- function(n_grts_tests, study_area_results, nARUs, os,
       shapefile = FALSE,
     ) # no shapefile created here, will be created below)
   )))
+  return(grts_output)
+  }
+  if(packageVersion("spsurvey")>=5){
+    # browser()
+    mindis <-  NULL
+    maxtry <-  10
+    DesignID <-  "Sample"
+    crs <- 3395 #4326 #
+    list2env(list(...), envir = environment())
 
-  grts_output
+    if (is.list(study_area_results) & !is.data.frame(study_area_results)) {
+      if (!is_null(study_area_results$inclusionPr)) {
+        attframe <- study_area_results$inclusionPr
+      }
+      if (is_null(study_area_results$inclusionPr)) {
+        fbr_t <- study_area_results %>% transpose()
+        attframe <- fbr_t %>%
+          .[["inclusion_probs"]] %>%
+          do.call("rbind", .) %>%
+          as_tibble() %>%
+          # dplyr::select(-geometry) %>%
+          filter(!is.na(X))
+      }
+    }
+    if (!"geometry" %in% names(study_area_results)) {
+        attframe <- study_area_results %>%
+          filter(!is.na(X)) |>
+          st_as_sf(coords = c("X", "Y"), crs = crs)
+      } else {
+        attframe <- st_as_sf(study_area_results)
+      }
+
+    attframe <- filter(attframe, !{{ hexid }} %in% removedhexes)
+
+    if(as_label(enquo(Stratum)) == "None"){
+      Stratdsgn <- rep(nARUs, length(nARUs))
+      n_os <-  round(nARUs*os)
+      names(Stratdsgn) <- unique(attframe[[idcol]])
+      if(n_os==0) n_os <- NULL
+    } else if ( all(arus %in% names(N)) ){
+      Stratdsgn <- N
+      if(length(os)==1){
+        if(n_os==0){ n_os <- NULL
+        } else  n_os <- lapply(FUN = function(x) x * os, X = N )
+      } else if ( all(arus %in% names(N)) ){
+        n_os <- os
+      } else{simpleError("OS should either be single value or list with all strata ID. Not all Strata found in OS and OS has length >1")}
+    } else {simpleError("N should either be single value or list with all strata ID. Not all Strata found in N and N has length >1")}
+
+
+    invisible(capture.output(grts_output <- map(
+      1:n_grts_tests,
+      ~ spsurvey::grts(sframe = attframe,
+                       n_over = n_os,
+                       n_base = Stratdsgn,
+                       stratum_var = idcol,
+                       mindis = mindis,
+                       DesignID = "sample",
+                       aux_var = "inclpr",
+                       maxtry = maxtry)
+    )
+    )
+    )
+
+    return(grts_output)
+  }
+
 }
 
 

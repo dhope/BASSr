@@ -18,6 +18,8 @@ ont.proj <- 3161
 ## ----load-data----------------------------------------------------------------
 
 
+
+
 study_area_id  <- "ONT_SA_0740"
 
 SA_sum <- StudyArea_hexes$landcover %>% as_tibble() %>% 
@@ -32,7 +34,7 @@ SA_sum <- StudyArea_hexes$landcover %>% as_tibble() %>%
   mutate(lcc_fac = forcats::fct_reorder(LCC_NAME, pHab_SA))
 
 set.seed(2277)
-exampleHex <- sample_n(StudyArea_hexes$landcover, 1)
+exampleHex <- slice_sample(StudyArea_hexes$landcover, n = 1)
 
 hex_LC <- 
 StudyArea_hexes$landcover %>% 
@@ -167,10 +169,13 @@ exLC%>%  dplyr::select(lcc_fac,pHab, pHab_SA) %>%
 sample_hexes <- BASSr::draw_random_samples(att_cleaned = as_tibble(StudyArea_hexes$landcover), 
                                            att.sf = st_centroid(StudyArea_hexes$landcover), 
                                            num_runs = 1, nsamples = 10) 
-
+if(packageVersion("spsurvey")<5){
 sample_hexes_sf <- StudyArea_hexes$landcover %>% 
   filter(SampleUnitID %in% (sample_hexes$grts_random_sample %>% filter(panel == "PanelOne"))$SampleUnitID)
-
+} else{
+  sample_hexes_sf <- StudyArea_hexes$landcover %>% 
+  filter(SampleUnitID %in% (sample_hexes$grts_random_sample %>% filter(siteuse == "Base"))$SampleUnitID)
+}
 hex_wHHS <- 
 ggplot(exampleHex) + geom_sf(fill = 'red') +
   geom_sf(data = StudyArea_hexes$landcover, fill = NA) + 
@@ -278,6 +283,7 @@ a <- sum(rep_tabl$benefit )
 b <- quick_ben(d = exampleHex%>% as_tibble %>% 
              mutate_at(.vars = vars(contains("LC")),.funs = ~(.*hexsize)), 
           samples = sample_hexes$grts_random_sample %>% 
+            st_drop_geometry() |> 
              summarize_at(.vars = vars(contains("LC")),.funs = ~sum(.*hexsize)), 
           land_cover_summary = SA_sum %>% mutate(ha = pHab_SA*study_area_size), 
           col_ = SampleUnitID, pd=F)
@@ -307,6 +313,7 @@ multi_exbroken <- map_df(1:200,
                                       mutate_at(.vars = vars(contains("LC")),
                                                 .funs = ~(.*hexsize)), 
           samples = sample_hexes200$grts_random_sample %>% 
+            st_drop_geometry() |> 
             filter(run == .x) %>% 
              summarize_at(.vars = vars(contains("LC")),.funs = ~sum(.)), 
           land_cover_summary = SA_sum %>% mutate(ha = pHab_SA*study_area_size), 
@@ -328,6 +335,7 @@ one_sample <- quick_ben(
   d = StudyArea_hexes$landcover %>% as_tibble %>% 
              mutate_at(.vars = vars(contains("LC")),.funs = ~(.*hexsize)), 
           samples = sample_hexes$grts_random_sample %>% 
+    st_drop_geometry() |> 
              summarize_at(.vars = vars(contains("LC")),.funs = ~sum(.*hexsize)), 
           land_cover_summary = SA_sum %>% mutate(ha = pHab_SA*study_area_size), 
           col_ = SampleUnitID, pd=F)
