@@ -26,3 +26,5 @@ Encoding: UTF-8
 LazyData: true
 VignetteBuilder: knitr
 RoxygenNote: 7.1.2
+URL: https://github.com/dhope/BASSr
+BugReports: https://github.com/dhope/BASSr/issues
