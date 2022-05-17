@@ -20,11 +20,15 @@ Imports:
     methods,
     Rcpp
 Suggests:
-  knitr,
-  rmarkdown
+    knitr,
+    rmarkdown,
+    testthat (>= 3.0.0),
+    withr,
+    palmerpenguins
 Encoding: UTF-8
 LazyData: true
 VignetteBuilder: knitr
 RoxygenNote: 7.1.2
 URL: https://github.com/dhope/BASSr
 BugReports: https://github.com/dhope/BASSr/issues
+Config/testthat/edition: 3

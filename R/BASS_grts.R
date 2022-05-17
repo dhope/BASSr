@@ -9,12 +9,15 @@
 #' @param att.sf The simple features shape.file object
 #' @param num_runs The number of times to draw random samples from the attribute files
 #' @param nsamples The number of samples to draw from each run
+#' @param use_grts Logical. Indicates if should draw using GRTS or just random sample without
+#'                spatial dispersion.
 #'
 #' @return Returns a sample output in long and wide formats.
 #' @export
 #'
-draw_random_samples <- function(att_cleaned, att.sf, num_runs, nsamples, ...) {
+draw_random_samples <- function(att_cleaned, att.sf, num_runs, nsamples,use_grts = TRUE, ...) {
   args <- list(...)
+  if(isTRUE(use_grts)){
   if(packageVersion("spsurvey")<5){
   equaldesgn <- list(None = list # a list named 'None" that contains:
   (
@@ -22,7 +25,7 @@ draw_random_samples <- function(att_cleaned, att.sf, num_runs, nsamples, ...) {
     seltype = "Equal"
   )) # equal probability sample
 
-  invisible(capture.output(grts_output <- map(
+  invisible(capture.output(grts_output <- purrr::map(
     1:num_runs,
     ~ grts(
       design = equaldesgn, ## selects the reference equaldesgn object
@@ -35,9 +38,9 @@ draw_random_samples <- function(att_cleaned, att.sf, num_runs, nsamples, ...) {
     ) # no shapefile created here, will be created below)
   )))
 
-  grts_random_sample <- as.list(grts_output) %>%
-    do.call("rbind", .) %>%
-    as_tibble() %>%
+  grts_random_sample <- as.list(grts_output) |>
+    do.call("rbind", .) |>
+    as_tibble() |>
     mutate(run = rep(1:num_runs, each = nsamples), num_runs = num_runs, nsamples = nsamples)
 
   }
@@ -61,7 +64,7 @@ draw_random_samples <- function(att_cleaned, att.sf, num_runs, nsamples, ...) {
     #   } else{simpleError("OS should either be single value or list with all strata ID. Not all Strata found in OS and OS has length >1")}
     # }
 
-    invisible(capture.output(grts_output <- map(
+    invisible(capture.output(grts_output <- purrr::map(
       1:num_runs,
       ~ spsurvey::grts(sframe = att.sf,
                            # n_over = n_os,
@@ -74,8 +77,8 @@ draw_random_samples <- function(att_cleaned, att.sf, num_runs, nsamples, ...) {
     )
     )
 
-    grts_random_sample <- transpose(grts_output) %>%
-      pluck("sites_base") |>
+    grts_random_sample <- purrr::transpose(grts_output) |>
+      purrr::pluck("sites_base") |>
       bind_rows() |>
       mutate(run = rep(1:num_runs, each = nsamples), num_runs = num_runs, nsamples = nsamples)
 
@@ -87,6 +90,22 @@ draw_random_samples <- function(att_cleaned, att.sf, num_runs, nsamples, ...) {
   )
 
   message(glue::glue("Finished GRTS draw of {num_runs} runs and {nsamples} samples\n\r"))
+  return(list(random_sample = grts_random_sample, random_sample_long = grts_random_sample_long))
+  }
+  if(isFALSE(use_grts)){
+    random_sample <- purrr::map_df(1:num_runs, ~{dplyr::slice_sample(att.sf, n = nsamples) |>
+      dplyr::mutate(run = .x)} )
 
-  return(list(grts_random_sample = grts_random_sample, grts_random_sample_long = grts_random_sample_long))
+    random_sample_long <- pivot_longer(random_sample,
+                                       cols = matches("LC\\d"),
+                                       names_to = "lc", values_to = "ha"
+    )
+
+    return(list(random_sample = random_sample,
+                random_sample_long = random_sample_long))
+
+
+  }
+
+
 }

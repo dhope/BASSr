@@ -22,46 +22,46 @@ calculate_benefit <- function(grts_res, HexID, att_long, output = "all", quick =
   if (!output %in% c("all", "full", "by_run", "mean_benefit")) {
     simpleError("output must be one of 'all'(default), 'full','by_run', or 'mean_benefit'")
   }
-  if("sf" %in% class(grts_res$grts_random_sample)){
-    grts_res$grts_random_sample <- st_drop_geometry(grts_res$grts_random_sample)
+  if("sf" %in% class(grts_res$random_sample)){
+    grts_res$random_sample <- st_drop_geometry(grts_res$random_sample)
   }
 
 
   pd <- F # ifelse(output == 'all',  T, F)
   if (is_null(non_random_set)) {
-    grts_random_sample_summary_widenest <-
-      grts_res$grts_random_sample %>%
+    random_sample_summary_widenest <-
+      grts_res$random_sample %>%
       group_by(run) %>%
       summarize_at(vars(matches("LC\\d")), sum)
   }
   if (!is_null(non_random_set)) {
     if(is.vector(non_random_set)){
-    grts_random_sample_summary_widenest <-
-      grts_res$grts_random_sample %>%
+    random_sample_summary_widenest <-
+      grts_res$random_sample %>%
       group_by(run) %>%
       bind_rows(
         expand_grid(filter(
           att_long %>% mutate({{ HexID }} := as.character({{ HexID }})) %>%
             pivot_wider(id_cols = {{ HexID }}, names_from = lc, values_from = ha),
           {{ HexID }} %in% non_random_set
-        ), run = 1:n_distinct(grts_res$grts_random_sample$run))
+        ), run = 1:n_distinct(grts_res$random_sample$run))
       ) %>%
       summarize_at(vars(matches("LC\\d")), sum) %>%
       mutate(across(matches("LC\\d"),replace_na,0))
     } else if(is.data.frame(non_random_set)){
       if(is_null(grts_res)){
-      grts_random_sample_summary_widenest <-
+      random_sample_summary_widenest <-
         expand_grid(non_random_set,
-                    run = 1:n_distinct(grts_res$grts_random_sample$run)  ) %>%
+                    run = 1:n_distinct(grts_res$random_sample$run)  ) %>%
         group_by(run) %>%
         summarize_at(vars(matches("LC\\d")), sum) %>%
         mutate(across(matches("LC\\d"), replace_na, 0))
       } else{
-      grts_random_sample_summary_widenest <-
-        grts_res$grts_random_sample %>%
+      random_sample_summary_widenest <-
+        grts_res$random_sample %>%
         bind_rows(
           expand_grid(non_random_set
-          , run = 1:n_distinct(grts_res$grts_random_sample$run))
+          , run = 1:n_distinct(grts_res$random_sample$run))
         ) %>%
         group_by(run) %>%
         summarize_at(vars(matches("LC\\d")), sum) %>%
@@ -83,17 +83,17 @@ calculate_benefit <- function(grts_res, HexID, att_long, output = "all", quick =
   if (isTRUE(quick)) {
     return(quick_ben(
       d = hexes,
-      samples = grts_random_sample_summary_widenest,
+      samples = random_sample_summary_widenest,
       land_cover_summary = total, land_cover_weights = land_cover_weights,
       col_ = {{ HexID }}, pd
     ))
   }
 
   benefit_by_run <- map_df(
-    1:n_distinct(grts_random_sample_summary_widenest$run),
+    1:n_distinct(random_sample_summary_widenest$run),
     ~ quick_ben(
       d = hexes,
-      samples = grts_random_sample_summary_widenest %>%
+      samples = random_sample_summary_widenest %>%
         filter(run == .x),
       land_cover_summary = total,
       col_ = {{ HexID }}, pd = pd
@@ -104,7 +104,7 @@ calculate_benefit <- function(grts_res, HexID, att_long, output = "all", quick =
   if (output == "all") {
     return(list(
       hexagon_benefits_by_run = benefit_by_run,
-      grts_random_sample_summary_widenest = grts_random_sample_summary_widenest,
+      random_sample_summary_widenest = random_sample_summary_widenest,
       hexes = hexes, total = total
     ))
   }
@@ -158,10 +158,10 @@ prepare_hab_long <- function(att, lg_area = StudyAreaID) {
 #' @export
 subsample_grts_and_calc_benefit <- function(nsamples, num_runs, grts_file, att, q = T) {
   runs_to_pull <- sample(1:1000, num_runs)
-  grts_ <- read_rds(grts_file)[nsamples]$grts_random_sample_long %>%
+  grts_ <- read_rds(grts_file)[nsamples]$random_sample_long %>%
     filter(run %in% runs_to_pull)
 
-  grts_res <- list(grts_random_sample_long = grts_)
+  grts_res <- list(random_sample_long = grts_)
   rm(grts_)
   calculate_benefit(grts_res = grts_res, att_long = att, output = "all", quick = q)
 }
@@ -183,9 +183,9 @@ subsample_grts_and_calc_benefit <- function(nsamples, num_runs, grts_file, att, 
 quick_ben <- function(d, samples, land_cover_summary, col_, pd, land_cover_weights = NULL) {
 
   # col <- rlang::enquo(col_)
-  hexes <- d %>%
-    as_tibble() %>%
-    dplyr::select_at(vars(matches("LC\\d")))
+  hexes <- d  |>
+    as_tibble()  |>
+    dplyr::select(matches("LC\\d"))
 
 
   if (all(round(rowSums(hexes), 0) == 100) | all(round(rowSums(hexes), 0) == 1)) {
@@ -193,26 +193,26 @@ quick_ben <- function(d, samples, land_cover_summary, col_, pd, land_cover_weigh
                 This will not calculate accurate benefit values.")
   }
   hexNames <- # as.character(d[[col_]])
-    dplyr::select(as_tibble(d), {{ col_ }}) %>% .[[1]]
+    dplyr::select(as_tibble(d), {{ col_ }})  |> pull(1)
   # print(names(d))
   # samples <- grts_random_sample_summary_widenest
   # browser()
   if (nrow(land_cover_summary) > n_distinct(land_cover_summary$lc)) {
     stop("Stratification of benefit calculation not yet supported. Your land cover summary had too many rows.")
   }
-  total <- land_cover_summary %>%
-    dplyr::select(lc, ha) %>%
+  total <- land_cover_summary  |>
+    dplyr::select(lc, ha)  |>
     pivot_wider(names_from = lc, values_from = ha)
   total <- total[names(hexes)]
   if (all(round(rowSums(total), 0) == 100) | all(round(rowSums(total), 0) == 1)) {
     stop("I think you have inputed percentages into your total values.
                 This will not calculate accurate benefit values.")
   }
-  samp <- samples %>% dplyr::select_at(vars(matches("LC\\d")))
+  samp <-  dplyr::select(samples, matches("LC\\d"))
   # browser()
   if (!all(names(hexes) %in% names(samp))) {
-    extraN <- dplyr::select(hexes, names(hexes)[!names(hexes) %in% names(samp)]) %>%
-      mutate_all(.funs = ~ . * 0)
+    extraN <- dplyr::select(hexes, names(hexes)[!names(hexes) %in% names(samp)])  |>
+      mutate(across(.funs = ~ {.x * 0}))
     samp <- bind_cols(samp, extraN)
   }
   samp <- samp[names(hexes)]
@@ -221,9 +221,9 @@ quick_ben <- function(d, samples, land_cover_summary, col_, pd, land_cover_weigh
     w <- rep(1, length(names(hexes)))
   } else {
     if (!all(names(hexes) %in% land_cover_weights$lc)) {
-      extraNw <- dplyr::select(hexes, names(hexes)[!names(hexes) %in% names(land_cover_weights)]) %>%
-        pivot_longer(cols = everything(), values_to = "weights", names_to = "lc") %>%
-        mutate_at(.vars = vars(weights), .funs = ~1)
+      extraNw <- dplyr::select(hexes, names(hexes)[!names(hexes) %in% names(land_cover_weights)])  |>
+        pivot_longer(cols = everything(), values_to = "weights", names_to = "lc")  |>
+        mutate(weights = 1)
       land_cover_weights <- bind_rows(land_cover_weights, extraNw)
     }
     w <-

@@ -19,14 +19,11 @@ knitr::opts_chunk$set(
   collapse = TRUE,
   comment = "#>"
 )
-library(tidyverse)
-library(sf)
-library(spsurvey)
-library(glue)
 library(BASSr)
-library(raster)
-library(rlang)
+library(ggplot2)
+library(glue)
 library(patchwork)
+
 ont.proj <- 3161
 
 ```
@@ -152,7 +149,7 @@ r <- raster::raster(system.file("extdata", glue("{study_area_id}.tif"),
   # library(patchwork)
   # lc + inplt
 
-lc + ggspatial::annotation_scale(location = "bl", width_hint = 0.4) 
+lc #+ ggspatial::annotation_scale(location = "bl", width_hint = 0.4) 
 ``` 
 
 
@@ -202,7 +199,7 @@ r2 <- r %>% filter(x<st_bbox(exampleHex)[[3]]&x>st_bbox(exampleHex)[[1]]&y<st_bb
  ggplot() + geom_raster(data = r2, aes(x, y, fill = LCC_NAME)) +
     ggplot2::scale_discrete_manual(aesthetics = 'fill', values = pal_) +
     labs(x = "", y = "", fill = "LCC2015") + theme_linedraw() +
-   ggspatial::annotation_scale(location = "bl", width_hint = 0.4)  +
+   # ggspatial::annotation_scale(location = "bl", width_hint = 0.4)  +
   geom_sf(data = exampleHex, fill =NA, colour= 'red', size = 2) + theme(legend.position = 'none')+
   coord_sf(xlim =st_bbox(exampleHex)[c(1,3)], ylim = st_bbox(exampleHex)[c(2,4)])
 
@@ -276,10 +273,10 @@ sample_hexes <- BASSr::draw_random_samples(att_cleaned = as_tibble(StudyArea_hex
                                            num_runs = 1, nsamples = 10) 
 if(packageVersion("spsurvey")<5){
 sample_hexes_sf <- StudyArea_hexes$landcover %>% 
-  filter(SampleUnitID %in% (sample_hexes$grts_random_sample %>% filter(panel == "PanelOne"))$SampleUnitID)
+  filter(SampleUnitID %in% (sample_hexes$random_sample %>% filter(panel == "PanelOne"))$SampleUnitID)
 } else{
   sample_hexes_sf <- StudyArea_hexes$landcover %>% 
-  filter(SampleUnitID %in% (sample_hexes$grts_random_sample %>% filter(siteuse == "Base"))$SampleUnitID)
+  dplyr::filter(SampleUnitID %in% (sample_hexes$random_sample %>% filter(siteuse == "Base"))$SampleUnitID)
 }
 hex_wHHS <- 
 ggplot(exampleHex) + geom_sf(fill = 'red') +
@@ -438,7 +435,7 @@ In the table above, there are only 5 land cover types with a benefit (Urban and 
 a <- sum(rep_tabl$benefit )
 b <- quick_ben(d = exampleHex%>% as_tibble %>% 
              mutate_at(.vars = vars(contains("LC")),.funs = ~(.*hexsize)), 
-          samples = sample_hexes$grts_random_sample %>% 
+          samples = sample_hexes$random_sample %>% 
             st_drop_geometry() |> 
              summarize_at(.vars = vars(contains("LC")),.funs = ~sum(.*hexsize)), 
           land_cover_summary = SA_sum %>% mutate(ha = pHab_SA*study_area_size), 
@@ -469,7 +466,7 @@ landcover_ha <- StudyArea_hexes$landcover %>%
 att.long <- BASSr::prepare_hab_long(as_tibble(landcover_ha))
 set.seed(1234)
 sample_hexes200 <- BASSr::draw_random_samples(att_cleaned = as_tibble(landcover_ha), 
-                                           att.sf = st_centroid(landcover_ha), 
+                                           att.sf = st_centroid(landcover_ha), use_grts = F,
                                            num_runs = 200, nsamples = 10) 
 
 multi_ex <- BASSr::calculate_benefit(grts_res = sample_hexes200, 
@@ -477,12 +474,12 @@ multi_ex <- BASSr::calculate_benefit(grts_res = sample_hexes200,
                                      att_long = att.long[att.long$SampleUnitID==exampleHex$SampleUnitID,], 
                                      q=T )
 
-multi_exbroken <- map_df(1:200, 
+multi_exbroken <- purrr::map_df(1:200, 
                          ~quick_ben(d = exampleHex %>% as_tibble %>%
                                       dplyr::select(-geometry) %>%
                                       mutate_at(.vars = vars(contains("LC")),
                                                 .funs = ~(.*hexsize)), 
-          samples = sample_hexes200$grts_random_sample %>% 
+          samples = sample_hexes200$random_sample %>% 
             st_drop_geometry() |> 
             filter(run == .x) %>% 
              summarize_at(.vars = vars(contains("LC")),.funs = ~sum(.)), 
@@ -516,7 +513,7 @@ The total benefit for the example focal sample unit based on national land cover
 one_sample <- quick_ben(
   d = StudyArea_hexes$landcover %>% as_tibble %>% 
              mutate_at(.vars = vars(contains("LC")),.funs = ~(.*hexsize)), 
-          samples = sample_hexes$grts_random_sample %>% 
+          samples = sample_hexes$random_sample %>% 
     st_drop_geometry() |> 
              summarize_at(.vars = vars(contains("LC")),.funs = ~sum(.*hexsize)), 
           land_cover_summary = SA_sum %>% mutate(ha = pHab_SA*study_area_size), 
@@ -550,8 +547,8 @@ I calculated benefit for each sample unit as the focal sample unit using 200 ran
 benefits2 <- calculate_benefit(sample_hexes200, HexID = SampleUnitID,att_long =  att.long, quick = T, 
                                output = 'mean.benefit')
 
-sample_hexes100 <- list(grts_random_sample = sample_hexes200$grts_random_sample %>%  filter(run <=100),
-                        grts_random_sample_long = sample_hexes200$grts_random_sample_long %>%  filter(run <=100))
+sample_hexes100 <- list(random_sample = sample_hexes200$random_sample %>%  filter(run <=100),
+                        random_sample_long = sample_hexes200$random_sample_long %>%  filter(run <=100))
 
 benefits1 <- calculate_benefit(sample_hexes100, HexID = SampleUnitID,att_long =  att.long, quick = T, 
                                output = 'mean.benefit')
@@ -586,6 +583,7 @@ Lets have a look it what a larger sample set size will look like. I next calcula
 set.seed(1234)
 sample_hexes3 <- BASSr::draw_random_samples(att_cleaned = as_tibble(landcover_ha), 
                                            att.sf = st_centroid(landcover_ha), 
+                                           use_grts = F,
                                            num_runs = 200, nsamples = 20) 
 
 benefits3 <- calculate_benefit(sample_hexes3, HexID = SampleUnitID,att_long =  att.long, quick = T, 
@@ -611,8 +609,8 @@ After running multiple iterations of drawing hypothetical sample sets we can the
 benefit_sf <- 
 ggplot(benefits2 %>% right_join(landcover_ha) %>% st_as_sf) +
   geom_sf(aes(fill = benefit)) + scale_fill_viridis_c() + theme_linedraw() +
-  geom_sf(data = exampleHex, fill = NA, colour = 'red')+
-   ggspatial::annotation_scale(location = "bl", width_hint = 0.4) 
+  geom_sf(data = exampleHex, fill = NA, colour = 'red')#+
+   # ggspatial::annotation_scale(location = "bl", width_hint = 0.4) 
 benefit_sf
 ```
 

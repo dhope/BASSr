@@ -4,7 +4,14 @@
 \alias{draw_random_samples}
 \title{Draw random sample}
 \usage{
-draw_random_samples(att_cleaned, att.sf, num_runs, nsamples, ...)
+draw_random_samples(
+  att_cleaned,
+  att.sf,
+  num_runs,
+  nsamples,
+  use_grts = TRUE,
+  ...
+)
 }
 \arguments{
 \item{att_cleaned}{The attribute file for hexagons. Must include Habitat Layers and hexid}
@@ -14,6 +21,9 @@ draw_random_samples(att_cleaned, att.sf, num_runs, nsamples, ...)
 \item{num_runs}{The number of times to draw random samples from the attribute files}
 
 \item{nsamples}{The number of samples to draw from each run}
+
+\item{use_grts}{Logical. Indicates if should draw using GRTS or just random sample without
+spatial dispersion.}
 }
 \value{
 Returns a sample output in long and wide formats.

@@ -8,3 +8,11 @@ options(
   ),
   usethis.protocol = "ssh"
 )
+if(interactive()){
+  suppressMessages({
+    require(devtools)
+    require(usethis)
+    require(testthat)
+  })
+}
+
