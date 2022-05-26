@@ -38,9 +38,6 @@ estimate_cost_study_area(
 
 \item{vars}{}
 }
-\value{
-
-}
 \description{
 Cost model estimate
 }

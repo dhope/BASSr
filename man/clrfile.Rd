@@ -7,12 +7,12 @@
 \format{
 A data frame with 20 rows and 6 variables:
 \describe{
-  \item{Value}{price, in US dollars}
-  \item{red}{weight of the diamond, in carats}
-  \item{green}{weight of the diamond, in carats}
-  \item{blue}{weight of the diamond, in carats}
-  \item{rgb}{weight of the diamond, in carats}
-  \item{LCC_NAME}{weight of the diamond, in carats}
+\item{Value}{price, in US dollars}
+\item{red}{weight of the diamond, in carats}
+\item{green}{weight of the diamond, in carats}
+\item{blue}{weight of the diamond, in carats}
+\item{rgb}{weight of the diamond, in carats}
+\item{LCC_NAME}{weight of the diamond, in carats}
 
 }
 }

@@ -23,9 +23,6 @@ create_study_area(
 
 \item{output}{output type}
 }
-\value{
-
-}
 \description{
 Create Study Area
 }

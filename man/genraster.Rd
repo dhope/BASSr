@@ -26,9 +26,6 @@ genraster(
 
 \item{outpath}{Location of output}
 }
-\value{
-
-}
 \description{
 Generatate Raster
 }

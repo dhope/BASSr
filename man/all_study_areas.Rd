@@ -7,12 +7,12 @@
 \format{
 A data frame with 746 rows and 19 variables:
 \describe{
-  \item{StudyAreaID}{Unique Identifier for each study area}
-  \item{TOT_HA}{Total hectares in study area}
-  \item{D_CLC15}{Dominant land cover in study area}
-  \item{LC..}{Hectares covered by landcover type (00-18)}
-  ...
-  \item{geometry}{SF geometry}
+\item{StudyAreaID}{Unique Identifier for each study area}
+\item{TOT_HA}{Total hectares in study area}
+\item{D_CLC15}{Dominant land cover in study area}
+\item{LC..}{Hectares covered by landcover type (00-18)}
+...
+\item{geometry}{SF geometry}
 }
 }
 \source{

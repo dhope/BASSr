@@ -29,9 +29,6 @@ calculate_benefit(
 
 \item{land_cover_weights}{Data table with 'lc' and 'weights' column. Or could be NULL to have all equal.}
 }
-\value{
-
-}
 \description{
 Title
 }

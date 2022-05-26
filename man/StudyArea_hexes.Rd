@@ -7,9 +7,9 @@
 \format{
 A list of 2 dataframes and one character string:
 \describe{
-  \item{cost}{cost estimates for each sample unit}
-  \item{landcover}{SF polygon with land cover in percentages for each sample unit}
-  \item{study_area}{Unique identifier for Study Area}
+\item{cost}{cost estimates for each sample unit}
+\item{landcover}{SF polygon with land cover in percentages for each sample unit}
+\item{study_area}{Unique identifier for Study Area}
 }
 }
 \source{

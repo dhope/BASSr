@@ -7,9 +7,9 @@
 \format{
 A simple feature data frame with 1 rows and 2 variables:
 \describe{
-  \item{PROV}{Two letter code for Ontario}
-  \item{NAME}{Name of Province}
-  \item{geometry}{SF geometry}
+\item{PROV}{Two letter code for Ontario}
+\item{NAME}{Name of Province}
+\item{geometry}{SF geometry}
 }
 }
 \source{

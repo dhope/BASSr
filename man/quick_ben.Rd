@@ -19,9 +19,6 @@ quick_ben(d, samples, land_cover_summary, col_, pd, land_cover_weights = NULL)
 
 \item{land_cover_weights}{a data frame with lc specifying land cover and 'weights' specifying weight.}
 }
-\value{
-
-}
 \description{
 Quick Benefits
 }

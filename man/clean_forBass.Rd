@@ -23,9 +23,6 @@ clean_forBass(
 
 \item{appended}{String to append to end of LandCover Code}
 }
-\value{
-
-}
 \description{
 This is a general function to clean land cover data for BASS functions
 }

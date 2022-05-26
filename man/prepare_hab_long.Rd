@@ -11,9 +11,6 @@ prepare_hab_long(att, lg_area = StudyAreaID)
 
 \item{lg_area}{Column for larger area. Either study area or region}
 }
-\value{
-
-}
 \description{
 Summarize land cover in attribute and add it to a longer table
 }

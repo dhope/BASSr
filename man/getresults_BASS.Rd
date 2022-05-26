@@ -13,9 +13,6 @@ getresults_BASS(grts_output, study_area_results, nARUs)
 
 \item{nARUs}{Number of ARUs to deploy}
 }
-\value{
-
-}
 \description{
 Get the results from a BASS grts run
 }

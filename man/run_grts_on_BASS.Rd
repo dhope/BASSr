@@ -34,9 +34,6 @@ run_grts_on_BASS(
 
 \item{return_points}{}
 }
-\value{
-
-}
 \description{
 Run grts sampling on BASSr results
 }

@@ -7,9 +7,9 @@
 \format{
 A data frame with 19 rows and 2 variables:
 \describe{
-  \item{LCC_CODE}{Land cover code}
-  \item{LCC_NAME}{Land cover name}
-  ...
+\item{LCC_CODE}{Land cover code}
+\item{LCC_NAME}{Land cover name}
+...
 }
 }
 \source{

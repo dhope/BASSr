@@ -17,9 +17,6 @@ subsample_grts_and_calc_benefit(nsamples, num_runs, grts_file, att, q = T)
 
 \item{q}{run it using CPP quick calc}
 }
-\value{
-
-}
 \description{
 Subsample GRTS and calculate benefit
 }
