@@ -3,10 +3,10 @@ Type: Package
 Title: Boreal Avian Sampling Strategy
 Version: 0.3.0
 Author: David Hope
-Maintainer: David Hope <david.hope@canada.ca>
-Description: More about what it does (maybe more than one line)
-    Use four spaces when indenting paragraphs within the Description.
-License: CC0
+Maintainer: David Hope <david.hope@ec.gc.ca>
+Description: Sampling design for generating a spatially
+    dispersed sample that is representative across multiple variables.
+License: GPL (>= 3)
 LinkingTo: Rcpp
 Depends:
   R (>= 4.0),

@@ -11,3 +11,4 @@
 ^output$       # rds files created from vignettes
 ^output$
 ^JUNK
+^LICENSE\.md$
