@@ -3,7 +3,7 @@
 # Built from code by Nora Spencer
 # 2019
 
-#' Title
+#' Calculate the benefit of a hexagon from  grts results.
 #'
 #' @param grts_res Results from GRTS random sample set.
 #' @param att_long Attribute table
