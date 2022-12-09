@@ -36,7 +36,7 @@ create_study_area <- function(landscape, study_area_size, study_unit_size, units
 
   HexPols_lg <- st_make_grid(landscape, cellsize = study_area_diam,
                              square = F, what = 'polygons', offset = c(0,0)) %>%
-    st_as_sf() %>%  mutate(StudyAreaID = glue::glue("SA_{str_pad(1:nrow(.), width = 4, pad = 0)}"))
+    st_as_sf() %>%  mutate(StudyAreaID = glue::glue("SA_{stringr::str_pad(1:nrow(.), width = 4, pad = 0)}"))
   # sp::spsample(x, type = "hexagonal", cellsize = study_area_diam, offset = c(0, 0))
 
   # HexPols_lg <- sp::HexPoints2SpatialPolygons(study_area) %>%
@@ -48,7 +48,7 @@ create_study_area <- function(landscape, study_area_size, study_unit_size, units
   }
 
   HexPols <- st_make_grid(landscape, cellsize = hex_diam, square = F, what = 'polygons', offset = c(0,0)) %>%
-    st_as_sf() %>%  mutate(SampleUnitID = glue::glue("ONT_Hex_{str_pad(1:nrow(.), width = 7, pad = 0)}"))
+    st_as_sf() %>%  mutate(SampleUnitID = glue::glue("ONT_Hex_{stringr::str_pad(1:nrow(.), width = 7, pad = 0)}"))
   # small_hexes <- sp::spsample(x, type = "hexagonal", cellsize = hex_diam, offset = c(0, 0)) %>%
   #   sf::as("sf") %>%
   #   sf::st_join(., HexPols_lg, join = sf::st_covered_by)

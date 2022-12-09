@@ -2,42 +2,44 @@
 #'
 #' @param h Hexagon - sf polygon
 #' @param spacing distance between points
+#' @param HexID_column Name of column to identify individual PSU
 #'
 #' @return SSU points as an sf object
 #' @export
 #'
-genSSU <- function(h, spacing){
-  ch <- as_tibble(st_coordinates(h))
+genSSU <- function(h, spacing, HexID_column){
+  if(attr(h, "sf_column")=="x") st_geometry(h) = "geometry"
+
+  ch <- tibble::as_tibble(st_coordinates(h))
   top_point <- ch[which.max(ch$Y),]
   bottom_point <- ch[which.min(ch$Y),]
   gridsize <- 2*floor(abs(top_point$Y-bottom_point$Y)/spacing)+3
   rowAngle <- tanh((top_point$X-bottom_point$X)/(top_point$Y-bottom_point$Y))
 
-
-  cent <- st_centroid(h) %>%
-    bind_cols(as_tibble(st_coordinates(.))) %>%
-    st_drop_geometry %>%
-    dplyr::select(ET_Index, X, Y)
+  suppressWarnings({cent <- sf::st_centroid(h) %>%
+    dplyr::bind_cols(tibble::as_tibble(sf::st_coordinates(.))) %>%
+    sf::st_drop_geometry() %>%
+    dplyr::select({{HexID_column}}, X, Y)})
 
 
   genRow <- function(cX, cY, sp,...){
-    tibble(rowid = seq(-gridsize,gridsize)) %>%
-      mutate(X = sin(60*pi/180+rowAngle) *sp*rowid + {{cX}},
+    tibble::tibble(rowid = seq(-gridsize,gridsize)) %>%
+      dplyr::mutate(X = sin(60*pi/180+rowAngle) *sp*rowid + {{cX}},
              Y = cos(60*pi/180+rowAngle) *sp*rowid  + {{cY}})
   }
 
-  centroids <- tibble(crowid=seq(-gridsize,gridsize)) %>%
-    mutate(cY = cos(rowAngle) *spacing*crowid + cent$Y,
+  centroids <- tibble::tibble(crowid=seq(-gridsize,gridsize)) %>%
+    dplyr::mutate(cY = cos(rowAngle) *spacing*crowid + cent$Y,
            #spacing/2*crowid + cent$Y,
            cX =  sin(rowAngle) *spacing*crowid + cent$X) %>%
     #cent$X + crowid* sqrt(spacing**2-(spacing/2)**2)) %>%
-    rowwise() %>%
-    mutate(row = list(genRow(cX = cX,cY = cY,sp = spacing))) %>%
-    unnest(row) %>%
+    dplyr::rowwise() %>%
+    dplyr::mutate(row = list(genRow(cX = cX,cY = cY,sp = spacing))) %>%
+    tidyr::unnest(row) %>%
     dplyr::select(X,Y) %>%
-    st_as_sf(coords = c("X", "Y"), crs = st_crs(h)) %>%
-    st_filter(h) %>%
-    mutate(ET_Index = h$ET_Index,
+    sf::st_as_sf(coords = c("X", "Y"), crs = st_crs(h)) %>%
+    sf::st_filter(h) %>%
+    dplyr::mutate({{HexID_column}} := dplyr::pull(h,{{HexID_column}}),
            ssuID = row_number())
   return(centroids)
 }

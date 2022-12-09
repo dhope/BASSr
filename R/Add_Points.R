@@ -15,6 +15,7 @@
 #' @return Returns an sf object with points within provided hexagons
 #' @export
 generate_Points_around_centroid <- function(df, crs_ = NULL) {
+
   if (is_null(crs_)) {
     crs_ <- st_crs(df)
   }
@@ -23,6 +24,7 @@ generate_Points_around_centroid <- function(df, crs_ = NULL) {
     if (!"sf" %in% class(df)) {
       stop("Object must either contain X & Y coordinates or be an object of type sf. Please fix and try again")
     } else {
+      if(attr(df, "sf_column")=="x") st_geometry(df) = "geometry"
       if (all(sf::st_is(df, "POLYGON"))) {
         message("Spatial Feature object should be points not polygons or GRTS expects clusters. Don't worry, I'll fix it!")
         df <- st_centroid(df)
@@ -60,21 +62,18 @@ generate_Points_around_centroid <- function(df, crs_ = NULL) {
 
 
     locs %>%
-      mutate(
+      dplyr::mutate(
         rad = bearing * pi / 180,
         x = cos(rad) * distance + X,
         y = sin(rad) * distance + Y,
         PointID = 1:nrow(.)
       ) %>%
-      st_as_sf(coords = c("x", "y"), crs = crs_)
+      sf::st_as_sf(coords = c("x", "y"), crs = crs_)
   }
-
   df %>%
-    # nest(loc = c(X,Y,type)) %>%
-    mutate(points = pmap(list(X, Y, type),
-      calc_loc,
-      crs_ = crs_
-    )) %>%
-    unnest(cols = c(points)) %>%
-    st_as_sf()
+    sf::st_drop_geometry() |>
+    dplyr::rowwise() |>
+    dplyr::mutate(points = list(calc_loc(X, Y, type, crs_ = crs_))) %>%
+    tidyr::unnest(cols = c(points)) %>%
+    sf::st_as_sf()
 }
