@@ -4,12 +4,14 @@
 \alias{genSSU}
 \title{genSSU. Generate ssu layer aligned with hexagon PSU}
 \usage{
-genSSU(h, spacing)
+genSSU(h, spacing, HexID_column)
 }
 \arguments{
 \item{h}{Hexagon - sf polygon}
 
 \item{spacing}{distance between points}
+
+\item{HexID_column}{Name of column to identify individual PSU}
 }
 \value{
 SSU points as an sf object

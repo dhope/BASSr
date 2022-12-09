@@ -2,7 +2,7 @@
 % Please edit documentation in R/BASS_benefit.R
 \name{calculate_benefit}
 \alias{calculate_benefit}
-\title{Title}
+\title{Calculate the benefit of a hexagon from  grts results.}
 \usage{
 calculate_benefit(
   grts_res,
@@ -30,5 +30,5 @@ calculate_benefit(
 \item{land_cover_weights}{Data table with 'lc' and 'weights' column. Or could be NULL to have all equal.}
 }
 \description{
-Title
+Calculate the benefit of a hexagon from  grts results.
 }
