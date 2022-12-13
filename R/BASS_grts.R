@@ -17,6 +17,7 @@
 #'
 draw_random_samples <- function(att_cleaned, att.sf, num_runs, nsamples,use_grts = TRUE, ...) {
   args <- list(...)
+  # browser()
   if(isTRUE(use_grts)){
   if(packageVersion("spsurvey")<5){
   equaldesgn <- list(None = list # a list named 'None" that contains:
