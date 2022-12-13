@@ -51,7 +51,7 @@ run_grts_on_BASS <- function(n_grts_tests, study_area_results, nARUs, os,
   } else{
     l_s <- unique(attframe[[idcol]])
       Stratdesgn <-
-        map(l_s, ~list # a list named 'None" that contains:
+        purrr::map(l_s, ~list # a list named 'None" that contains:
                              (
                                panel = c(PanelOne =  nARUs$N[nARUs[[idcol]] == .x],
                                over = max(round(nARUs$N[nARUs[[idcol]] == .x] * os,0),1)), # panelOne indicates the number of samples you want
@@ -87,9 +87,7 @@ run_grts_on_BASS <- function(n_grts_tests, study_area_results, nARUs, os,
     DesignID <-  "Sample"
     crs <- 3395 #4326 # This is the default crs if not provided. It is not lat/lon, so perhaps should be removed
 
-    strata_vector <- study_area_results %>% # Vector of strata
-      dplyr::pull({{ Stratum }}) %>%
-      unique()
+
 
     list2env(list(...), envir = environment())
 
@@ -122,7 +120,11 @@ run_grts_on_BASS <- function(n_grts_tests, study_area_results, nARUs, os,
       n_os <-  round(nARUs*os)
       names(Stratdsgn) <- unique(attframe[[idcol]])
       if(n_os==0) n_os <- NULL
-    } else if ( all(strata_vector %in% names(nARUs)) ){
+    } else {
+      strata_vector <- study_area_results %>% # Vector of strata
+        dplyr::pull({{ Stratum }}) %>%
+        unique()
+      if ( all(strata_vector %in% names(nARUs)) ){
       Stratdsgn <- N
       if(length(os)==1){
         if(n_os==0){ n_os <- NULL
@@ -130,9 +132,9 @@ run_grts_on_BASS <- function(n_grts_tests, study_area_results, nARUs, os,
       } else if ( all(strata_vector %in% names(N)) ){
         n_os <- os
       } else{rlang::abort("OS should either be single value or list with all strata ID. Not all Strata found in OS and OS has length >1")}
-    } else {rlang::abort("N should either be single value or list with all strata ID. Not all Strata found in N and N has length >1")}
+    }  else {rlang::abort("N should either be single value or list with all strata ID. Not all Strata found in N and N has length >1")} }
 
-
+      browser()
     invisible(capture.output(grts_output <- purrr::map(
       1:n_grts_tests,
       ~ spsurvey::grts(sframe = attframe,
