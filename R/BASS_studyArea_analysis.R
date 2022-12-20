@@ -62,7 +62,7 @@ run_grts_on_BASS <- function(n_grts_tests, study_area_results, nARUs, os,
 
 
   # browser()
-  invisible(capture.output(grts_output <- map(
+  invisible(capture.output(grts_output <- purrr::map(
     1:n_grts_tests,
     ~ grts(
       design = Stratdesgn, ## selects the reference equaldesgn object
