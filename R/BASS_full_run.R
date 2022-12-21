@@ -50,14 +50,17 @@ full_BASS_run <- function(num_runs, nsamples, att, att.sp, cost, return_all = F,
   }
   if (!"X" %in% names(cost) & !isTRUE(noCost)) {
     message("Did you forget to add coordinates? I am adding it based centroids of the att.sp for now.")
+
+    cost <- st_centroid(cost)
     cost <- cost %>%
-      bind_cols(as_tibble(
-        st_coordinates(.)
-      ))
+      st_coordinates() %>%
+      as_tibble() %>%
+      bind_cols(cost)
   }
 
   if(nsamples ==0){grts_output <- NULL}
   if(nsamples !=0){
+
   grts_output <- draw_random_samples(att_cleaned = att, att.sf = att.sp, num_runs = num_runs, nsamples = nsamples)
   message("sample draw complete")
   }
