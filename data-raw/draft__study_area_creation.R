@@ -1,11 +1,13 @@
-library(BASSr)
-nr <-  NLMR::nlm_randomcluster(
-  ncol = 300,
-  nrow = 300,
-  p = 0.4,
-  ai = c(0.05,0.1,0.15, 0.25, 0.25, 0.5),
-  rescale = FALSE
-)
+
+withr::with_seed(1234, {
+  nr <-  NLMR::nlm_randomcluster(
+    ncol = 300,
+    nrow = 300,
+    p = 0.4,
+    ai = c(0.05, 0.1, 0.15, 0.25, 0.25, 0.5),
+    rescale = FALSE)
+})
+
 raster::crs(nr) <- 3161
 stars_nr <- stars::st_as_stars(nr)
 
@@ -13,47 +15,103 @@ stars_nr <- stars::st_as_stars(nr)
 # landscapetools::show_landscape(nr_classified)
 # landscapetools::show_landscape(nr)
 
-bbx <- sf::st_bbox(nr) |> sf::st_as_sfc()
+bbx <- sf::st_bbox(nr) |>
+  sf::st_as_sfc()
 
-PSU_hexagons <-
-BASSr::create_study_area(nr, study_area_size = 50,
-                         study_unit_size = .5, units = "m", output = 'large') |>
-  sf::st_filter(bbx,.predicate = sf::st_covered_by)
+add_coords <- function(sf) {
+  # Set attributes as constant to avoid sf warnings
+  # (cf. https://github.com/r-spatial/sf/issues/406)
+  sf <- sf::st_set_agr(sf, "constant") %>%
+    sf::st_centroid()
 
-
-ssu_points <-
-  purrr::map_df(1:nrow(PSU_hexagons), ~ genSSU(PSU_hexagons[.x,], spacing = 5, HexID_column = StudyAreaID) )
-
-ssu_buffers <- st_buffer(ssu_points, 2.5)
-
-
-# library(ggplot2)
-# ggplot(ssu_points |> filter(StudyAreaID=="SA_0043")) +
-#   stars::geom_stars(data=st_crop(stars_nr,
-#                                  sa1[sa1$StudyAreaID=="SA_0043",])) +
-#   geom_sf(data = sa1[sa1$StudyAreaID=="SA_0043",], fill = NA)+
-#   geom_sf() + theme_void()
-
-stars_df <- st_as_sf(stars_nr)
-
-land_cover_PSU <- st_join( PSU_hexagons, stars_df) %>%
-  mutate(Area = st_area(.)) |>
-  st_drop_geometry() |> group_by(StudyAreaID, clumps) |>
-  summarise(Area = sum(Area), .groups = 'drop_last') |>
-  mutate(HexArea = sum(Area)) |> ungroup() |>
-  pivot_wider(names_from = clumps, values_from = Area, names_prefix = "LC",
-              values_fill = list(Area = units::set_units(0, "m^2")) )
-
-land_cover_SSU <- st_join( ssu_buffers, stars_df) %>%
-  mutate(Area = st_area(.)) |>
-  st_drop_geometry() |> group_by(StudyAreaID, ssuID, clumps) |>
-  summarise(Area = sum(Area), .groups = 'drop_last') |>
-  mutate(HexArea = sum(Area)) |> ungroup() |>
-  pivot_wider(names_from = clumps, values_from = Area,
-              names_prefix = "LC",
-              values_fill = list(Area = units::set_units(0, "m^2")) )
+  sf %>%
+    sf::st_coordinates() %>%
+    dplyr::as_tibble() %>%
+    dplyr::bind_cols(sf, .)
+}
 
 
+psu_hexagons <- create_study_area(
+  nr, study_area_size = 50, study_unit_size = .5, units = "m", output = 'large') |>
+  sf::st_filter(bbx, .predicate = sf::st_covered_by) %>%
+  dplyr::mutate(province = "ON") %>%
+  dplyr::rename(hex_id = StudyAreaID)
+
+ssu_points <- purrr::map_df(
+  1:nrow(psu_hexagons),
+  ~ genSSU(psu_hexagons[.x,], spacing = 5, HexID_column = hex_id))%>%
+  dplyr::mutate(province = "ON")
+
+ssu_buffers <- sf::st_buffer(ssu_points, 2.5)
+
+stars_df <- sf::st_as_sf(stars_nr)
+
+psu_land_cover <- st_join(psu_hexagons, stars_df) %>%
+  dplyr::mutate(Area = sf::st_area(.)) |>
+  sf::st_drop_geometry() |>
+  dplyr::group_by(hex_id, clumps) |>
+  dplyr::summarise(Area = sum(Area), .groups = 'drop_last') |>
+  dplyr::mutate(HexArea = sum(Area)) |>
+  dplyr::ungroup() |>
+  tidyr::pivot_wider(names_from = clumps, values_from = Area, names_prefix = "LC",
+                     values_fill = list(Area = units::set_units(0, "m^2"))) %>%
+  dplyr::mutate(province = "ON")
+
+psu_hexagons <- left_join(psu_hexagons, psu_land_cover, by = c("hex_id", "province")) %>%
+  add_coords()
+
+ssu_land_cover <- st_join(ssu_buffers, stars_df) %>%
+  dplyr::mutate(Area = sf::st_area(.)) |>
+  sf::st_drop_geometry() |>
+  dplyr::group_by(hex_id, ssuID, clumps) |>
+  dplyr::summarise(Area = sum(Area), .groups = 'drop_last') |>
+  dplyr::mutate(HexArea = sum(Area)) |>
+  dplyr::ungroup() |>
+  tidyr::pivot_wider(names_from = clumps, values_from = Area,
+                     names_prefix = "LC",
+                     values_fill = list(Area = units::set_units(0, "m^2"))) %>%
+  dplyr::mutate(province = "ON")
+
+# Costs
+withr::with_seed(1234, {
+  costs_hex <- psu_hexagons %>%
+    select(hex_id, HexArea, province, X, Y) %>%
+    mutate(pr = runif(n = n(), min = 0, max = 0.9), #' primary road buffer proportion of study area
+           sr = runif(n = n(), min = 0, max = 0.9-pr), #' secondary road proportion of study area
+           wr = runif(n = n(), min = 0, max = 0.9-pr-sr), #' winter road proportion of study area
+           pr = as.numeric(pr * HexArea),
+           sr = as.numeric(sr * HexArea),
+           wr = as.numeric(wr * HexArea),
+           basecamps = runif(n = n(), min = 0, max = 50),
+           airportdist_km = runif(n = n(), min = 0, max = 200),
+           cabin_dist_to_air = runif(n = n(), min = 0, max = 200),
+           AirportType = c("Highway", "Remote", "Secondary")[runif(n = n(), min = 1, max = 3)],
+           INLAKE = FALSE
+           )
+})
+
+psu_costs <- estimate_cost_study_area(narus = 3, costs_hex,
+                                      pr, sr, wr,
+                                      dist_base_sa = basecamps,
+                                      dist_airport_sa = airportdist_km,
+                                      dist2airport_base = cabin_dist_to_air,
+                                      AirportType = AirportType,
+                                      vars = cost_vars)
+
+withr::with_seed(1234, {
+  psu_samples <- draw_random_samples(
+    att.sf = psu_hexagons,
+    num_runs = 10,
+    nsamples = 3)
+})
+
+
+usethis::use_data(psu_hexagons, psu_land_cover, psu_costs, psu_samples,
+                  ssu_points, ssu_land_cover,
+                  overwrite = TRUE)
+
+lobstr::obj_sizes(psu_hexagons, psu_land_cover, psu_costs, psu_samples,
+                  ssu_points, ssu_land_cover)
 
 
 # PSU_for_bass <-
