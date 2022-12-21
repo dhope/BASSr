@@ -294,7 +294,7 @@ prepare_cost <- function(truck_roads, atv_roads, winter_roads, all_roads, airpor
         left_join(x = hexagons, y = .) %>%
         st_as_sf()
     }else{
-    hexagons_w_roads <- map_df(ids, ~{pb$tick();getroaddensity(sa = .x,
+    hexagons_w_roads <- purrr::map_df(ids, ~{pb$tick();getroaddensity(sa = .x,
       hexes = hexagons, wr = winter_roads,
       pr = truck_roads, sr = atv_roads, r = all_roads, idcol = {{ idcol_ }}, ... )}
     ) %>%

@@ -41,7 +41,7 @@ create_study_area <- function(landscape, study_area_size, study_unit_size, units
 
   # HexPols_lg <- sp::HexPoints2SpatialPolygons(study_area) %>%
   #   as("sf") %>%
-  #   mutate(StudyAreaID = glue::glue("SA_{str_pad(1:nrow(.), width = 4, pad = 0)}"))
+  #   mutate(StudyAreaID = glue::glue("SA_{stringr::str_pad(1:nrow(.), width = 4, pad = 0)}"))
 
   if (output == "large") {
     return(HexPols_lg)
@@ -54,7 +54,7 @@ create_study_area <- function(landscape, study_area_size, study_unit_size, units
   #   sf::st_join(., HexPols_lg, join = sf::st_covered_by)
   #
   # HexPols <- sp::HexPoints2SpatialPolygons(small_hexes) %>%
-  #   mutate(SampleUnitID = glue::glue("ONT_Hex_{str_pad(1:nrow(.), width = 7, pad = 0)}"))
+  #   mutate(SampleUnitID = glue::glue("ONT_Hex_{stringr::str_pad(1:nrow(.), width = 7, pad = 0)}"))
 
   if (output == "small") {
     return(HexPols)

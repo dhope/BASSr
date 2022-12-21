@@ -203,7 +203,7 @@ start_time <- Sys.time()
 
 
   } else{
-    # pt <- map_df(
+    # pt <- purrr::map_df(
     #   unique(att_prep_focalSA$StudyAreaID),
     #   ~ calculate_inclusion_probs(cost = st_centroid(focal_SampleUnits_cost %>% filter(StudyAreaID == .x)),
     #                                       hexagon_benefits = benefit_dfs$SU %>% filter(StudyAreaID == .x),

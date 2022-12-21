@@ -89,7 +89,7 @@ calculate_benefit <- function(grts_res, HexID, att_long, output = "all", quick =
     ))
   }
 
-  benefit_by_run <- map_df(
+  benefit_by_run <- purrr::map_df(
     1:n_distinct(random_sample_summary_widenest$run),
     ~ quick_ben(
       d = hexes,

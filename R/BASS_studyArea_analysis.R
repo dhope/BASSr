@@ -168,7 +168,7 @@ getresults_BASS <- function(grts_output, study_area_results, nARUs) {
   fbr_t <- study_area_results %>% transpose()
   landcover <- fbr_t %>% .[["landcover"]]
   studyareas <- fbr_t$study_area %>% do.call("c", .)
-  sa_habsum <- map_df(1:length(study_area_results), ~ as_tibble(landcover[[.x]])) %>%
+  sa_habsum <- purrr::map_df(1:length(study_area_results), ~ as_tibble(landcover[[.x]])) %>%
     dplyr::select(-geometry, -X, -Y) %>%
     pivot_longer(cols = matches("LC\\d"), names_to = "LC", values_to = "hab_ha", values_drop_na = F) %>%
     mutate(hab_ha = replace_na(hab_ha, 0)) %>%
@@ -205,7 +205,7 @@ getresults_BASS <- function(grts_output, study_area_results, nARUs) {
         left_join(sa_habsum, by = c("StudyAreaID", "LC"))
     }
 
-    outputs <- map_df(1:length(grts_output), fixgrtsout, saN = saN, nARUs = nARUs)
+    outputs <- purrr::map_df(1:length(grts_output), fixgrtsout, saN = saN, nARUs = nARUs)
 
     plt <- ggplot(outputs, aes(LC, pHab)) +
       geom_point() +
