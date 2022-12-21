@@ -47,7 +47,7 @@ calculate_benefit <- function(grts_res, HexID, att_long, output = "all", quick =
         ), run = 1:n_distinct(grts_res$random_sample$run))
       ) %>%
       summarize_at(vars(matches("LC\\d")), sum) %>%
-      mutate(across(matches("LC\\d"),replace_na,0))
+      mutate(across(matches("LC\\d"),~replace_na(as.numeric(.x), 0)))
     } else if(is.data.frame(non_random_set)){
       if(is_null(grts_res)){
       random_sample_summary_widenest <-
@@ -55,7 +55,7 @@ calculate_benefit <- function(grts_res, HexID, att_long, output = "all", quick =
                     run = 1:n_distinct(grts_res$random_sample$run)  ) %>%
         group_by(run) %>%
         summarize_at(vars(matches("LC\\d")), sum) %>%
-        mutate(across(matches("LC\\d"), replace_na, 0))
+        mutate(across(matches("LC\\d"),~replace_na(as.numeric(.x), 0)))
       } else{
       random_sample_summary_widenest <-
         grts_res$random_sample %>%
@@ -65,7 +65,7 @@ calculate_benefit <- function(grts_res, HexID, att_long, output = "all", quick =
         ) %>%
         group_by(run) %>%
         summarize_at(vars(matches("LC\\d")), sum) %>%
-        mutate(across(matches("LC\\d"),replace_na,0))
+        mutate(across(matches("LC\\d"),~replace_na(as.numeric(.x), 0)))
       } #else {stop("non_random_set should be NULL, a vector or a data.frame")}
     # browser()
     }
