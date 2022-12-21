@@ -33,7 +33,7 @@ test_that("full_BASS_run()", {
                     "weightedIP", "inclpr", "num_runs", "nsamples") %in%
                     names(f2)))  # No run?
 
-  # Not the same?????
+  # Not the same????? - BECAUSE   set.seed(seed_) on L37?
   # expect_equal(dplyr::select(f1, -"run") %>% dplyr::arrange(hex_id, benefit),
   #              dplyr::select(f2, dplyr::any_of(names(f1))) %>%
   #                sf::st_drop_geometry() %>%
