@@ -1,0 +1,379 @@
+---
+title: "Getting Started"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Getting Started}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r}
+library(sf)
+library(ggplot2)
+library(dplyr)
+b <- readr::read_rds("../BASSr - Extra/2022-10-27-Data_for_BASSr.rds")
+```
+
+
+```{r}
+ggplot() +
+  geom_sf(data = b$PSU$Hexagons) +
+  geom_sf(data = b$SSU$Points)
+
+ggplot() +
+  geom_sf(data = filter(b$SSU$Points, SW_ID == 108))
+
+ggplot() +
+  geom_sf(data = b$PSU$Hexagons) +
+  geom_sf(data = b$SSU$Points) +
+  geom_sf_label(data = b$SSU$Points, aes(label = COMP_ID)) +
+  coord_sf(xlim = c(490000, 520000), ylim = c(12500000, 12600000))
+
+```
+
+
+
+## Setup
+
+1. Get spatial data - Hexagonal grid (primary spatial units - PSU)
+2. Get land cover characteristics for spatial hexes
+3. Get cost data
+4. Run `full_BASS_run()`    
+
+
+### 1. Spatial Data
+- Spatial data frame (sf object) with 
+    - Columns Cell ID (e.g., `ET_Index`)
+    - Columns defining land cover (e.g., `CLC15_1`)
+    - Columns defining in dominant land cover if no lake and calculating costs (e.g., `D_CLC15`)
+- This must be either POINTS or (MULTI)POLYGON (will be converted to points via `st_centroid()`)
+
+> Land cover characteristics should not be percentages, but should be XXXX?
+
+```{r}
+lc <- select(b$PSU$CLC, "ET_Index", starts_with("CLC"), "TOTAL_HA_raw") %>%
+  clean_forBass(s = "CLC15",
+                f_vec =  .$ET_Index,
+                id_col = ET_Index)
+
+hex <- select(b$PSU$Hexagons, "ET_Index") %>%
+  left_join(lc, by = "ET_Index") %>%
+  select(-"Province") %>%
+  st_transform(3395)  # Otherwise wrong locations from run_grts_on_bass()
+
+ggplot(data = hex) +
+  geom_sf()
+```
+
+### 2. Land cover
+- Data frame with columns Cell ID (e.g., `ET_Index`) and ...
+    - Columns defining land cover (e.g., CORINE land cover CLC `CLC15_1`)
+    - Column defining Stratum (e.g., `Province`)
+
+```{r}
+ggplot(data = hex, aes(fill = LC18)) +
+  geom_sf() +
+  labs(fill = "Open Water") +
+  scale_fill_viridis_c()
+
+ggplot(data = hex, aes(fill = LC06)) +
+  geom_sf() +
+  labs(fill = "Mixed Forest") +
+  scale_fill_viridis_c()
+
+b$CLC_guide
+```
+
+
+### Basic Run
+```{r}
+d <- full_BASS_run(num_runs = 10,
+                   nsamples = 3,
+                   att.sp =  hex,
+                   att = lc,
+                   HexID_ = ET_Index,
+                   stratumID = Province,
+                   cost = NULL,
+                   q = TRUE,
+                   noCost = TRUE)
+
+hex_d <- left_join(hex, d, by = "ET_Index")
+ggplot(data = hex_d, aes(fill = benefit)) +
+  geom_sf() +
+  labs(fill = "Benefit") +
+  scale_fill_viridis_c()
+```
+
+### Weights? (e.g., Akimiski_Island.Rmd)
+
+
+## 3. Costs
+
+- Need number of ARUs which to deploy
+
+```{r, eval=T}
+water_hex <- hex %>%
+  filter(LC18 / TOTAL_HA_raw > 0.9) %>%
+  pull(ET_Index)
+
+c <- b$PSU$cost_parameters %>%
+  st_transform(3395) %>%
+  select(ET_Index, pr, sr, wr, basecamps, airportdist_km, cabin_dist_to_air,
+         AirportStatus) %>%
+  mutate(INLAKE = ET_Index %in% water_hex,
+         Province = "ON")
+
+costs <-  estimate_cost_study_area(narus = 3, c, pr, sr, wr, 
+                                   dist_base_sa = basecamps,
+                                   dist_airport_sa = airportdist_km,
+                                   dist2airport_base = cabin_dist_to_air, # Or cabin_dist_to_hwyair?
+                                   AirportType = AirportStatus,
+                                   vars = cost_vars)
+
+ggplot(data = costs) +
+  geom_sf(aes(colour = log(RawCost))) + 
+  scale_colour_viridis_c("Cost Estimate")+
+  theme(legend.position = c(0,0.7), legend.background = element_rect(fill=NA))
+
+
+d <- full_BASS_run(num_runs = 10,
+                   nsamples = 3,
+                   att.sp =  hex,
+                   att = lc,
+                   HexID_ = ET_Index,
+                   stratumID = Province,
+                   cost = costs,
+                   q = TRUE)
+
+d_hex <- left_join(hex, d, by = "ET_Index")
+
+ggplot(d_hex, aes(fill = inclpr)) + 
+  geom_sf() +
+  geom_sf(data = filter(c, airportdist_km < 5), fill = "red") +
+  scale_fill_viridis_c()
+
+ggplot(d_hex, aes(fill = LogCost)) + 
+  geom_sf() +
+  geom_sf(data = filter(c, airportdist_km < 5), fill = "red") +
+  scale_fill_viridis_c()
+
+c2 <- pivot_longer(c, cols = -c("ET_Index", "INLAKE", "Province", "AirportStatus", "geometry"))
+ggplot(filter(c2, name %in% c("pr", "sr", "wr")), aes(fill = value)) +
+  geom_sf(size = 0.5) +
+  facet_wrap(~name) +
+  scale_fill_viridis_c()
+
+ggplot(filter(c2, !name %in% c("pr", "sr", "wr")), aes(fill = value)) +
+  geom_sf(size = 0.5) +
+  facet_wrap(~name) +
+  scale_fill_viridis_c()
+
+```
+
+
+But perhaps one type of land cover is prioritized. This leads to weights...
+
+See....
+```{r}
+#calculate_inclusion_probs()
+```
+
+
+Can also calculate separately...
+
+```{r}
+costs2 <- st_centroid(costs)
+costs2 <- costs2 %>%
+  st_coordinates() %>%
+  as_tibble() %>%
+  bind_cols(costs2)
+
+calculate_inclusion_probs(cost = costs2,
+                          hexagon_benefits = select(d, ET_Index, benefit),
+                          HexID = ET_Index, StratumID = Province)
+```
+
+
+## Selection probabilities
+```{r}
+#CRS  expected is 3395 (must be in first step)
+
+ggplot() + 
+  geom_sf(data = hex) +
+  geom_sf(data = st_as_sf(d, coords = c("X", "Y"), crs = 3395))
+
+sel <- run_grts_on_BASS(n_grts_tests = 1, 
+                        study_area_results = d, 
+                        nARUs = 12, 
+                        os = 0.2,   # default?
+                        idcol = "Province",
+                        hexid = ET_Index)
+
+ggplot(d_hex) +
+  geom_sf() +
+  geom_sf(data = sel[[1]]$sites_base)
+
+```
+
+## SSUs
+
+```{r}
+lc <- select(b$SSU$CLC, "SW_ID", "COMP_ID", starts_with("CLC"), "TOTAL_m2") %>%
+  clean_forBass(s = "CLC15",
+                f_vec =  .$COMP_ID,
+                id_col = COMP_ID)
+
+hex_ssu <- select(b$SSU$Points, "COMP_ID") %>%
+  left_join(lc, by = "COMP_ID") %>%
+  select(-"Province") %>%
+  st_transform(3395)  # Otherwise wrong locations from run_grts_on_bass()
+
+ggplot(data = hex_ssu) +
+  geom_sf()
+
+set.seed(1111)
+
+ssu1 <- full_BASS_run(num_runs = 10, 
+                      nsamples = 3, 
+                      att = lc, 
+                      att.sp = hex_ssu, 
+                      HexID_ = COMP_ID,
+                      stratumID = Province,
+                      cost = NULL,
+                      noCost = TRUE,
+                      q = TRUE)
+
+ssu2 <- map(unique(hex_ssu$SW_ID),
+            ~full_BASS_run(num_runs = 10, 
+                           nsamples = 3, 
+                           att = filter(lc, SW_ID == .x),
+                           att.sp = filter(hex_ssu, SW_ID == .x),
+                           HexID_ = COMP_ID,
+                           stratumID = Province,
+                           cost = NULL,
+                           noCost = TRUE,
+                           q = TRUE))
+
+ssu_sel <- map(ssu2, 
+               ~st_coordinates(.x) %>%
+               ~run_grts_on_BASS(n_grts_tests = 1, 
+                                 study_area_results = .x, 
+                                 nARUs = 12, 
+                                 os = 0.2,   # default?
+                                 idcol = "Province",
+                                 hexid = COMP_ID))
+
+```
+
+
+
+## Selection probabilities all together
+```{r}
+#CRS  expected is 3395 (must be in first step)
+
+ggplot() + 
+  geom_sf(data = hex) +
+  geom_sf(data = st_as_sf(d, coords = c("X", "Y"), crs = 3395))
+
+d <- full_BASS_run(num_runs = 10,
+                   nsamples = 3,
+                   att.sp =  hex,
+                   att = lc,
+                   HexID_ = ET_Index,
+                   stratumID = Province,
+                   cost = costs,
+                   q = TRUE)
+
+d <- run_full_BASS_w_selection(study_areas_hab_cost,
+                               sample_units_w_hab,
+                               Number_of_Study_areas = 12, # nARUs run_grts_on_BASS()
+                               Number_of_sample_units,
+                               Size_of_HSS,        # nsamples full_BASS_run()
+                               Number_of_HSS,      # num_runs full_BASS_run()
+                               Weight_of_benefit,  # benefit_weight full_BASS_run()
+                               LandCoverType,
+                               RemovedLayers_,
+                               Area_of_interest,
+                               RandomSeed)
+
+ggplot(d_hex) +
+  geom_sf() +
+  geom_sf(data = sel[[1]]$sites_base)
+
+```
+  
+## After 
+
+```{r}
+run_grts_on_BASS()
+# OR
+run_full_BASS_w_selection()
+# OR
+select_ssu() #?
+
+```
+
+
+```{r}
+downweight_selection_pr()
+genSSU()
+
+
+```
+
+Helpers...?
+```{r}
+create_study_area()
+estimate_cost_study_area()
+clean_forBass()
+
+```
+
+## Potential workflow
+
+
+```{r, eval = FALSE}
+# Load hex landcover data
+hex <- st_read(...) %>%
+  clean_forBass(s = "CLC15", hex_id = "ET_Index")
+
+hex_ssu <- st_read(...) %>%
+  clean_forBass(s = "CLC15", psu_hex_id = "ET_Index", ssu_hex_id = "COMP_ID")
+
+# Estimate costs
+costs <- st_read(...) %>%
+  estimate_cost_study_area(narus = ..., ...)
+
+# Run PSU cost/benefit
+psu <- full_BASS_run(hex, costs, num_runs = 10, nsamples = 3, hex_id = "ET_Index")
+
+# Run selection on PSU
+psu_sub <- run_grts_on_BASS(bass_run = psu, 
+                            n_grts_tests = 1, 
+                            n_arus = 12, 
+                            os = 0.2,   # default?
+                            hex_id = ET_Index)
+
+# Run SSU cost/benefit
+hex_ssu <- filter(hex_ssu, .data$ET_Index %in% psu_sub$sites_base$ET_Index)
+ssu <- full_BASS_run(hex_ssu, costs_ssu, 
+                     num_runs = 10, nsamples = 3, hex_id = "COMP_ID",
+                     by = "ET_Index", sub = psu_sub$ET_Index)
+
+# Run selection on SSU
+ssu_sub <- run_grts_on_BASS(bass_run = psu, 
+                            n_grts_tests = 1, 
+                            n_arus = 12, 
+                            os = 0.2,   # default?
+                            hex_id = ET_Index)
+
+summarize_selection(ssu_sub)
+
+```
+
+
+
+  
+# Acronyms
+- GRTS - generalized random tessellation stratified sample
+- BMS
