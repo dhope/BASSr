@@ -22,8 +22,7 @@ calculate_inclusion_probs <- function(cost, hexagon_benefits, HexID, StratumID =
       mutate(RawCost = ifelse(NEAR_DIST > 1000, 5000, NEAR_DIST)) ## scale the distance so anything greater than 1000m from the road is given a value of 5000
   }
 
-
-  left_join(cost, hexagon_benefits) %>%
+  left_join(cost, hexagon_benefits, by = rlang::as_label(rlang::enquo(HexID))) %>%
     filter(INLAKE == F) %>% ## delete any centroids that are in water
     ## any NA in the 'INLAKE' column will be converted to a 0
     dplyr::select({{ HexID }}, {{ StratumID }}, X, Y, RawCost, benefit) %>%

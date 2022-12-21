@@ -38,7 +38,7 @@ full_BASS_run <- function(num_runs, nsamples, att, att.sp, cost, return_all = F,
     message("Did you forget to add a lake specification to the cost? I am addig it based on dominant land cover for now.")
     inlake <- NA
     try(inlake <- filter_at(att, vars(matches("^D_.+")), any_vars(. == lakeN)))
-    cost <- mutate(cost, INLAKE = {{ HexID_ }} %in% inlake[[as_label(enquo(HEXID_))]])
+    cost <- mutate(cost, INLAKE = {{ HexID_ }} %in% inlake$ET_Index)
   }
   if (!"sf" %in% class(att.sp)) {
     stop("Spatial object att.sp must be an object of package sf. Please fix and try again")
