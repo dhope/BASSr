@@ -18,7 +18,7 @@
 #' @export
 #'
 create_study_area <- function(landscape, hexagon_size, units, HexagonID_label, HexagonID_prefix) {
-  if(!"sf" %in% class(landscape)) rlang::abort("Landscape must be an sf object")
+  if(!any(grepl(pattern = "sf",class(landscape)))) rlang::abort("Landscape must be an sf object")
   if(any(all(sf::st_geometry_type(landscape)%in% c("POINT", "LINESTRING", "MULTIPOINT", "MULTILINESTRING")))){
     rlang::warn(c("POINT or LINESTRING geometry types detected.",
     "x"="Hexagon grid may not be valid or cover study area.",
