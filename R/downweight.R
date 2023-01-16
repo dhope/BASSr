@@ -27,13 +27,13 @@ downweight_selection_pr <- function(sample_locs,
     exp = function(x,mn,sd) {exp(-x**2/ sd**2)},
 
   )
-  if(is_null(dmat)) dmat <- gen_dist_mat(sample_locs, existing_sampling)
+  if(is.null(dmat)) dmat <- gen_dist_mat(sample_locs, existing_sampling)
   z <- exp(rowSums(log( 1.-scalingFactor*
                           f(units::drop_units(dmat),
                                            mn = 0,
                                            sd = sigma_value) /
                           f(0,0,sd = sigma_value))))
-  if(!rlang::quo_is_null(enquo(selection_column))) {
+  if(!rlang::quo_is.null(enquo(selection_column))) {
     # browser()
     # stopifnot(as_label(enquo(selection_column)) %in% names(sample_locs))
     if(!as_label(enquo(selection_column)) %in% names(sample_locs)){

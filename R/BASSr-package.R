@@ -4,17 +4,26 @@
 #'
 #' @docType package
 #' @name BASSr
-#' @import dplyr
-#' @import tidyr
-#' @import rlang
-#' @import spsurvey
-#' @import sf
-#' @importFrom methods as
-#' @importFrom utils capture.output data
+#' @importFrom magrittr %>%
+#' @importFrom rlang .data .env
 #' @importFrom Rcpp sourceCpp
 #' @useDynLib BASSr, .registration = TRUE
 #'
 NULL
+
+
+# Dealing with CRAN Notes due to Non-standard evaluation
+.onLoad <- function(libname = find.package("BASSr"),
+                    pkgname = "BASSr"){
+
+  # CRAN Note avoidance
+  if(getRversion() >= "2.15.1")
+    utils::globalVariables(
+      c(".", " " # piping requires '.' at times
+      )
+    )
+  invisible()
+}
 
 
 #' Polygon SF of Ontario

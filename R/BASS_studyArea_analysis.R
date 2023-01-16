@@ -18,10 +18,10 @@ run_grts_on_BASS <- function(n_grts_tests, study_area_results, nARUs, os,
 
   if(packageVersion("spsurvey")<5){
     if (is.list(study_area_results) & !is.data.frame(study_area_results)) {
-      if (!is_null(study_area_results$inclusionPr)) {
+      if (!is.null(study_area_results$inclusionPr)) {
         attframe <- study_area_results$inclusionPr
       }
-      if (is_null(study_area_results$inclusionPr)) {
+      if (is.null(study_area_results$inclusionPr)) {
         fbr_t <- study_area_results %>% transpose()
         attframe <- fbr_t %>%
           .[["inclusion_probs"]] %>%
@@ -62,7 +62,7 @@ run_grts_on_BASS <- function(n_grts_tests, study_area_results, nARUs, os,
 
 
   # browser()
-  invisible(capture.output(grts_output <- map(
+  invisible(utils::capture.output(grts_output <- map(
     1:n_grts_tests,
     ~ grts(
       design = Stratdesgn, ## selects the reference equaldesgn object
@@ -92,10 +92,10 @@ run_grts_on_BASS <- function(n_grts_tests, study_area_results, nARUs, os,
     list2env(list(...), envir = environment())
 
     if (is.list(study_area_results) & !is.data.frame(study_area_results)) {
-      if (!is_null(study_area_results$inclusionPr)) {
+      if (!is.null(study_area_results$inclusionPr)) {
         attframe <- study_area_results$inclusionPr
       }
-      if (is_null(study_area_results$inclusionPr)) {
+      if (is.null(study_area_results$inclusionPr)) {
         fbr_t <- study_area_results %>% transpose()
         attframe <- fbr_t %>%
           .[["inclusion_probs"]] %>%
@@ -135,7 +135,7 @@ run_grts_on_BASS <- function(n_grts_tests, study_area_results, nARUs, os,
     }  else {rlang::abort("N should either be single value or list with all strata ID. Not all Strata found in N and N has length >1")} }
 
       browser()
-    invisible(capture.output(grts_output <- purrr::map(
+    invisible(utils::capture.output(grts_output <- purrr::map(
       1:n_grts_tests,
       ~ spsurvey::grts(sframe = attframe,
                        n_over = n_os,
@@ -184,7 +184,7 @@ getresults_BASS <- function(grts_output, study_area_results, nARUs) {
     #             mutate(LC_all = glue::glue("LC{stringr::str_pad(value, width= 2, pad = 0)}"))
     sa <- (landcover[[saN]]$StudyAreaID %>% unique())
     fixgrtsout <- function(i, saN, nARUs) {
-      invisible(capture.output(spbal <- spsurvey::spbalance(grts_output[[i]],
+      invisible(utils::capture.output(spbal <- spsurvey::spbalance(grts_output[[i]],
         grts_output[[i]]@data %>%
           left_join(st_centroid(landcover[[saN]]), .) %>%
           filter(panel == "PanelOne" &

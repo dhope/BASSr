@@ -16,7 +16,7 @@
 #' @export
 generate_Points_around_centroid <- function(df, crs_ = NULL) {
 
-  if (is_null(crs_)) {
+  if (is.null(crs_)) {
     crs_ <- st_crs(df)
   }
 

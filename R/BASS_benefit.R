@@ -19,7 +19,7 @@
 #' @export
 #'
 calculate_benefit <- function(grts_res, HexID, att_long, output = "all",
-                              quick = F, non_random_set = NULL,
+                              quick = FALSE, non_random_set = NULL,
                               land_cover_weights = NULL) {
 
   if (!output %in% c("all", "full", "by_run", "mean_benefit")) {
@@ -31,15 +31,15 @@ calculate_benefit <- function(grts_res, HexID, att_long, output = "all",
   }
 
 
-  pd <- F # ifelse(output == 'all',  T, F)
+  pd <- FALSE # ifelse(output == 'all',  T, F)
 
-  if (is_null(non_random_set)) {
+  if (is.null(non_random_set)) {
     random_sample_summary_widenest <-
       grts_res$random_sample %>%
       dplyr::group_by(.data$run) %>%
       dplyr::summarize(dplyr::across(dplyr::matches("LC\\d"), sum))
   }
-  if (!is_null(non_random_set)) {
+  if (!is.null(non_random_set)) {
     if (is.vector(non_random_set)) {
 
       extra <- att_long %>%
@@ -58,7 +58,7 @@ calculate_benefit <- function(grts_res, HexID, att_long, output = "all",
         non_random_set,
         run = 1:dplyr::n_distinct(grts_res$random_sample$run))
 
-      if(!is_null(grts_res)){
+      if(!is.null(grts_res)){
         random_sample_summary_widenest <-
           dplyr::bind_rows(
             grts_res$random_sample,
@@ -95,7 +95,7 @@ calculate_benefit <- function(grts_res, HexID, att_long, output = "all",
   }
 
   benefit_by_run <- purrr::map_df(
-    1:n_distinct(random_sample_summary_widenest$run),
+    1:dplyr::n_distinct(random_sample_summary_widenest$run),
     ~ quick_ben(
       d = hexes,
       samples = random_sample_summary_widenest %>%
