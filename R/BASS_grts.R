@@ -16,7 +16,7 @@
 #' @export
 #'
 draw_random_samples <- function(att_cleaned, att.sf, num_runs, nsamples,
-                                use_grts = TRUE, ...) {
+                                use_grts = TRUE, quiet = FALSE, ...) {
   args <- list(...)
 
   if (isTRUE(use_grts)) {
@@ -58,7 +58,7 @@ draw_random_samples <- function(att_cleaned, att.sf, num_runs, nsamples,
                     num_runs = .env$num_runs,
                     nsamples = .env$nsamples)
 
-    message(glue::glue("Finished GRTS draw of {num_runs} runs and {nsamples} samples\n\r"))
+    if(!quiet) message(glue::glue("Finished GRTS draw of {num_runs} runs and {nsamples} samples\n\r"))
   }
 
   if (isFALSE(use_grts)) {

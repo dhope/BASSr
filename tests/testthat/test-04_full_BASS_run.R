@@ -4,12 +4,12 @@ n_samples <- 3
 test_that("full_BASS_run()", {
 
   # without costs
-  expect_message({
+  expect_silent({
     f1 <- full_BASS_run(num_runs = n_runs, nsamples = n_samples,
                         att = psu_land_cover, att.sp = psu_hexagons,
                         HexID_ = hex_id, seed_ = 1234,
                         stratumID = province,
-                        noCost = TRUE, cost = NA)
+                        noCost = TRUE, cost = NA, quiet = TRUE)
   })
 
   expect_s3_class(f1, "data.frame")
@@ -18,12 +18,12 @@ test_that("full_BASS_run()", {
 
 
   # With costs
-  expect_message({
+  expect_silent({
     f2 <- full_BASS_run(num_runs = n_runs, nsamples = n_samples,
                         att = psu_land_cover, att.sp = psu_hexagons,
                         HexID_ = hex_id, seed_ = 1234,
                         stratumID = province,
-                        noCost = FALSE, cost = psu_costs)
+                        noCost = FALSE, cost = psu_costs, quiet = TRUE)
   })
 
   expect_s3_class(f2, "data.frame")
@@ -45,12 +45,12 @@ test_that("full_BASS_run()", {
 
 test_that("full_BASS_run() slow", {
 
-  expect_message({
+  expect_silent({
     f1 <- full_BASS_run(num_runs = n_runs, nsamples = n_samples,
                         att = psu_land_cover, att.sp = psu_hexagons,
                         HexID_ = hex_id, quick = FALSE, seed_ = 1234,
                         stratumID = province,
-                        noCost = TRUE, cost = NA)
+                        noCost = TRUE, cost = NA, quiet = TRUE)
   })
 
   expect_s3_class(f1, "data.frame")
@@ -58,12 +58,12 @@ test_that("full_BASS_run() slow", {
   expect_named(f1, c("hex_id", "benefit", "run", "num_runs", "nsamples"))
 
   # With costs
-  expect_message({
+  expect_silent({
     f2 <- full_BASS_run(num_runs = n_runs, nsamples = n_samples,
                         att = psu_land_cover, att.sp = psu_hexagons,
                         HexID_ = hex_id, quick = FALSE, seed_ = 1234,
                         stratumID = province,
-                        noCost = FALSE, cost = psu_costs)
+                        noCost = FALSE, cost = psu_costs, quiet = TRUE)
   })
 
   expect_s3_class(f1, "data.frame")
@@ -85,12 +85,12 @@ test_that("full_BASS_run() slow", {
 test_that("full_BASS_run() all", {
 
   # All
-  expect_message({
+  expect_silent({
     f1 <- full_BASS_run(num_runs = n_runs, nsamples = n_samples,
                         att = psu_land_cover, att.sp = psu_hexagons,
                         HexID_ = hex_id, return_all = TRUE,
                         stratumID = province, seed_ = 1234,
-                        noCost = TRUE, cost = NA)
+                        noCost = TRUE, cost = NA, quiet = TRUE)
   })
 
   expect_s3_class(f1, "data.frame")
@@ -98,12 +98,12 @@ test_that("full_BASS_run() all", {
   #expect_named(f2, c("hex_id", "benefit", "run", "num_runs", "nsamples"))
 
   # With costs
-  expect_message({
+  expect_silent({
     f2 <- full_BASS_run(num_runs = n_runs, nsamples = n_samples,
                         att = psu_land_cover, att.sp = psu_hexagons,
                         HexID_ = hex_id, return_all = TRUE,
                         stratumID = province, seed_ = 1234,
-                        noCost = FALSE, cost = psu_costs)
+                        noCost = FALSE, cost = psu_costs, quiet = TRUE)
   })
 
   expect_type(f2, "list")

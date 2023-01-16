@@ -24,7 +24,7 @@ full_BASS_run <- function(num_runs, nsamples, att, att.sp, cost,
                           HexID_ = HEX100, stratumID = StudyAreaID,
                           quick = FALSE, non_ran_set = NULL, lakeN = 18,
                           benefit_weight = 0.5, noCost = F,
-                          weighted_benefits = NULL) {
+                          weighted_benefits = NULL, quiet = FALSE) {
 
   # Input Checks
 
@@ -33,15 +33,15 @@ full_BASS_run <- function(num_runs, nsamples, att, att.sp, cost,
   ## Check if any NA in habitat columns
   if(!any(grepl("^LC\\d",names(att)))) rlang::abort(message = "Habitat data table not formatted correctly. Try running clean_forBass.")
   if (!"sf" %in% class(att)){
-    if(is.na(rowSums(summarise(att , across( matches("^LC\\d"), sum))))) rlang::abort(message = "Habitat data table not formatted correctly. Try running clean_forBass.")
+    if(is.na(rowSums(dplyr::summarize(att, dplyr::across(dplyr::matches("^LC\\d"), sum))))) rlang::abort(message = "Habitat data table not formatted correctly. Try running clean_forBass.")
   }else{
-    if(is.na(rowSums(summarise(st_drop_geometry(att) , across( matches("^LC\\d"), sum))))) rlang::abort(message = "Habitat data table not formatted correctly. Try running clean_forBass.")
+    if(is.na(rowSums(dplyr::summarize(sf::st_drop_geometry(att), dplyr::across(dplyr::matches("^LC\\d"), sum))))) rlang::abort(message = "Habitat data table not formatted correctly. Try running clean_forBass.")
   }
 
   set.seed(seed_)
 
   if (!"INLAKE" %in% names(cost) & !isTRUE(noCost)) {
-    message("Did you forget to add a lake specification to the cost? I am addig it based on dominant land cover for now.")
+    if(!quiet) message("Did you forget to add a lake specification to the cost? I am addig it based on dominant land cover for now.")
     inlake <- NA
     try(inlake <- dplyr::filter_at(att, dplyr::vars(dplyr::matches("^D_.+")), dplyr::any_vars(. == lakeN)))
     cost <- dplyr::mutate(cost, INLAKE = {{ HexID_ }} %in% inlake$ET_Index)
@@ -50,12 +50,12 @@ full_BASS_run <- function(num_runs, nsamples, att, att.sp, cost,
     stop("Spatial object att.sp must be an object of package sf. Please fix and try again")
   } else {
     if (all(sf::st_is(att.sp, "POLYGON"))) {
-      message("Spatial Feature object should be points not polygons or GRTS expects clusters. Don't worry, I'll fix it!")
+      if(!quiet) message("Spatial Feature object should be points not polygons or GRTS expects clusters. Don't worry, I'll fix it!")
       att.sp <- sf::st_centroid(att.sp)
     }
   }
   if (!"X" %in% names(cost) & !isTRUE(noCost)) {
-    message("Did you forget to add coordinates? I am adding it based centroids of the att.sp for now.")
+    if(!quiet) message("Did you forget to add coordinates? I am adding it based centroids of the att.sp for now.")
 
     cost <- sf::st_centroid(cost)
     cost <- cost %>%
@@ -68,8 +68,9 @@ full_BASS_run <- function(num_runs, nsamples, att, att.sp, cost,
   if (nsamples !=0) {
 
   grts_output <- draw_random_samples(att_cleaned = att, att.sf = att.sp,
-                                     num_runs = num_runs, nsamples = nsamples)
-  message("sample draw complete")
+                                     num_runs = num_runs, nsamples = nsamples,
+                                     quiet = quiet)
+  if(!quiet) message("sample draw complete")
   }
 
   att_cleaned_long <- prepare_hab_long(att, {{ stratumID }})
