@@ -15,11 +15,11 @@
 #' @return Returns a sample output in long and wide formats.
 #' @export
 #'
-draw_random_samples <- function(att_cleaned, att.sf, num_runs, nsamples,use_grts = TRUE, ...) {
+draw_random_samples <- function(att_cleaned, att.sf, num_runs, nsamples,
+                                use_grts = TRUE, ...) {
   args <- list(...)
 
-  if(isTRUE(use_grts)){
-
+  if (isTRUE(use_grts)) {
 
     mindis <-  NULL
     maxtry <-  10
@@ -51,39 +51,30 @@ draw_random_samples <- function(att_cleaned, att.sf, num_runs, nsamples,use_grts
                        maxtry = maxtry)
     )
 
-    grts_random_sample <- purrr::transpose(grts_output) |>
+    random_sample <- purrr::transpose(grts_output) |>
       purrr::pluck("sites_base") |>
       dplyr::bind_rows() |>
-      dplyr::mutate(run = rep(1:num_runs, each = nsamples),
-                    num_runs = num_runs,
-                    nsamples = nsamples)
-
-
-
-    grts_random_sample_long <- tidyr::pivot_longer(grts_random_sample,
-                                                   cols = matches("LC\\d"),
-                                                   names_to = "lc",
-                                                   values_to = "ha"
-    )
+      dplyr::mutate(run = rep(1:.env$num_runs, each = .env$nsamples),
+                    num_runs = .env$num_runs,
+                    nsamples = .env$nsamples)
 
     message(glue::glue("Finished GRTS draw of {num_runs} runs and {nsamples} samples\n\r"))
-    sample <- list(random_sample = grts_random_sample,
-                   random_sample_long = grts_random_sample_long)
   }
-  if(isFALSE(use_grts)){
+
+  if (isFALSE(use_grts)) {
     random_sample <- purrr::map_df(
       1:num_runs,
       ~{dplyr::slice_sample(att.sf, n = nsamples) |>
           dplyr::mutate(run = .x)})
-
-    random_sample_long <- tidyr::pivot_longer(random_sample,
-                                              cols = matches("LC\\d"),
-                                              names_to = "lc", values_to = "ha"
-    )
-
-    sample <- list(random_sample = random_sample,
-                   random_sample_long = random_sample_long)
   }
 
-  sample
+  random_sample_long <- tidyr::pivot_longer(
+    random_sample,
+    cols = dplyr::matches("LC\\d"),
+    names_to = "lc",
+    values_to = "ha"
+  )
+
+  list(random_sample = random_sample,
+       random_sample_long = random_sample_long)
 }
