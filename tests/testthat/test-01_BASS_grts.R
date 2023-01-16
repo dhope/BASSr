@@ -1,4 +1,4 @@
-test_that("Sampling works - no GRTS", {
+test_that("draw_random_samples() - no GRTS", {
   pp <- palmerpenguins::penguins |>
     dplyr::mutate(across(.fns = as.character))
   names(pp) <- glue::glue("LC{1:ncol(pp)}")
@@ -15,7 +15,7 @@ test_that("Sampling works - no GRTS", {
                      }))
 })
 
-test_that("draw_random_samples()", {
+test_that("draw_random_samples() - with GRTS", {
 
   withr::local_seed(1234)
 
