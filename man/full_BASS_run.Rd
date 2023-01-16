@@ -10,16 +10,17 @@ full_BASS_run(
   att,
   att.sp,
   cost,
-  return_all = F,
+  return_all = FALSE,
   seed_ = as.integer(Sys.time()),
   HexID_ = HEX100,
   stratumID = StudyAreaID,
-  q = F,
+  quick = FALSE,
   non_ran_set = NULL,
   lakeN = 18,
   benefit_weight = 0.5,
   noCost = F,
-  weighted_benefits = NULL
+  weighted_benefits = NULL,
+  quiet = FALSE
 )
 }
 \arguments{
@@ -41,7 +42,7 @@ full_BASS_run(
 
 \item{stratumID}{Column for larger area id. Likely StudyAreaID or Province}
 
-\item{q}{Run the benefit calculation quickly}
+\item{quick}{Run the benefit calculation quickly}
 
 \item{non_ran_set}{Non random set that is added to the hypothetical sample set in benefit calculation.}
 

@@ -10,6 +10,7 @@ draw_random_samples(
   num_runs,
   nsamples,
   use_grts = TRUE,
+  quiet = FALSE,
   ...
 )
 }

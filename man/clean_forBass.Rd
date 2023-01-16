@@ -4,13 +4,7 @@
 \alias{clean_forBass}
 \title{Clean habitat data for BASS}
 \usage{
-clean_forBass(
-  df,
-  s,
-  id_col = StudyAreaID,
-  f_vec = brandtStudyAreas_list,
-  appended = ""
-)
+clean_forBass(df, s, id_col = StudyAreaID, f_vec = NULL, appended = "")
 }
 \arguments{
 \item{df}{Habitat data frame}

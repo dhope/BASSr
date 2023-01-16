@@ -9,7 +9,7 @@ calculate_benefit(
   HexID,
   att_long,
   output = "all",
-  quick = F,
+  quick = FALSE,
   non_random_set = NULL,
   land_cover_weights = NULL
 )

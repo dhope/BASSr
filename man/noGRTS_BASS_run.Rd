@@ -11,7 +11,7 @@ noGRTS_BASS_run(
   att,
   att.sp,
   cost,
-  return_all = F,
+  return_all = FALSE,
   seed_ = as.integer(Sys.time())
 )
 }
