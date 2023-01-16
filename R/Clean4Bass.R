@@ -11,12 +11,17 @@
 #' @return
 #' @export
 #'
-clean_forBass <- function(df, s, id_col = StudyAreaID, f_vec = brandtStudyAreas_list, appended = "") {
+clean_forBass <- function(df, s, id_col = StudyAreaID, f_vec = NULL, appended = "") {
+
+  match <- glue::glue("^{s}")
+
+  # Subset
+  if(!is.null(f_vec)) df <- dplyr::filter(df, {{ id_col }} %in% .env$f_vec)
+
+  # Rename land cover columns
   df %>%
-    rename_at(
-      .vars = vars(contains(glue::glue("{s}_"))),
-      .funs = ~ glue::glue('LC{stringr::str_pad(gsub(glue::glue("{s}_"), "", .), width = 2, pad = 0)}{appended}')
-    ) %>%
-    filter({{ id_col }} %in% f_vec) %>%
-    mutate(Province = "ON")
+    dplyr::rename_with(
+      .fn = ~ glue::glue('LC{stringr::str_pad(gsub(match, "", .), width = 2, pad = 0)}{appended}'),
+      .cols = dplyr::matches(match)
+    )
 }
