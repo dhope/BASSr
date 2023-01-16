@@ -1,8 +1,4 @@
 
-
-
-
-
 #' BASS cost benefit calculation
 #'
 #' Caculate the cost benefits and inclusion probabilities
@@ -16,23 +12,36 @@
 #' @return A data frame with full inclusion probabilities for each raster.
 #' @export
 #'
-calculate_inclusion_probs <- function(cost, hexagon_benefits, HexID, StratumID = StudyAreaID, benefit_weight = 0.5) {
+calculate_inclusion_probs <- function(cost, hexagon_benefits, HexID,
+                                      StratumID = StudyAreaID,
+                                      benefit_weight = 0.5) {
+
   if (!"RawCost" %in% names(cost)) {
-    cost <- cost %>%
-      mutate(RawCost = ifelse(NEAR_DIST > 1000, 5000, NEAR_DIST)) ## scale the distance so anything greater than 1000m from the road is given a value of 5000
+    # scale distance so anything >1000m from the road is given a value of 5000
+    cost <- dplyr::mutate(cost,
+                          RawCost = ifelse(.data$NEAR_DIST > 1000,
+                                           5000,
+                                           .data$NEAR_DIST))
   }
 
-  left_join(cost, hexagon_benefits, by = rlang::as_label(rlang::enquo(HexID))) %>%
-    filter(INLAKE == F) %>% ## delete any centroids that are in water
-    ## any NA in the 'INLAKE' column will be converted to a 0
-    dplyr::select({{ HexID }}, {{ StratumID }}, X, Y, RawCost, benefit) %>%
-    group_by({{StratumID}}) %>%
-    mutate(
-      LogCost = log10(RawCost),
-      ScLogCost = LogCost / (max(LogCost, na.rm = T) + 1),
-      scale_ben = benefit / max(benefit, na.rm = T),
-      partIP = (1 - ScLogCost) * scale_ben, ## Inclusion probability
-      weightedIP = (1 - (ScLogCost * (1 - benefit_weight))) * scale_ben * benefit_weight, # Benefit weighted by benefit weight
-      inclpr = weightedIP / max(weightedIP, na.rm = T) ## scaled Inclusion probability
-    ) %>% ungroup
+  dplyr::left_join(cost, hexagon_benefits,
+                   by = rlang::as_label(rlang::enquo(HexID))) %>%
+    # delete any centroids that are in water
+    dplyr::filter(INLAKE == FALSE) %>%
+    # convert NA in the 'INLAKE' column to 0  ---> CHECK
+    dplyr::select({{ HexID }}, {{ StratumID }}, "X", "Y", "RawCost", "benefit") %>%
+    dplyr::group_by({{StratumID}}) %>%
+    dplyr::mutate(
+      LogCost = log10(.data$RawCost),
+      ScLogCost = .data$LogCost / (max(.data$LogCost, na.rm = TRUE) + 1),
+      scale_ben = .data$benefit / max(.data$benefit, na.rm = TRUE),
+      # Inclusion probability
+      partIP = (1 - .data$ScLogCost) * .data$scale_ben,
+      # Benefit weighted by benefit weight
+      weightedIP = (1 - (.data$ScLogCost * (1 - .env$benefit_weight))) *
+        .data$scale_ben * .env$benefit_weight,
+      # Scaled inclusion probability
+      inclpr = .data$weightedIP / max(.data$weightedIP, na.rm = TRUE)
+    ) %>%
+    dplyr::ungroup()
 }
