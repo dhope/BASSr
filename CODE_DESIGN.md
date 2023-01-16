@@ -13,3 +13,4 @@ making collaboration and future modifications easier.
 
 ## Best practices
 - Do not use `return()` unless calling high up in a function
+- Use 

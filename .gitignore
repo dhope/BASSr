@@ -46,3 +46,4 @@ vignettes/*.pdf
 output/*
 JUNK
 
+inst/doc
