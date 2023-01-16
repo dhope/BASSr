@@ -72,21 +72,21 @@ ssu_land_cover <- st_join(ssu_buffers, stars_df) %>%
                      values_fill = list(Area = units::set_units(0, "m^2"))) %>%
   dplyr::mutate(province = "ON")
 
-# Costs
+# Costs ----------------------------------------
 withr::with_seed(1234, {
   costs_hex <- psu_hexagons %>%
-    select(hex_id, HexArea, province, X, Y) %>%
-    mutate(pr = runif(n = n(), min = 0, max = 0.9), #' primary road buffer proportion of study area
-           sr = runif(n = n(), min = 0, max = 0.9-pr), #' secondary road proportion of study area
-           wr = runif(n = n(), min = 0, max = 0.9-pr-sr), #' winter road proportion of study area
-           pr = as.numeric(pr * HexArea),
-           sr = as.numeric(sr * HexArea),
-           wr = as.numeric(wr * HexArea),
-           basecamps = runif(n = n(), min = 0, max = 50),
-           airportdist_km = runif(n = n(), min = 0, max = 200),
-           cabin_dist_to_air = runif(n = n(), min = 0, max = 200),
-           AirportType = c("Highway", "Remote", "Secondary")[runif(n = n(), min = 1, max = 3)],
-           INLAKE = FALSE
+    dplyr::select(hex_id, HexArea, province, X, Y) %>%
+    dplyr::mutate(pr = runif(n = dplyr::n(), min = 0, max = 0.9), #' primary road buffer proportion of study area
+                  sr = runif(n = dplyr::n(), min = 0, max = 0.9-pr), #' secondary road proportion of study area
+                  wr = runif(n = dplyr::n(), min = 0, max = 0.9-pr-sr), #' winter road proportion of study area
+                  pr = as.numeric(pr * HexArea),
+                  sr = as.numeric(sr * HexArea),
+                  wr = as.numeric(wr * HexArea),
+                  basecamps = runif(n = dplyr::n(), min = 0, max = 50),
+                  airportdist_km = runif(n = dplyr::n(), min = 0, max = 200),
+                  cabin_dist_to_air = runif(n = dplyr::n(), min = 0, max = 200),
+                  AirportType = c("Highway", "Remote", "Secondary")[runif(n = dplyr::n(), min = 1, max = 3)],
+                  INLAKE = FALSE
            )
 })
 
