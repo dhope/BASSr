@@ -104,25 +104,32 @@ full_BASS_run <- function(num_runs, nsamples, att, att.sp, cost,
       HexID = {{ HexID_ }}, quick = quick,
       land_cover_weights = weighted_benefits
     )
-    if (isTRUE(noCost)) {
-      return(benefits %>% mutate(num_runs = num_runs, nsamples = nsamples))
-    }
-    if (isTRUE(q)) {
-      b <- benefits
-    } else {
-      b <- benefits$hexagon_benefits
-    }
-    pointswith_inclusion <- calculate_inclusion_probs(
-      cost = cost, hexagon_benefits = b,
-      HexID = {{ HexID_ }},
-      StratumID = {{ stratumID }},
-      benefit_weight = benefit_weight
-    )
 
-    return(list(
-      inclusionPr = pointswith_inclusion %>% mutate(num_runs = num_runs, nsamples = nsamples),
-      benefits_full = benefits, grts_samples = grts_output, att_long = att_cleaned_long
-    ))
+
+    if (isTRUE(quick)) b <- benefits else b <- benefits$hexagon_benefits
+
+    if (isTRUE(noCost)) {
+      run_results <- dplyr::mutate(b,
+                                   num_runs = .env$num_runs,
+                                   nsamples = .env$nsamples)
+    } else {
+
+      pointswith_inclusion <- calculate_inclusion_probs(
+        cost = cost, hexagon_benefits = b,
+        HexID = {{ HexID_ }},
+        StratumID = {{ stratumID }},
+        benefit_weight = benefit_weight
+      )
+
+      run_results <- list(
+        inclusionPr =  dplyr::mutate(pointswith_inclusion,
+                                     num_runs = .env$num_runs,
+                                     nsamples = .env$nsamples),
+        benefits_full = benefits,
+        grts_samples = grts_output,
+        att_long = att_cleaned_long
+      )
+    }
   }
 
   run_results
