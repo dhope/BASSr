@@ -18,7 +18,8 @@ Imports:
     sf (>= 0.8),
     glue,
     methods,
-    Rcpp
+    Rcpp,
+    magrittr
 Suggests:
     knitr,
     rmarkdown,
