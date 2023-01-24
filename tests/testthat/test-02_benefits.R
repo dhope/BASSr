@@ -75,7 +75,7 @@ test_that("quick_ben()", {
       samples = samples,
       land_cover_summary = lc_sum,
       col_ = hex_id,
-      pd = FALSE
+      print = FALSE
     )
   }) %>%
     expect_s3_class("data.frame")
@@ -94,7 +94,7 @@ test_that("quick_ben()", {
       land_cover_summary = lc_sum,
       col_ = hex_id,
       land_cover_weights = w,
-      pd = FALSE
+      print = FALSE
     )
   })
 
@@ -112,9 +112,7 @@ test_that("calculate_benefit()", {
     withr::with_seed(1234, {
       b1 <- calculate_benefit(grts_res = psu_samples,
                               att_long = h,
-                              output = "benefit_by_run",
-                              HexID = hex_id,
-                              quick = TRUE)
+                              HexID = hex_id)
     })
   })
 
@@ -128,10 +126,8 @@ test_that("calculate_benefit()", {
       b2 <- calculate_benefit(
         grts_res = psu_samples,
         att_long = h,
-        output = "benefit_by_run",
         HexID = hex_id,
-        non_random_set = c("SA_0009", "SA_0022", "SA_0047", "SA_0052"),
-        quick = TRUE)
+        non_random_set = c("SA_0009", "SA_0022", "SA_0047", "SA_0052"))
     })
   })
 

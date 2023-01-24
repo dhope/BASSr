@@ -7,31 +7,46 @@
 #'
 #' @param grts_res Results from GRTS random sample set.
 #' @param att_long Attribute table
-#' @param output  Must be one of 'all'(default), 'full','by_run', or 'mean_benefit'
 #' @param HexID column for hexagons
 #' @param att_long Data frame with habitat information, in long format
-#' @param output if not using quick. Output format
-#' @param quick should you run it fast?
-#' @param non_random_set Set of hexagons to include as a non randomly selected set
-#' @param land_cover_weights Data table with 'lc' and 'weights' column. Or could be NULL to have all equal.
+#' @param non_random_set Set of hexagons to include as a non randomly selected
+#'   set
+#' @param land_cover_weights Data table with 'lc' and 'weights' column. Or could
+#'   be NULL to have all equal.
 #'
 #' @return
 #' @export
 #'
-calculate_benefit <- function(grts_res, HexID, att_long, output = "all",
-                              quick = FALSE, non_random_set = NULL,
+#' @examples
+#'
+#' # Using example data psu_land_cover and psu_samples
+#' hab <- prepare_hab_long(psu_land_cover, lg_area = province)
+#'
+#' calculate_benefit(
+#'   grts_res = psu_samples,
+#'   att_long = hab,
+#'   HexID = hex_id,
+#'   non_random_set = c("SA_0009", "SA_0022", "SA_0047", "SA_0052"))
+#'
+#' # Specify a non-random set
+#'
+#' calculate_benefit(
+#'  grts_res = psu_samples,
+#'  att_long = hab,
+#'  HexID = hex_id,
+#'  non_random_set = c("SA_0009", "SA_0022", "SA_0047", "SA_0052"))
+#'
+#'
+#'
+calculate_benefit <- function(grts_res, HexID, att_long,
+                              non_random_set = NULL,
                               land_cover_weights = NULL) {
 
-  if (!output %in% c("all", "full", "by_run", "mean_benefit")) {
-    simpleError("output must be one of 'all'(default), 'full','by_run', or 'mean_benefit'")
-  }
+  # ADD CHECKS
 
   if("sf" %in% class(grts_res$random_sample)){
     grts_res$random_sample <- sf::st_drop_geometry(grts_res$random_sample)
   }
-
-
-  pd <- FALSE # ifelse(output == 'all',  T, F)
 
   if (is.null(non_random_set)) {
     random_sample_summary_widenest <-
@@ -40,6 +55,9 @@ calculate_benefit <- function(grts_res, HexID, att_long, output = "all",
       dplyr::summarize(dplyr::across(dplyr::matches("LC\\d"), sum))
   }
   if (!is.null(non_random_set)) {
+
+    # CHECKS
+
     if (is.vector(non_random_set)) {
 
       extra <- att_long %>%
@@ -63,7 +81,7 @@ calculate_benefit <- function(grts_res, HexID, att_long, output = "all",
           dplyr::bind_rows(
             grts_res$random_sample,
             random_sample_summary_widenest)
-      } #else {stop("non_random_set should be NULL, a vector or a data.frame")}
+      }
 
     }
 
@@ -84,37 +102,12 @@ calculate_benefit <- function(grts_res, HexID, att_long, output = "all",
     dplyr::distinct() %>%
     dplyr::rename("ha" = "ha_total")
 
+  quick_ben(
+    d = hexes,
+    samples = random_sample_summary_widenest,
+    land_cover_summary = total, land_cover_weights = land_cover_weights,
+    col_ = {{ HexID }}, print = FALSE)
 
-  if (isTRUE(quick)) {
-    return(quick_ben(
-      d = hexes,
-      samples = random_sample_summary_widenest,
-      land_cover_summary = total, land_cover_weights = land_cover_weights,
-      col_ = {{ HexID }}, pd
-    ))
-  }
-
-  benefit_by_run <- purrr::map_df(
-    1:dplyr::n_distinct(random_sample_summary_widenest$run),
-    ~ quick_ben(
-      d = hexes,
-      samples = random_sample_summary_widenest %>%
-        dplyr::filter(run == .x),
-      land_cover_summary = total,
-      col_ = {{ HexID }}, pd = pd
-    ) %>% dplyr::mutate(run = .x)
-  )
-
-
-  if (output == "all") {
-    return(list(
-      hexagon_benefits_by_run = benefit_by_run,
-      random_sample_summary_widenest = random_sample_summary_widenest,
-      hexes = hexes, total = total
-    ))
-  }
-
-  return(get(output))
 }
 
 
@@ -182,16 +175,19 @@ subsample_grts_and_calc_benefit <- function(nsamples, num_runs, grts_file, att,
 
 #' Quick Benefits
 #'
-#' @param d Hexagon data.frame - Needs to include Land Cover types in format LC__
+#' @param d Hexagon data.frame - Needs to include Land Cover types in format
+#'   LC_
 #' @param samples Hypothetical sample set
 #' @param land_cover_summary Land cover summary for larger area
 #' @param col_ ID column
-#' @param pd print details
-#' @param land_cover_weights a data frame with lc specifying land cover and 'weights' specifying weight.
+#' @param print print details
+#' @param land_cover_weights a data frame with lc specifying land cover and
+#'   'weights' specifying weight.
 #'
 #' @return
 #' @export
-quick_ben <- function(d, samples, land_cover_summary, col_, pd, land_cover_weights = NULL) {
+quick_ben <- function(d, samples, land_cover_summary, col_, print,
+                      land_cover_weights = NULL) {
 
   # col <- rlang::enquo(col_)
   hexes <- d  |>
@@ -278,5 +274,5 @@ quick_ben <- function(d, samples, land_cover_summary, col_, pd, land_cover_weigh
     as.vector()
 
   dplyr::tibble({{ col_ }} := hexNames,
-                benefit = allhexes(h, s, tot, w, printDets = pd))
+                benefit = allhexes(h, s, tot, w, printDets = print))
 }
