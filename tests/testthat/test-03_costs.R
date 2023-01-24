@@ -4,14 +4,12 @@ test_that("calculate_inclusion_probs()", {
 
   expect_silent(b <- calculate_benefit(grts_res = psu_samples,
                                        att_long = h,
-                                       output = "benefit_by_run",
-                                       HexID = hex_id,
-                                       quick = TRUE))
+                                       HexID = hex_id))
 
 
   expect_silent(inc <- calculate_inclusion_probs(
-    cost = psu_costs,
-    hexagon_benefits = b,
+    costs = psu_costs,
+    benefits = b,
     HexID = hex_id,
     StratumID = province
   )) %>%
@@ -26,8 +24,8 @@ test_that("calculate_inclusion_probs()", {
 
   # benefit_weight
   expect_silent(inc2 <- calculate_inclusion_probs(
-    cost = psu_costs,
-    hexagon_benefits = b,
+    costs = psu_costs,
+    benefits = b,
     HexID = hex_id,
     StratumID = province,
     benefit_weight = 1
@@ -38,6 +36,22 @@ test_that("calculate_inclusion_probs()", {
   expect_equal(dplyr::select(inc, -"weightedIP", -"inclpr"),
                dplyr::select(inc2, -"weightedIP", -"inclpr"))
 
+  # INLAKE
+  psu_costs$INLAKE[10:12] <- TRUE
+  expect_silent(inc3 <- calculate_inclusion_probs(
+    costs = psu_costs,
+    benefits = b,
+    omit = INLAKE,
+    HexID = hex_id,
+    StratumID = province
+  ))
+
+  expect_equal(sum(is.na(inc3$RawCost)), sum(psu_costs$INLAKE))
+  expect_equal(sum(is.na(inc3$LogCost)), sum(psu_costs$INLAKE))
+  expect_equal(sum(is.na(inc3$ScLogCost)), sum(psu_costs$INLAKE))
+  expect_equal(sum(is.na(inc3$partIP)), sum(psu_costs$INLAKE))
+  expect_equal(sum(is.na(inc3$weightedIP)), sum(psu_costs$INLAKE))
+  expect_equal(sum(is.na(inc3$inclpr)), sum(psu_costs$INLAKE))
 
   # Snapshots cannot be tested interactively
   expect_snapshot_value(sf::st_drop_geometry(inc), style = "json2",

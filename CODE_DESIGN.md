@@ -14,3 +14,8 @@ making collaboration and future modifications easier.
 ## Best practices
 - Do not use `return()` unless calling high up in a function
 - Use 
+
+## tidyeval
+- Use {{ }} where tidyeval variable used directly
+- Use `rlang::enquo()` where `rlang::as_label()` required, or where passing to
+  inner functions

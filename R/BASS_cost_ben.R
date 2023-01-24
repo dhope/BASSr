@@ -1,36 +1,57 @@
-
 #' BASS cost benefit calculation
 #'
-#' Caculate the cost benefits and inclusion probabilities
+#' Calculate the cost benefits and inclusion probabilities
 #'
 #' @param cost data frame with costs for each hexagon in a RawCost format
 #' @param hexagon_benefits data frame with benefits for each hexagon
 #' @param HexID column of hexagon ids
 #' @param StratumID Column of larger area id
-#' @param benefit_weight The weight assigned to benefit in the selection probabilities.0.5 is equal weighting of cost and benefits. 1.0 is zero weighting to cost.
+#' @param benefit_weight The weight assigned to benefit in the selection
+#'   probabilities. 0.5 is equal weighting of cost and benefits. 1.0 is zero
+#'   weighting to cost. Default 0.5.
 #'
 #' @return A data frame with full inclusion probabilities for each raster.
+#'
 #' @export
 #'
-calculate_inclusion_probs <- function(cost, hexagon_benefits, HexID,
-                                      StratumID = StudyAreaID,
+#' @examples
+#'
+#' h <- prepare_hab_long(psu_land_cover, lg_area = province)
+#' b <- calculate_benefit(grts_res = psu_samples,
+#'                        att_long = h,
+#'                        HexID = hex_id)
+#'
+#' inc <- calculate_inclusion_probs(
+#'   costs = psu_costs,
+#'   benefits = b,
+#'   HexID = hex_id,
+#'   StratumID = province)
+#'
+calculate_inclusion_probs <- function(costs, benefits,
+                                      HexID,
+                                      omit = NULL,
+                                      StratumID = NULL,
                                       benefit_weight = 0.5) {
 
-  if (!"RawCost" %in% names(cost)) {
-    # scale distance so anything >1000m from the road is given a value of 5000
-    cost <- dplyr::mutate(cost,
-                          RawCost = ifelse(.data$NEAR_DIST > 1000,
-                                           5000,
-                                           .data$NEAR_DIST))
+  # Setup quosures
+  HexID <- rlang::enquo(HexID)
+  omit <- rlang::enquo(omit)
+  StratumID = rlang::enquo(StratumID)
+
+  # Checks
+  costs <- check_costs(costs, HexID, omit, quiet = TRUE)
+
+  # Add benefits
+  costs <- dplyr::left_join(costs, benefits, by = rlang::as_label(HexID)) %>%
+    dplyr::select({{ HexID }}, {{ StratumID }}, "X", "Y", "RawCost", "benefit")
+
+  # By stratum
+  if(!rlang::quo_is_null(StratumID)) {
+    costs <- dplyr::group_by(costs, {{StratumID}})
   }
 
-  dplyr::left_join(cost, hexagon_benefits,
-                   by = rlang::as_label(rlang::enquo(HexID))) %>%
-    # delete any centroids that are in water
-    dplyr::filter(INLAKE == FALSE) %>%
-    # convert NA in the 'INLAKE' column to 0  ---> CHECK
-    dplyr::select({{ HexID }}, {{ StratumID }}, "X", "Y", "RawCost", "benefit") %>%
-    dplyr::group_by({{StratumID}}) %>%
+  # Calculate inclusion probabilities
+  costs %>%
     dplyr::mutate(
       LogCost = log10(.data$RawCost),
       ScLogCost = .data$LogCost / (max(.data$LogCost, na.rm = TRUE) + 1),
