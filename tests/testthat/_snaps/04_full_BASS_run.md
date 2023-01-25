@@ -6,7 +6,7 @@
         "names": {
           "type": "character",
           "attributes": {},
-          "value": ["hex_id", "benefit", "num_runs", "nsamples"]
+          "value": ["hex_id", "benefit", "num_runs", "n_samples"]
         },
         "row.names": {
           "type": "integer",
@@ -51,7 +51,7 @@
         "names": {
           "type": "character",
           "attributes": {},
-          "value": ["hex_id", "province", "X", "Y", "RawCost", "benefit", "x", "LogCost", "ScLogCost", "scale_ben", "partIP", "weightedIP", "inclpr", "num_runs", "nsamples"]
+          "value": ["hex_id", "province", "X", "Y", "RawCost", "benefit", "x", "LogCost", "ScLogCost", "scale_ben", "partIP", "weightedIP", "inclpr", "num_runs", "n_samples"]
         },
         "row.names": {
           "type": "integer",
@@ -74,7 +74,7 @@
             "names": {
               "type": "character",
               "attributes": {},
-              "value": ["hex_id", "province", "X", "Y", "RawCost", "benefit", "LogCost", "ScLogCost", "scale_ben", "partIP", "weightedIP", "inclpr", "num_runs", "nsamples"]
+              "value": ["hex_id", "province", "X", "Y", "RawCost", "benefit", "LogCost", "ScLogCost", "scale_ben", "partIP", "weightedIP", "inclpr", "num_runs", "n_samples"]
             },
             "levels": {
               "type": "character",

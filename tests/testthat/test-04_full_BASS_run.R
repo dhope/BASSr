@@ -5,38 +5,38 @@ test_that("full_BASS_run()", {
 
   # without costs
   expect_silent({
-    f1 <- full_BASS_run(num_runs = n_runs, nsamples = n_samples,
+    f1 <- full_BASS_run(num_runs = n_runs, n_samples = n_samples,
                         att = psu_land_cover, att.sp = psu_hexagons,
-                        HexID_ = hex_id, seed_ = 1234,
-                        stratumID = province, quiet = TRUE)
+                        hex_id = hex_id, seed = 1234,
+                        stratum_id = province, quiet = TRUE)
   })
 
   expect_s3_class(f1, "data.frame")
   expect_equal(nrow(f1), nrow(psu_hexagons))
-  expect_named(f1, c("hex_id", "benefit", "num_runs", "nsamples"))
+  expect_named(f1, c("hex_id", "benefit", "num_runs", "n_samples"))
 
 
   # With costs
   expect_silent({
-    f2 <- full_BASS_run(num_runs = n_runs, nsamples = n_samples,
+    f2 <- full_BASS_run(num_runs = n_runs, n_samples = n_samples,
                         att = psu_land_cover, att.sp = psu_hexagons,
-                        HexID_ = hex_id, seed_ = 1234,
-                        stratumID = province,
+                        hex_id = hex_id, seed = 1234,
+                        stratum_id = province,
                         costs = psu_costs, quiet = TRUE)
   })
 
   expect_s3_class(f2, "data.frame")
   expect_equal(nrow(f2), nrow(psu_hexagons))
   expect_true(all(c("benefit", "LogCost", "ScLogCost", "scale_ben", "partIP",
-                    "weightedIP", "inclpr", "num_runs", "nsamples") %in%
+                    "weightedIP", "inclpr", "num_runs", "n_samples") %in%
                     names(f2)))
 
   # With GRTS - No costs
   expect_silent({
-    f3 <- full_BASS_run(num_runs = n_runs, nsamples = n_samples,
+    f3 <- full_BASS_run(num_runs = n_runs, n_samples = n_samples,
                         att = psu_land_cover, att.sp = psu_hexagons,
-                        HexID_ = hex_id, return_grts = TRUE,
-                        stratumID = province, seed_ = 1234,
+                        hex_id = hex_id, return_grts = TRUE,
+                        stratum_id = province, seed = 1234,
                         quiet = TRUE)
   })
 
@@ -46,10 +46,10 @@ test_that("full_BASS_run()", {
 
   # With costs
   expect_silent({
-    f4 <- full_BASS_run(num_runs = n_runs, nsamples = n_samples,
+    f4 <- full_BASS_run(num_runs = n_runs, n_samples = n_samples,
                         att = psu_land_cover, att.sp = psu_hexagons,
-                        HexID_ = hex_id, return_grts = TRUE,
-                        stratumID = province, seed_ = 1234,
+                        hex_id = hex_id, return_grts = TRUE,
+                        stratum_id = province, seed = 1234,
                         costs = psu_costs, quiet = TRUE)
   })
 

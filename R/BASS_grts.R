@@ -8,14 +8,14 @@
 #' @param att_cleaned The attribute file for hexagons. Must include Habitat Layers and hexid
 #' @param att.sf The simple features shape.file object
 #' @param num_runs The number of times to draw random samples from the attribute files
-#' @param nsamples The number of samples to draw from each run
+#' @param n_samples The number of samples to draw from each run
 #' @param use_grts Logical. Indicates if should draw using GRTS or just random sample without
 #'                spatial dispersion.
 #'
 #' @return Returns a sample output in long and wide formats.
 #' @export
 #'
-draw_random_samples <- function(att_cleaned, att.sf, num_runs, nsamples,
+draw_random_samples <- function(att_cleaned, att.sf, num_runs, n_samples,
                                 use_grts = TRUE, quiet = FALSE, ...) {
   args <- list(...)
 
@@ -44,7 +44,7 @@ draw_random_samples <- function(att_cleaned, att.sf, num_runs, nsamples,
       1:num_runs,
       ~ spsurvey::grts(sframe = att.sf,
                        # n_over = n_os,
-                       n_base = nsamples,
+                       n_base = n_samples,
                        # stratum_var = paste0(strat_),
                        mindis = mindis,
                        DesignID = "sample",
@@ -54,17 +54,17 @@ draw_random_samples <- function(att_cleaned, att.sf, num_runs, nsamples,
     random_sample <- purrr::transpose(grts_output) |>
       purrr::pluck("sites_base") |>
       dplyr::bind_rows() |>
-      dplyr::mutate(run = rep(1:.env$num_runs, each = .env$nsamples),
+      dplyr::mutate(run = rep(1:.env$num_runs, each = .env$n_samples),
                     num_runs = .env$num_runs,
-                    nsamples = .env$nsamples)
+                    n_samples = .env$n_samples)
 
-    if(!quiet) message(glue::glue("Finished GRTS draw of {num_runs} runs and {nsamples} samples\n\r"))
+    if(!quiet) message(glue::glue("Finished GRTS draw of {num_runs} runs and {n_samples} samples\n\r"))
   }
 
   if (isFALSE(use_grts)) {
     random_sample <- purrr::map_df(
       1:num_runs,
-      ~{dplyr::slice_sample(att.sf, n = nsamples) |>
+      ~{dplyr::slice_sample(att.sf, n = n_samples) |>
           dplyr::mutate(run = .x)})
   }
 

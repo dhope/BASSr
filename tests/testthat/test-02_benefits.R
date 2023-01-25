@@ -1,6 +1,6 @@
 test_that("prepare_hab_long()", {
 
-  expect_silent(h <- prepare_hab_long(psu_land_cover, lg_area = province)) %>%
+  expect_silent(h <- prepare_hab_long(psu_land_cover, stratum_id = province)) %>%
     expect_s3_class("data.frame")
 
   # Dimensions and categories
@@ -58,7 +58,7 @@ test_that("allhexes()", {
 
 test_that("quick_ben()", {
 
-  lc_sum <- prepare_hab_long(psu_land_cover, lg_area = province) %>%
+  lc_sum <- prepare_hab_long(psu_land_cover, stratum_id = province) %>%
     dplyr::select("lc", "ha_total") %>%
     dplyr::distinct() %>%
     dplyr::rename(ha = ha_total)
@@ -74,7 +74,7 @@ test_that("quick_ben()", {
       d = psu_land_cover,
       samples = samples,
       land_cover_summary = lc_sum,
-      col_ = hex_id,
+      hex_id = hex_id,
       print = FALSE
     )
   }) %>%
@@ -92,7 +92,7 @@ test_that("quick_ben()", {
       d = psu_land_cover,
       samples = samples,
       land_cover_summary = lc_sum,
-      col_ = hex_id,
+      hex_id = hex_id,
       land_cover_weights = w,
       print = FALSE
     )
@@ -106,13 +106,13 @@ test_that("quick_ben()", {
 
 test_that("calculate_benefit()", {
 
-  h <- prepare_hab_long(psu_land_cover, lg_area = province)
+  h <- prepare_hab_long(psu_land_cover, stratum_id = province)
 
   expect_silent({
     withr::with_seed(1234, {
       b1 <- calculate_benefit(grts_res = psu_samples,
                               att_long = h,
-                              HexID = hex_id)
+                              hex_id = hex_id)
     })
   })
 
@@ -126,7 +126,7 @@ test_that("calculate_benefit()", {
       b2 <- calculate_benefit(
         grts_res = psu_samples,
         att_long = h,
-        HexID = hex_id,
+        hex_id = hex_id,
         non_random_set = c("SA_0009", "SA_0022", "SA_0047", "SA_0052"))
     })
   })

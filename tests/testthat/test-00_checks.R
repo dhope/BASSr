@@ -1,15 +1,30 @@
 test_that("check_column()", {
 
-  # Character
-  expect_silent(check_column(psu_hexagons, "hex_id"))
-  expect_error(check_column(psu_hexagons, "hex_iddddd"),
-               "not found in data")
-
   # Quoted
-  f <- function(col) check_column(psu_hexagons, rlang::enquo(col))
+  expect_silent(check_column(psu_hexagons, hex_id))
+  expect_error(check_column(psu_hexagons, hex_id2), "'hex_id2' not found")
+
+  f <- function(col) check_column(psu_hexagons, {{ col }})
 
   expect_silent(f(hex_id))
-  expect_error(f(HEX_ID), "not found in data")
+  expect_error(f(HEX_ID), "'HEX_ID' not found in data")
+
+  f <- function(col) {
+    col <- rlang::enquo(col)
+    check_column(psu_hexagons, {{ col }})
+  }
+
+  expect_silent(f(hex_id))
+  expect_error(f(HEX_ID), "'HEX_ID' not found in data")
+
+
+  # Need to use {{ }}
+  f <- function(col) {
+    col <- rlang::enquo(col)
+    check_column(psu_hexagons, col)
+  }
+
+  expect_error(f(hex_id))
 
 })
 

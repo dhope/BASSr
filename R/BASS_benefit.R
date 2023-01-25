@@ -7,7 +7,7 @@
 #'
 #' @param grts_res Results from GRTS random sample set.
 #' @param att_long Attribute table
-#' @param HexID column for hexagons
+#' @param hex_id column for hexagons
 #' @param att_long Data frame with habitat information, in long format
 #' @param non_random_set Set of hexagons to include as a non randomly selected
 #'   set
@@ -25,7 +25,7 @@
 #' calculate_benefit(
 #'   grts_res = psu_samples,
 #'   att_long = hab,
-#'   HexID = hex_id,
+#'   hex_id = hex_id,
 #'   non_random_set = c("SA_0009", "SA_0022", "SA_0047", "SA_0052"))
 #'
 #' # Specify a non-random set
@@ -33,12 +33,12 @@
 #' calculate_benefit(
 #'  grts_res = psu_samples,
 #'  att_long = hab,
-#'  HexID = hex_id,
+#'  hex_id = hex_id,
 #'  non_random_set = c("SA_0009", "SA_0022", "SA_0047", "SA_0052"))
 #'
 #'
 #'
-calculate_benefit <- function(grts_res, HexID, att_long,
+calculate_benefit <- function(grts_res, hex_id, att_long,
                               non_random_set = NULL,
                               land_cover_weights = NULL) {
 
@@ -61,10 +61,10 @@ calculate_benefit <- function(grts_res, HexID, att_long,
     if (is.vector(non_random_set)) {
 
       extra <- att_long %>%
-        dplyr::mutate({{ HexID }} := as.character({{ HexID }})) %>%
-        tidyr::pivot_wider(id_cols = {{ HexID }},
+        dplyr::mutate({{ hex_id }} := as.character({{ hex_id }})) %>%
+        tidyr::pivot_wider(id_cols = {{ hex_id }},
                            names_from = "lc", values_from = "ha") %>%
-        dplyr::filter({{ HexID }} %in% .env$non_random_set) %>%
+        dplyr::filter({{ hex_id }} %in% .env$non_random_set) %>%
         tidyr::expand_grid(run = 1:dplyr::n_distinct(grts_res$random_sample$run))
 
       random_sample_summary_widenest <-
@@ -93,8 +93,8 @@ calculate_benefit <- function(grts_res, HexID, att_long,
   }
 
   hexes <- att_long %>%
-    dplyr::select({{ HexID }}, "lc", "ha") %>%
-    dplyr::mutate({{ HexID }} := as.character({{ HexID }})) %>%
+    dplyr::select({{ hex_id }}, "lc", "ha") %>%
+    dplyr::mutate({{ hex_id }} := as.character({{ hex_id }})) %>%
     tidyr::pivot_wider(names_from = "lc", values_from = "ha")
 
   total <- att_long %>%
@@ -106,7 +106,7 @@ calculate_benefit <- function(grts_res, HexID, att_long,
     d = hexes,
     samples = random_sample_summary_widenest,
     land_cover_summary = total, land_cover_weights = land_cover_weights,
-    col_ = {{ HexID }}, print = FALSE)
+    hex_id = {{ hex_id }}, print = FALSE)
 
 }
 
@@ -117,15 +117,16 @@ calculate_benefit <- function(grts_res, HexID, att_long,
 #' Summarize land cover in attribute and add it to a longer table
 #'
 #' @param att attribute table
-#' @param lg_area Column for larger area. Either study area or region
+#' @param stratum_id Column for larger area. Either study area or region
 #'
 #' @return
 #' @export
 #'
-prepare_hab_long <- function(att, lg_area = StudyAreaID) {
+prepare_hab_long <- function(att, stratum_id) {
   # sa_a <- sum(att$area)
+
   land_cover_summary <- att %>%
-    dplyr::group_by({{ lg_area }}) %>%
+    dplyr::group_by({{ stratum_id }}) %>%
     dplyr::summarize(dplyr::across(dplyr::matches("^LC\\d+$"), sum)) %>%
     tidyr::pivot_longer(cols = dplyr::matches("^LC\\d+$"),
                         names_to = "lc", values_to = "ha") %>%
@@ -140,7 +141,7 @@ prepare_hab_long <- function(att, lg_area = StudyAreaID) {
   ) %>%
     dplyr::left_join(
       dplyr::rename(land_cover_summary, "ha_total" = "ha"),
-      by = c("lc", rlang::as_label(rlang::enquo(lg_area))))
+      by = c("lc", rlang::as_label(rlang::enquo(stratum_id))))
 
   att_cleaned_long
 }
@@ -186,10 +187,9 @@ subsample_grts_and_calc_benefit <- function(nsamples, num_runs, grts_file, att,
 #'
 #' @return
 #' @export
-quick_ben <- function(d, samples, land_cover_summary, col_, print,
+quick_ben <- function(d, samples, land_cover_summary, hex_id, print,
                       land_cover_weights = NULL) {
 
-  # col <- rlang::enquo(col_)
   hexes <- d  |>
     dplyr::as_tibble()  |>
     dplyr::select(dplyr::matches("LC\\d"))
@@ -199,12 +199,9 @@ quick_ben <- function(d, samples, land_cover_summary, col_, print,
     stop("I think you have inputed percentages into your hexagons.
                 This will not calculate accurate benefit values.")
   }
-  hexNames <- # as.character(d[[col_]])
-    dplyr::select(dplyr::as_tibble(d), {{ col_ }}) |>
+  hexNames <- dplyr::as_tibble(d) %>%
+    dplyr::select({{ hex_id }}) |>
     dplyr::pull(1)
-  # print(names(d))
-  # samples <- grts_random_sample_summary_widenest
-  # browser()
 
   if (nrow(land_cover_summary) > dplyr::n_distinct(land_cover_summary$lc)) {
     stop("Stratification of benefit calculation not yet supported. ",
@@ -273,6 +270,6 @@ quick_ben <- function(d, samples, land_cover_summary, col_, print,
     t() %>%
     as.vector()
 
-  dplyr::tibble({{ col_ }} := hexNames,
+  dplyr::tibble({{ hex_id }} := hexNames,
                 benefit = allhexes(h, s, tot, w, printDets = print))
 }

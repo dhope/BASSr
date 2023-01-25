@@ -17,5 +17,4 @@ making collaboration and future modifications easier.
 
 ## tidyeval
 - Use {{ }} where tidyeval variable used directly
-- Use `rlang::enquo()` where `rlang::as_label()` required, or where passing to
-  inner functions
+- Use `rlang::as_label(rlang::enquo())` to get name

@@ -1,29 +1,29 @@
 #' A full BASS run
 #'
 #' @param num_runs The number of times to draw random samples from hexagons
-#' @param nsamples The number of samples to draw in each sample
+#' @param n_samples The number of samples to draw in each sample
 #' @param att  the attribute table correctly formatted
 #' @param att.sp the shape file from the attribute table
-#' @param cost the cost table for each hexagon id
+#' @param costs the cost table for each hexagon id
 #' @param return_all return each piece of BASS implementation
-#' @param seed_ random seed to use for random grts samples
-#' @param HexID_ Column for hexagon id
-#' @param stratumID Column for larger area id. Likely StudyAreaID or Province
+#' @param seed random seed to use for random grts samples
+#' @param hex_id Column for hexagon id
+#' @param stratum_id Column for larger area id. Likely StudyAreaID or Province
 #' @param quick Run the benefit calculation quickly
 #' @param non_ran_set Non random set that is added to the hypothetical sample set in benefit calculation.
 #' @param lakeN The land cover number to represent open water. 1 for FNLC, 18 for CLC
 #' @param benefit_weight The weight assigned to benefit in the selection probabilities.0.5 is equal weighting of cost and benefits. 1.0 is zero weighting to cost.
-#' @param weighted_benefits data frame with lc and weights
+#' @param land_cover_weights data frame with lc and weights
 #'
 #' @return a table with inclusion probabilities
 #' @export
 #'
-full_BASS_run <- function(num_runs, nsamples, att, att.sp, costs = NULL,
-                          seed_ = as.integer(Sys.time()),
-                          HexID_ = HEX100, stratumID = StudyAreaID,
+full_BASS_run <- function(num_runs, n_samples, att, att.sp, costs = NULL,
+                          seed = as.integer(Sys.time()),
+                          hex_id, stratum_id = NULL, omit_flag = NULL,
                           non_ran_set = NULL, lakeN = 18,
                           benefit_weight = 0.5,
-                          weighted_benefits = NULL, return_grts = FALSE,
+                          land_cover_weights = NULL, return_grts = FALSE,
                           quiet = FALSE) {
 
   # CHECK
@@ -38,7 +38,7 @@ full_BASS_run <- function(num_runs, nsamples, att, att.sp, costs = NULL,
     if(is.na(rowSums(dplyr::summarize(sf::st_drop_geometry(att), dplyr::across(dplyr::matches("^LC\\d"), sum))))) rlang::abort(message = "Habitat data table not formatted correctly. Try running clean_forBass.")
   }
 
-  set.seed(seed_)
+  set.seed(seed)
 
   if (!"sf" %in% class(att.sp)) {
     stop("Spatial object att.sp must be an object of package sf. Please fix and try again")
@@ -49,30 +49,30 @@ full_BASS_run <- function(num_runs, nsamples, att, att.sp, costs = NULL,
     }
   }
 
-  if (nsamples ==0) grts_output <- NULL
-  if (nsamples !=0) {
-
-    grts_output <- draw_random_samples(att_cleaned = att, att.sf = att.sp,
-                                       num_runs = num_runs, nsamples = nsamples,
-                                       quiet = quiet)
+  if (n_samples == 0) grts_output <- NULL
+  if (n_samples != 0) {
+    grts_output <- draw_random_samples(
+      att_cleaned = att, att.sf = att.sp,
+      num_runs = num_runs, n_samples = n_samples,
+      quiet = quiet)
     if(!quiet) message("sample draw complete")
   }
 
-  att_cleaned_long <- prepare_hab_long(att, {{ stratumID }})
+  att_cleaned_long <- prepare_hab_long(att, {{ stratum_id }})
 
   # Benefits
   benefits <- calculate_benefit(
     grts_res = grts_output, att_long = att_cleaned_long,
     non_random_set = non_ran_set,
-    HexID = {{ HexID_ }},
-    land_cover_weights = weighted_benefits
+    hex_id = {{ hex_id }},
+    land_cover_weights = land_cover_weights
   )
 
   # Costs
   if (!is.null(costs)) {
     r <- calculate_inclusion_probs(
-      costs = costs, benefits = benefits, HexID = {{ HexID_ }},
-      StratumID = {{ stratumID }}, benefit_weight = benefit_weight)
+      costs = costs, benefits = benefits, hex_id = {{ hex_id }},
+      stratum_id = {{ stratum_id }}, benefit_weight = benefit_weight)
     type <- "inclusion_probs"
   } else {
     r <- benefits
@@ -82,7 +82,7 @@ full_BASS_run <- function(num_runs, nsamples, att, att.sp, costs = NULL,
   # Meta
   r <- dplyr::mutate(r,
                      num_runs = .env$num_runs,
-                     nsamples = .env$nsamples)
+                     n_samples = .env$n_samples)
 
 
   # GRTS

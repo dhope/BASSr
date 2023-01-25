@@ -1,9 +1,6 @@
-check_costs <- function(costs, HexID, omit, quiet) {
+check_costs <- function(costs, hex_id, omit_flag, quiet) {
 
   if(is.null(costs)) rlang::abort("`costs` cannot be NULL", call = NULL)
-
-  check_column(costs, HexID)
-  check_column(costs, omit)
 
   if (!"X" %in% names(costs)) {
     if(!quiet) rlang::inform(
@@ -19,27 +16,32 @@ check_costs <- function(costs, HexID, omit, quiet) {
       dplyr::bind_cols(costs)
   }
 
-  # Make omit column NA
-  if(!rlang::quo_is_null(omit)) {
+  # Make RawCosts NA, on omit column
+  if(!rlang::quo_is_null(rlang::enquo(omit_flag))) {
     costs <- dplyr::mutate(costs,
-                           RawCost = dplyr::if_else({{ omit }},
+                           RawCost = dplyr::if_else({{ omit_flag }},
                                                     NA_real_,
                                                     .data$RawCost))
   }
 
-  if (!"RawCost" %in% names(costs) && "NEAR_DIST" %in% names(costs)) {
-    rlang::inform(
-      c("!" = "No `RawCost` column in `costs`",
-        "*" = paste0("Assigning hex cost of 5000 when > 1000m from the road ",
-                     "(`NEAR_DIST`)")))
+  if (!"RawCost" %in% names(costs)) {
+    if("NEAR_DIST" %in% names(costs)) {
+      rlang::inform(
+        c("!" = "No `RawCost` column in `costs`",
+          "*" = "Calculating rough costs with `NEAR_DIST`",
+          "*" = "Assigning hex cost of 5000 when > 1000m from the road"))
 
-    costs <- dplyr::mutate(costs,
-                           RawCost = dplyr::if_else(.data$NEAR_DIST > 1000,
-                                                    5000,
-                                                    .data$NEAR_DIST))
+      costs <- dplyr::mutate(costs,
+                             RawCost = dplyr::if_else(.data$NEAR_DIST > 1000,
+                                                      5000,
+                                                      .data$NEAR_DIST))
+    } else {
+      rlang::abort(
+        c("No `RawCost` column in `costs`",
+          "!" = "Cannot calculate rough costs: No `NEAR_DIST` column"),
+        call = NULL)
+    }
   }
-
-  check_column(costs, "RawCost")
 
   costs
 }
@@ -52,16 +54,15 @@ check_costs <- function(costs, HexID, omit, quiet) {
 #' check_column(mtcars, mpg)
 #' @noRd
 check_column <- function(data, col) {
-  nm <- NULL
-  if(is.character(col) & !is.null(col)) {
-    nm <- col
-  } else if(rlang::is_quosure(col) & !rlang::quo_is_null(col)) {
-    nm <- rlang::as_label(col)
-  }
+  col <- rlang::enquo(col)
 
-  if(!is.null(nm) && !nm %in% names(data)) {
-    rlang::abort(glue::glue(
-      "Column '{nm}' not found in data frame `{deparse(substitute(data))}`"),
-      call = NULL)
+  if(!rlang::quo_is_null(col)) {
+    nm <- rlang::as_label({{ col }})
+
+    if(!nm %in% names(data)) {
+      rlang::abort(glue::glue(
+        "Column '{nm}' not found in data frame `{deparse(substitute(data))}`"),
+        call = NULL)
+    }
   }
 }

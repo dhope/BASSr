@@ -2,11 +2,15 @@
 #'
 #' Calculate the cost benefits and inclusion probabilities
 #'
-#' @param cost data frame with costs for each hexagon in a RawCost format
-#' @param hexagon_benefits data frame with benefits for each hexagon
-#' @param HexID column of hexagon ids
-#' @param StratumID Column of larger area id
-#' @param benefit_weight The weight assigned to benefit in the selection
+#' @param costs Data frame. Costs for each hexagon in a RawCost format
+#' @param benefits Data frame. Benefits associated with each hexagon ( output of
+#'   `calculate_benefits()`)
+#' @param hex_id Column containing hexagon IDs.
+#' @param omit Column identifying hexes to omit (e.g., water hexes). Default
+#'   INLAKE.
+#' @param stratum_id Column containing larger area id (e.g., Province,
+#'   StudyAreaID). Default StudyAreaID.
+#' @param benefit_weight Numeric. Weight assigned to benefit in the selection
 #'   probabilities. 0.5 is equal weighting of cost and benefits. 1.0 is zero
 #'   weighting to cost. Default 0.5.
 #'
@@ -16,38 +20,40 @@
 #'
 #' @examples
 #'
-#' h <- prepare_hab_long(psu_land_cover, lg_area = province)
+#' h <- prepare_hab_long(psu_land_cover, province)
 #' b <- calculate_benefit(grts_res = psu_samples,
 #'                        att_long = h,
-#'                        HexID = hex_id)
+#'                        hex_id = hex_id)
 #'
 #' inc <- calculate_inclusion_probs(
 #'   costs = psu_costs,
 #'   benefits = b,
-#'   HexID = hex_id,
-#'   StratumID = province)
+#'   hex_id = hex_id,
+#'   stratum_id = province)
 #'
 calculate_inclusion_probs <- function(costs, benefits,
-                                      HexID,
-                                      omit = NULL,
-                                      StratumID = NULL,
+                                      hex_id,
+                                      omit_flag = NULL,
+                                      stratum_id = NULL,
                                       benefit_weight = 0.5) {
 
-  # Setup quosures
-  HexID <- rlang::enquo(HexID)
-  omit <- rlang::enquo(omit)
-  StratumID = rlang::enquo(StratumID)
-
   # Checks
-  costs <- check_costs(costs, HexID, omit, quiet = TRUE)
+  check_column(costs, {{ hex_id }})
+  check_column(costs, {{ omit_flag }})
+  check_column(costs, {{ stratum_id }})
+  check_column(benefits, {{ hex_id }})
+
+  costs <- check_costs(costs, {{ hex_id }}, {{ omit_flag }}, quiet = TRUE)
 
   # Add benefits
-  costs <- dplyr::left_join(costs, benefits, by = rlang::as_label(HexID)) %>%
-    dplyr::select({{ HexID }}, {{ StratumID }}, "X", "Y", "RawCost", "benefit")
+  costs <- dplyr::left_join(costs, benefits,
+                            by = rlang::as_label(rlang::enquo(hex_id))) %>%
+    dplyr::select({{ hex_id }}, {{ stratum_id }},
+                  "X", "Y", "RawCost", "benefit")
 
   # By stratum
-  if(!rlang::quo_is_null(StratumID)) {
-    costs <- dplyr::group_by(costs, {{StratumID}})
+  if(!rlang::quo_is_null(rlang::enquo(stratum_id))) {
+    costs <- dplyr::group_by(costs, {{ stratum_id }})
   }
 
   # Calculate inclusion probabilities

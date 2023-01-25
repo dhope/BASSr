@@ -4,7 +4,7 @@ test_that("draw_random_samples() - no GRTS", {
   names(pp) <- glue::glue("LC{1:ncol(pp)}")
   expect_equal(
     withr::with_seed({draw_random_samples(att.sf =  pp,
-                                          num_runs = 1, nsamples = 10, use_grts = F) |>
+                                          num_runs = 1, n_samples = 10, use_grts = F) |>
         purrr::pluck('random_sample')},seed = 15
 
     ),
@@ -25,7 +25,7 @@ test_that("draw_random_samples() - with GRTS", {
   expect_message(g <- draw_random_samples(
     att.sf = psu_hexagons,
     num_runs = n_runs,
-    nsamples = n_samples),
+    n_samples = n_samples),
     paste0("Finished GRTS draw of ",
            n_runs, " runs and ",
            n_samples, " samples"))
@@ -35,11 +35,11 @@ test_that("draw_random_samples() - with GRTS", {
   g <- g[["random_sample"]]
   expect_named(g, c("siteID", "siteuse", "replsite", "lon_WGS84", "lat_WGS84",
                     "stratum", "wgt", "ip", "caty", "run", "num_runs",
-                    "nsamples", names(psu_hexagons)), ignore.order = TRUE)
+                    "n_samples", names(psu_hexagons)), ignore.order = TRUE)
   expect_equal(nrow(g), n_runs * n_samples)
   expect_true(all(g$hex_id %in% psu_hexagons$hex_id))
   expect_true(all(psu_hexagons$hex_id %in% psu_hexagons$hex_id))
-  expect_equal(unique(g$nsamples), n_samples)
+  expect_equal(unique(g$n_samples), n_samples)
   expect_equal(unique(g$num_runs), n_runs)
   expect_equal(sort(unique(g$run)), 1:n_runs)
 
