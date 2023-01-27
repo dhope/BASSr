@@ -3,7 +3,7 @@ test_that("draw_random_samples() - no GRTS", {
     dplyr::mutate(across(.fns = as.character))
   names(pp) <- glue::glue("LC{1:ncol(pp)}")
   expect_equal(
-    withr::with_seed({draw_random_samples(att.sf =  pp,
+    withr::with_seed({draw_random_samples(att_sf =  pp,
                                           num_runs = 1, n_samples = 10, use_grts = F) |>
         purrr::pluck('random_sample')},seed = 15
 
@@ -23,7 +23,7 @@ test_that("draw_random_samples() - with GRTS", {
   n_samples <- 3
 
   expect_message(g <- draw_random_samples(
-    att.sf = psu_hexagons,
+    att_sf = psu_hexagons,
     num_runs = n_runs,
     n_samples = n_samples),
     paste0("Finished GRTS draw of ",

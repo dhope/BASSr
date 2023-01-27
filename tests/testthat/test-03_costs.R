@@ -1,10 +1,9 @@
 test_that("calculate_inclusion_probs()", {
 
-  h <- prepare_hab_long(psu_land_cover, stratum_id = province)
-
-  expect_silent(b <- calculate_benefit(grts_res = psu_samples,
-                                       att_long = h,
-                                       hex_id = hex_id))
+  expect_silent(b <- calculate_benefit(samples = psu_samples,
+                                       att_sf = psu_hexagons,
+                                       hex_id = hex_id,
+                                       stratum_id = province))
 
 
   expect_silent(inc <- calculate_inclusion_probs(

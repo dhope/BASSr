@@ -1,16 +1,16 @@
 test_that("prepare_hab_long()", {
 
-  expect_silent(h <- prepare_hab_long(psu_land_cover, stratum_id = province)) %>%
+  expect_silent(h <- prepare_hab_long(psu_hexagons, stratum_id = province)) %>%
     expect_s3_class("data.frame")
 
   # Dimensions and categories
-  lc <- stringr::str_subset(names(psu_land_cover), "LC")
-  expect_named(h, c("hex_id", "HexArea", "province", "lc", "ha", "ha_total",
-                    "total_phab"))
+  lc <- stringr::str_subset(names(psu_hexagons), "LC")
+  expect_true(all(c("hex_id", "HexArea", "province", "lc", "ha", "ha_total",
+                    "total_phab") %in% names(h)))
   expect_equal(nrow(h),
-               dplyr::n_distinct(psu_land_cover$hex_id) * length(lc))
+               dplyr::n_distinct(psu_hexagons$hex_id) * length(lc))
   expect_true(all(unique(h$lc) == lc))
-  expect_true(all(h$hex_id %in% psu_land_cover$hex_id))
+  expect_true(all(h$hex_id %in% psu_hexagons$hex_id))
   expect_equal(dplyr::n_distinct(h$ha_total),
                dplyr::n_distinct(h$lc))
 
@@ -23,21 +23,24 @@ test_that("prepare_hab_long()", {
 
   # Pass through variables
   expect_equal(dplyr::select(h, "hex_id","HexArea", "province", "lc", "ha"),
-               tidyr::pivot_longer(psu_land_cover, cols = dplyr::matches("LC"),
-                                   values_to = "ha", names_to = "lc"))
+               tidyr::pivot_longer(psu_hexagons, cols = dplyr::matches("LC"),
+                                   values_to = "ha", names_to = "lc") %>%
+                 dplyr::select("hex_id","HexArea", "province", "lc", "ha"))
 
 })
 
 test_that("allhexes()", {
   withr::local_seed(1234)
 
-  h <- dplyr::select(psu_land_cover, dplyr::starts_with("LC")) %>%
+  h <- dplyr::select(psu_hexagons, dplyr::starts_with("LC")) %>%
+    sf::st_drop_geometry() %>%
     as.matrix()
 
   t <- as.vector(colSums(h))
 
   # Dummy sampling data
-  s <- psu_land_cover %>%
+  s <- psu_hexagons %>%
+    sf::st_drop_geometry() %>%
     dplyr::slice_sample(n = 10) %>%
     dplyr::select(dplyr::starts_with("LC")) %>%
     as.matrix()
@@ -58,20 +61,20 @@ test_that("allhexes()", {
 
 test_that("quick_ben()", {
 
-  lc_sum <- prepare_hab_long(psu_land_cover, stratum_id = province) %>%
+  lc_sum <- prepare_hab_long(psu_hexagons, stratum_id = province) %>%
+    sf::st_drop_geometry() %>%
     dplyr::select("lc", "ha_total") %>%
     dplyr::distinct() %>%
     dplyr::rename(ha = ha_total)
 
   samples <- psu_samples %>%
-    purrr::pluck("random_sample") %>%
     dplyr::group_by(run) %>%
     dplyr::summarize_at(dplyr::vars(dplyr::matches("LC\\d")), sum) %>%
     sf::st_drop_geometry()
 
   expect_silent({
     b1 <- quick_ben(
-      d = psu_land_cover,
+      d = psu_hexagons,
       samples = samples,
       land_cover_summary = lc_sum,
       hex_id = hex_id,
@@ -80,8 +83,8 @@ test_that("quick_ben()", {
   }) %>%
     expect_s3_class("data.frame")
 
-  expect_equal(nrow(b1), nrow(psu_land_cover))
-  expect_true(all(b1$hex_id %in% psu_land_cover$hex_id))
+  expect_equal(nrow(b1), nrow(psu_hexagons))
+  expect_true(all(b1$hex_id %in% psu_hexagons$hex_id))
 
   # land_cover_weights
   w <- data.frame(lc = paste0("LC", 1:6),
@@ -89,7 +92,7 @@ test_that("quick_ben()", {
 
   expect_silent({
     b2 <- quick_ben(
-      d = psu_land_cover,
+      d = psu_hexagons,
       samples = samples,
       land_cover_summary = lc_sum,
       hex_id = hex_id,
@@ -106,26 +109,26 @@ test_that("quick_ben()", {
 
 test_that("calculate_benefit()", {
 
-  h <- prepare_hab_long(psu_land_cover, stratum_id = province)
-
   expect_silent({
     withr::with_seed(1234, {
-      b1 <- calculate_benefit(grts_res = psu_samples,
-                              att_long = h,
+      b1 <- calculate_benefit(samples = psu_samples,
+                              att_sf = psu_hexagons,
+                              stratum_id = province,
                               hex_id = hex_id)
     })
   })
 
   expect_s3_class(b1, "data.frame")
-  expect_equal(nrow(b1), nrow(psu_land_cover))
-  expect_true(all(b1$hex_id %in% psu_land_cover$hex_id))
+  expect_equal(nrow(b1), nrow(psu_hexagons))
+  expect_true(all(b1$hex_id %in% psu_hexagons$hex_id))
 
   # non_random_set
   expect_silent({
     withr::with_seed(1234, {
       b2 <- calculate_benefit(
-        grts_res = psu_samples,
-        att_long = h,
+        samples = psu_samples,
+        att_sf = psu_hexagons,
+        stratum_id = province,
         hex_id = hex_id,
         non_random_set = c("SA_0009", "SA_0022", "SA_0047", "SA_0052"))
     })

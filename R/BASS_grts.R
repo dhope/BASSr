@@ -5,19 +5,22 @@
 
 #' Draw random sample
 #'
-#' @param att_cleaned The attribute file for hexagons. Must include Habitat Layers and hexid
-#' @param att.sf The simple features shape.file object
-#' @param num_runs The number of times to draw random samples from the attribute files
-#' @param n_samples The number of samples to draw from each run
-#' @param use_grts Logical. Indicates if should draw using GRTS or just random sample without
-#'                spatial dispersion.
+#' @param num_runs Numeric. Number of times to draw random samples from the
+#'   attribute files.
+#' @param n_samples Numeric. Number of samples to draw from each run.
+#' @param use_grts Logical. Whether to use GRTS or just sample randomly without
+#'   spatial dispersion.
 #'
-#' @return Returns a sample output in long and wide formats.
+#' @inheritParams common_docs
+#'
+#' @return Samples as spatial data frame.
 #' @export
 #'
-draw_random_samples <- function(att_cleaned, att.sf, num_runs, n_samples,
+draw_random_samples <- function(att_sf, num_runs, n_samples,
                                 use_grts = TRUE, quiet = FALSE, ...) {
   args <- list(...)
+
+  # CHECKS
 
   if (isTRUE(use_grts)) {
 
@@ -42,7 +45,7 @@ draw_random_samples <- function(att_cleaned, att.sf, num_runs, n_samples,
 
     grts_output <- purrr::map(
       1:num_runs,
-      ~ spsurvey::grts(sframe = att.sf,
+      ~ spsurvey::grts(sframe = att_sf,
                        # n_over = n_os,
                        n_base = n_samples,
                        # stratum_var = paste0(strat_),
@@ -58,23 +61,16 @@ draw_random_samples <- function(att_cleaned, att.sf, num_runs, n_samples,
                     num_runs = .env$num_runs,
                     n_samples = .env$n_samples)
 
-    if(!quiet) message(glue::glue("Finished GRTS draw of {num_runs} runs and {n_samples} samples\n\r"))
+    if(!quiet) message("Finished GRTS draw of ", num_runs, " runs and ",
+                       n_samples, " samples")
   }
 
   if (isFALSE(use_grts)) {
     random_sample <- purrr::map_df(
       1:num_runs,
-      ~{dplyr::slice_sample(att.sf, n = n_samples) |>
+      ~{dplyr::slice_sample(att_sf, n = n_samples) |>
           dplyr::mutate(run = .x)})
   }
 
-  random_sample_long <- tidyr::pivot_longer(
-    random_sample,
-    cols = dplyr::matches("LC\\d"),
-    names_to = "lc",
-    values_to = "ha"
-  )
-
-  list(random_sample = random_sample,
-       random_sample_long = random_sample_long)
+  random_sample
 }

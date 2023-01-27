@@ -42,6 +42,8 @@ ssu_points <- purrr::map_df(
   ~ genSSU(psu_hexagons[.x,], spacing = 5, HexID_column = hex_id))%>%
   dplyr::mutate(province = "ON")
 
+usethis::use_data(ssu_points, overwrite = TRUE)
+
 ssu_buffers <- sf::st_buffer(ssu_points, 2.5)
 
 stars_df <- sf::st_as_sf(stars_nr)
@@ -56,9 +58,11 @@ psu_land_cover <- st_join(psu_hexagons, stars_df) %>%
   tidyr::pivot_wider(names_from = clumps, values_from = Area, names_prefix = "LC",
                      values_fill = list(Area = units::set_units(0, "m^2"))) %>%
   dplyr::mutate(province = "ON")
+usethis::use_data(psu_land_cover, overwrite = TRUE)
 
 psu_hexagons <- left_join(psu_hexagons, psu_land_cover, by = c("hex_id", "province")) %>%
   add_coords()
+usethis::use_data(psu_hexagons, overwrite = TRUE)
 
 ssu_land_cover <- st_join(ssu_buffers, stars_df) %>%
   dplyr::mutate(Area = sf::st_area(.)) |>
@@ -71,6 +75,7 @@ ssu_land_cover <- st_join(ssu_buffers, stars_df) %>%
                      names_prefix = "LC",
                      values_fill = list(Area = units::set_units(0, "m^2"))) %>%
   dplyr::mutate(province = "ON")
+usethis::use_data(ssu_land_cover, overwrite = TRUE)
 
 # Costs ----------------------------------------
 withr::with_seed(1234, {
@@ -97,16 +102,16 @@ psu_costs <- estimate_cost_study_area(narus = 3, costs_hex,
                                       dist2airport_base = cabin_dist_to_air,
                                       AirportType = AirportType,
                                       vars = cost_vars)
+usethis::use_data(psu_costs, overwrite = TRUE)
 
 withr::with_seed(1234, {
   psu_samples <- draw_random_samples(
-    att.sf = psu_hexagons,
+    att_sf = psu_hexagons,
     num_runs = 10,
-    nsamples = 3)
+    n_samples = 3)
 })
+usethis::use_data(psu_samples, overwrite = TRUE)
 
-
-usethis::use_data(psu_hexagons, psu_land_cover, psu_costs, psu_samples,
                   ssu_points, ssu_land_cover,
                   overwrite = TRUE)
 
