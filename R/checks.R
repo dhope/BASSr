@@ -1,3 +1,34 @@
+check_lc_names <- function(cols, pattern) {
+
+  # Make sure matches
+  if(length(cols) == 0) {
+    rlang::abort("`pattern` did not match any names in `att_sf`", call = NULL)
+  }
+
+  # Make sure leftover is numeric
+  cols2 <- stringr::str_remove(cols, pattern)
+
+  t <- withr::with_options( # Temporarily return warnings as errors
+    list(warn = 2),
+    try(as.numeric(cols2), silent = TRUE))
+
+  if(inherits(t, "try-error")) {
+    msg <- c("x" = "`pattern` did not match all the land cover preamble")
+
+    # Try to help
+    add <- unique(stringr::str_remove(cols2, "[[:digit:]]+$"))
+    if(length(add) == 1) {
+      msg <- c(
+        msg,
+        "*" = paste0("Consider using '",
+                     stringr::str_remove(pattern, "\\^"), add,
+                     "' instead"))
+    }
+
+    rlang::abort(msg, call = NULL)
+  }
+}
+
 check_costs <- function(costs, hex_id, omit_flag, quiet) {
 
   if(is.null(costs)) rlang::abort("`costs` cannot be NULL", call = NULL)

@@ -1,29 +1,28 @@
 test_that("clean_forBass()", {
 
-  # Get dirty LC
-  dirty <- dplyr::rename_with(
-    psu_land_cover, .fn = ~paste0("CLC", .), .cols = dplyr::starts_with("LC"))
+  # No match
+  expect_error(clean <- clean_forBass(psu_hex_dirty, pattern = "CLC0013_LC"),
+               "did not match")
+  # Helpful
+  expect_error(clean <- clean_forBass(psu_hex_dirty, pattern = "CLC"),
+               "Consider using 'CLC0013_' instead")
 
-
-  expect_silent(clean <- clean_forBass(dirty, s = "CLCLC", id_col = hex_id))
+  # Clean
+  expect_message(clean <- clean_forBass(psu_hex_dirty, pattern = "CLC0013_"),
+                 "Renaming land cover columns") %>%
+    expect_message("should be POINTs not POLYGONs")
   expect_s3_class(clean, "data.frame")
   expect_true("LC01" %in% names(clean))
-  expect_equal(nrow(clean), nrow(dirty))
+  expect_equal(nrow(clean), nrow(psu_hex_dirty))
+  expect_true(all(sf::st_geometry_type(clean) == "POINT"))
 
-
-  expect_silent(clean <- clean_forBass(dirty, s = "CLCLC", id_col = hex_id,
-                                       f_vec = c("SA_0009")))
-  expect_s3_class(clean, "data.frame")
-  expect_true("LC01" %in% names(clean))
-  expect_equal(nrow(clean), 1)
-
-
-  expect_silent(clean <- clean_forBass(dirty, s = "CLCLC", id_col = hex_id,
-                                       append = "a"))
+  # Append
+  expect_message(clean <- clean_forBass(psu_hex_dirty, pattern = "CLC0013_",
+                                        append = "a")) %>%
+    suppressMessages()
   expect_s3_class(clean, "data.frame")
   expect_true("LC01a" %in% names(clean))
-  expect_equal(nrow(clean), nrow(dirty))
-
+  expect_equal(nrow(clean), nrow(psu_hex_dirty))
 })
 
 test_that("estimate_cost_study_area()", {

@@ -11,17 +11,56 @@
 #' @return
 #' @export
 #'
-clean_forBass <- function(df, s, id_col = StudyAreaID, f_vec = NULL, appended = "") {
+#' @examples
+#'
+#' psu_hex_clean <- clean_forBass(psu_hex_dirty, pattern = "CLC0013_")
+#'
+#'
+clean_forBass <- function(att_sf, pattern = "CLC15_", append = "",
+                          quiet = FALSE) {
 
-  match <- glue::glue("^{s}")
+  pattern <- glue::glue("^{pattern}")
+  cols <- stringr::str_subset(names(att_sf), pattern)
 
-  # Subset
-  if(!is.null(f_vec)) df <- dplyr::filter(df, {{ id_col }} %in% .env$f_vec)
+  check_lc_names(cols, pattern)
 
   # Rename land cover columns
-  df %>%
-    dplyr::rename_with(
-      .fn = ~ glue::glue('LC{stringr::str_pad(gsub(match, "", .), width = 2, pad = 0)}{appended}'),
-      .cols = dplyr::matches(match)
+  if(!quiet) {
+    rlang::inform(
+      c("i" = "Renaming land cover columns",
+        "*" = paste0("From: ", stringr::str_c(cols, collapse = ", ")),
+        "*" = paste0("To: ", stringr::str_c(lc_rename(cols, pattern, append),
+                                            collapse = ", "))
+      ))
+  }
+
+  att_sf <- dplyr::rename_with(
+    att_sf,
+    .fn = lc_rename, pattern = pattern, append = append,
+    .cols = dplyr::matches(pattern)
     )
+
+  # Check POINT vs. POLYGON
+  if(!quiet) {
+    rlang::inform(c(
+      "i" = "Spatial Feature object should be POINTs not POLYGONs",
+      "*" = "Don't worry, I'll fix it!",
+      "*" = "Assuming constant attributes and using centroids as points"))
+    att_sf <- att_sf %>%
+      sf::st_set_agr("constant") %>%
+      sf::st_centroid(att_sf)
+  }
+
+  att_sf
 }
+
+lc_rename <- function(nms, pattern, append = "") {
+  nms %>%
+    stringr::str_remove(pattern) %>%
+    stringr::str_pad(width = 2, pad = 0) %>%
+    stringr::str_c("LC", ., append)
+}
+
+
+
+
