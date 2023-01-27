@@ -9,7 +9,6 @@ withr::with_seed(1234, {
 })
 
 raster::crs(nr) <- 3161
-stars_nr <- stars::st_as_stars(nr)
 
 # nr_classified <- landscapetools::util_classify(nr, weighting = rep(1/6, 6))
 # landscapetools::show_landscape(nr_classified)
@@ -30,6 +29,9 @@ add_coords <- function(sf) {
     dplyr::bind_cols(sf, .)
 }
 
+stars_df <- nr %>%
+  stars::st_as_stars() %>%
+  sf::st_as_sf()
 
 psu_hexagons <- create_study_area(
   nr, study_area_size = 50, study_unit_size = .5, units = "m", output = 'large') |>
@@ -44,27 +46,22 @@ ssu_points <- purrr::map_df(
 
 usethis::use_data(ssu_points, overwrite = TRUE)
 
-ssu_buffers <- sf::st_buffer(ssu_points, 2.5)
-
-stars_df <- sf::st_as_sf(stars_nr)
-
-psu_land_cover <- st_join(psu_hexagons, stars_df) %>%
+psu_hexagons <- sf::st_join(psu_hexagons, stars_df) %>%
   dplyr::mutate(Area = sf::st_area(.)) |>
   sf::st_drop_geometry() |>
   dplyr::group_by(hex_id, clumps) |>
   dplyr::summarise(Area = sum(Area), .groups = 'drop_last') |>
-  dplyr::mutate(HexArea = sum(Area)) |>
   dplyr::ungroup() |>
   tidyr::pivot_wider(names_from = clumps, values_from = Area, names_prefix = "LC",
                      values_fill = list(Area = units::set_units(0, "m^2"))) %>%
-  dplyr::mutate(province = "ON")
-usethis::use_data(psu_land_cover, overwrite = TRUE)
-
-psu_hexagons <- left_join(psu_hexagons, psu_land_cover, by = c("hex_id", "province")) %>%
-  add_coords()
+  dplyr::mutate(province = "ON") %>%
+  dplyr::left_join(psu_hexagons, ., by = c("hex_id", "province")) %>%
+  sf::st_set_agr("constant") %>%
+  sf::st_centroid()
 usethis::use_data(psu_hexagons, overwrite = TRUE)
 
-ssu_land_cover <- st_join(ssu_buffers, stars_df) %>%
+ssu_land_cover <- sf::st_buffer(ssu_points, 2.5) %>%
+  st_join(stars_df) %>%
   dplyr::mutate(Area = sf::st_area(.)) |>
   sf::st_drop_geometry() |>
   dplyr::group_by(hex_id, ssuID, clumps) |>
@@ -80,19 +77,24 @@ usethis::use_data(ssu_land_cover, overwrite = TRUE)
 # Costs ----------------------------------------
 withr::with_seed(1234, {
   costs_hex <- psu_hexagons %>%
-    dplyr::select(hex_id, HexArea, province, X, Y) %>%
-    dplyr::mutate(pr = runif(n = dplyr::n(), min = 0, max = 0.9), #' primary road buffer proportion of study area
-                  sr = runif(n = dplyr::n(), min = 0, max = 0.9-pr), #' secondary road proportion of study area
-                  wr = runif(n = dplyr::n(), min = 0, max = 0.9-pr-sr), #' winter road proportion of study area
-                  pr = as.numeric(pr * HexArea),
-                  sr = as.numeric(sr * HexArea),
-                  wr = as.numeric(wr * HexArea),
-                  basecamps = runif(n = dplyr::n(), min = 0, max = 50),
-                  airportdist_km = runif(n = dplyr::n(), min = 0, max = 200),
-                  cabin_dist_to_air = runif(n = dplyr::n(), min = 0, max = 200),
-                  AirportType = c("Highway", "Remote", "Secondary")[runif(n = dplyr::n(), min = 1, max = 3)],
-                  INLAKE = FALSE
-           )
+    sf::st_drop_geometry() %>%
+    dplyr::rowwise() %>%
+    dplyr::mutate(area = LC1 + LC2 + LC3 + LC4 + LC5 + LC6) %>%
+    dplyr::ungroup() %>%
+    dplyr::select(hex_id, province, area) %>%
+    dplyr::mutate(
+      pr = runif(n = dplyr::n(), min = 0, max = 0.9), #' primary road buffer proportion of study area
+      sr = runif(n = dplyr::n(), min = 0, max = 0.9-pr), #' secondary road proportion of study area
+      wr = runif(n = dplyr::n(), min = 0, max = 0.9-pr-sr), #' winter road proportion of study area
+      pr = as.numeric(pr * area),
+      sr = as.numeric(sr * area),
+      wr = as.numeric(wr * area),
+      basecamps = runif(n = dplyr::n(), min = 0, max = 50),
+      airportdist_km = runif(n = dplyr::n(), min = 0, max = 200),
+      cabin_dist_to_air = runif(n = dplyr::n(), min = 0, max = 200),
+      AirportType = c("Highway", "Remote", "Secondary")[runif(n = dplyr::n(), min = 1, max = 3)],
+      INLAKE = FALSE
+    )
 })
 
 psu_costs <- estimate_cost_study_area(narus = 3, costs_hex,
@@ -112,11 +114,19 @@ withr::with_seed(1234, {
 })
 usethis::use_data(psu_samples, overwrite = TRUE)
 
-                  ssu_points, ssu_land_cover,
-                  overwrite = TRUE)
 
-lobstr::obj_sizes(psu_hexagons, psu_land_cover, psu_costs, psu_samples,
-                  ssu_points, ssu_land_cover)
+lobstr::obj_sizes(psu_hexagons, psu_costs, psu_samples,
+                  ssu_points)
+
+
+psu_hex_dirty <- psu_hexagons %>%
+  # Bad names
+  dplyr::rename_with(~paste0("CLC0013_", stringr::str_remove(., "LC")),
+                     starts_with("LC")) %>%
+  # Polygons
+  sf::st_buffer(dist = 1000)
+
+usethis::use_data(psu_hex_dirty, overwrite = TRUE)
 
 
 # PSU_for_bass <-
