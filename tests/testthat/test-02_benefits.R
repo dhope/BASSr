@@ -142,3 +142,32 @@ test_that("calculate_benefit()", {
   expect_snapshot_value(b2, style = "json2", tolerance = 0.0004)
 
 })
+
+test_that("calculate_benefit() without GRTS", {
+
+  withr::with_seed(1234, {
+    g <- draw_random_samples(
+      att_sf = psu_hexagons,
+      num_runs = 3,
+      n_samples = 10,
+      use_grts = FALSE)
+  })
+
+  expect_silent({
+    withr::with_seed(1234, {
+      b <- calculate_benefit(samples = g,
+                             att_sf = psu_hexagons,
+                             stratum_id = province,
+                             hex_id = hex_id)
+    })
+  })
+
+  expect_s3_class(b, "data.frame")
+  expect_equal(nrow(b), nrow(psu_hexagons))
+  expect_true(all(b$hex_id %in% psu_hexagons$hex_id))
+
+  # Snapshots cannot be tested interactively
+  expect_snapshot_value(b, style = "json2", tolerance = 0.0004)
+  expect_snapshot_value(b, style = "json2", tolerance = 0.0004)
+
+})
