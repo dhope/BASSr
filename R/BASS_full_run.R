@@ -15,12 +15,12 @@
 #' @return a table with inclusion probabilities
 #' @export
 #'
-full_BASS_run <- function(num_runs, n_samples, att_sf, costs = NULL,
-                          seed = as.integer(Sys.time()),
+full_BASS_run <- function(att_sf, num_runs, n_samples, costs = NULL,
                           hex_id, stratum_id = NULL, omit_flag = NULL,
                           non_ran_set = NULL, lakeN = 18,
                           benefit_weight = 0.5,
                           land_cover_weights = NULL, return_grts = FALSE,
+                          seed = as.integer(Sys.time()),
                           quiet = FALSE) {
 
   # CHECK
@@ -52,7 +52,7 @@ full_BASS_run <- function(num_runs, n_samples, att_sf, costs = NULL,
 
   # Benefits
   benefits <- calculate_benefit(
-    samples = grts_output, att_sf = att_sf,
+    att_sf = att_sf, samples = grts_output,
     non_random_set = non_ran_set,
     hex_id = {{ hex_id }},
     stratum_id = {{ stratum_id }},
@@ -62,8 +62,9 @@ full_BASS_run <- function(num_runs, n_samples, att_sf, costs = NULL,
   # Costs
   if (!is.null(costs)) {
     r <- calculate_inclusion_probs(
-      costs = costs, benefits = benefits, hex_id = {{ hex_id }},
-      stratum_id = {{ stratum_id }}, benefit_weight = benefit_weight)
+      benefits = benefits, costs = costs,
+      hex_id = {{ hex_id }}, stratum_id = {{ stratum_id }},
+      benefit_weight = benefit_weight)
     type <- "inclusion_probs"
   } else {
     r <- benefits
@@ -96,7 +97,7 @@ full_BASS_run <- function(num_runs, n_samples, att_sf, costs = NULL,
 #' @return a table with inclusion probabilities
 #' @export
 #'
-noGRTS_BASS_run <- function(samples, num_runs, n_samples, att_sf, costs,
+noGRTS_BASS_run <- function(att_sf, samples, num_runs, n_samples, costs,
                             seed = as.integer(Sys.time())) {
 
   set.seed(seed)

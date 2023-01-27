@@ -47,7 +47,8 @@
 #'
 #'
 #'
-calculate_benefit <- function(samples, hex_id, att_sf, stratum_id,
+calculate_benefit <- function(att_sf, samples,
+                              hex_id, stratum_id = NULL,
                               non_random_set = NULL,
                               land_cover_weights = NULL) {
 
@@ -136,7 +137,7 @@ calculate_benefit <- function(samples, hex_id, att_sf, stratum_id,
 #'
 #' @noRd
 
-prepare_hab_long <- function(att_sf, stratum_id) {
+prepare_hab_long <- function(att_sf, stratum_id = NULL) {
   # sa_a <- sum(att$area)
 
   land_cover_summary <- att_sf %>%
@@ -144,22 +145,22 @@ prepare_hab_long <- function(att_sf, stratum_id) {
     dplyr::summarize(dplyr::across(dplyr::matches("^LC\\d+$"), sum)) %>%
     tidyr::pivot_longer(cols = dplyr::matches("^LC\\d+$"),
                         names_to = "lc", values_to = "ha_total") %>%
-    dplyr::mutate(total_phab = .data$ha_total / sum(.data$ha_total, na.rm = TRUE)) %>%
+    dplyr::mutate(total_phab = .data$ha_total / sum(.data$ha_total,
+                                                    na.rm = TRUE)) %>%
     dplyr::ungroup() %>%
     sf::st_drop_geometry()
 
+  by <- c("lc", rlang::as_label(rlang::enquo(stratum_id)))
+  by <- by[by != "NULL"] # omit NULL turned to label
 
   tidyr::pivot_longer(
     att_sf,
     cols = dplyr::matches("^LC\\d+$"),
     names_to = "lc", values_to = "ha"
   ) %>%
-    dplyr::left_join(land_cover_summary,
-                     by = c("lc", rlang::as_label(rlang::enquo(stratum_id))))
+    dplyr::left_join(land_cover_summary, by = by)
 
 }
-
-
 
 #' Subsample GRTS and calculate benefit
 #'

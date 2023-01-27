@@ -31,10 +31,9 @@
 #'   hex_id = hex_id,
 #'   stratum_id = province)
 #'
-calculate_inclusion_probs <- function(costs, benefits,
-                                      hex_id,
+calculate_inclusion_probs <- function(benefits, costs,
+                                      hex_id, stratum_id = NULL,
                                       omit_flag = NULL,
-                                      stratum_id = NULL,
                                       benefit_weight = 0.5) {
 
   # Checks
@@ -51,13 +50,9 @@ calculate_inclusion_probs <- function(costs, benefits,
     dplyr::select({{ hex_id }}, {{ stratum_id }},
                   "X", "Y", "RawCost", "benefit")
 
-  # By stratum
-  if(!rlang::quo_is_null(rlang::enquo(stratum_id))) {
-    costs <- dplyr::group_by(costs, {{ stratum_id }})
-  }
-
   # Calculate inclusion probabilities
   costs %>%
+    dplyr::group_by({{ stratum_id }}) %>%   # By stratum if applicable
     dplyr::mutate(
       LogCost = log10(.data$RawCost),
       ScLogCost = .data$LogCost / (max(.data$LogCost, na.rm = TRUE) + 1),

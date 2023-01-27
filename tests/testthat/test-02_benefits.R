@@ -1,6 +1,6 @@
 test_that("prepare_hab_long()", {
 
-  expect_silent(h <- prepare_hab_long(psu_hexagons, stratum_id = province)) %>%
+  expect_silent(h <- prepare_hab_long(psu_hexagons)) %>%
     expect_s3_class("data.frame")
 
   # Dimensions and categories
@@ -27,6 +27,10 @@ test_that("prepare_hab_long()", {
                                    values_to = "ha", names_to = "lc") %>%
                  dplyr::select("hex_id","HexArea", "province", "lc", "ha"))
 
+
+  # With stratum_id
+  expect_silent(h2 <- prepare_hab_long(psu_hexagons, stratum_id = province))
+  expect_equal(h, h2)
 })
 
 test_that("allhexes()", {
@@ -61,7 +65,7 @@ test_that("allhexes()", {
 
 test_that("quick_ben()", {
 
-  lc_sum <- prepare_hab_long(psu_hexagons, stratum_id = province) %>%
+  lc_sum <- prepare_hab_long(psu_hexagons) %>%
     sf::st_drop_geometry() %>%
     dplyr::select("lc", "ha_total") %>%
     dplyr::distinct() %>%
@@ -113,7 +117,6 @@ test_that("calculate_benefit()", {
     withr::with_seed(1234, {
       b1 <- calculate_benefit(samples = psu_samples,
                               att_sf = psu_hexagons,
-                              stratum_id = province,
                               hex_id = hex_id)
     })
   })
@@ -126,9 +129,8 @@ test_that("calculate_benefit()", {
   expect_silent({
     withr::with_seed(1234, {
       b2 <- calculate_benefit(
-        samples = psu_samples,
         att_sf = psu_hexagons,
-        stratum_id = province,
+        samples = psu_samples,
         hex_id = hex_id,
         non_random_set = c("SA_0009", "SA_0022", "SA_0047", "SA_0052"))
     })
@@ -155,9 +157,8 @@ test_that("calculate_benefit() without GRTS", {
 
   expect_silent({
     withr::with_seed(1234, {
-      b <- calculate_benefit(samples = g,
-                             att_sf = psu_hexagons,
-                             stratum_id = province,
+      b <- calculate_benefit(att_sf = psu_hexagons,
+                             samples = g,
                              hex_id = hex_id)
     })
   })

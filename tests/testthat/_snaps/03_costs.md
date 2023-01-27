@@ -6,7 +6,7 @@
         "names": {
           "type": "character",
           "attributes": {},
-          "value": ["hex_id", "province", "X", "Y", "RawCost", "benefit", "LogCost", "ScLogCost", "scale_ben", "partIP", "weightedIP", "inclpr"]
+          "value": ["hex_id", "X", "Y", "RawCost", "benefit", "LogCost", "ScLogCost", "scale_ben", "partIP", "weightedIP", "inclpr"]
         },
         "row.names": {
           "type": "integer",
@@ -30,11 +30,6 @@
             }
           },
           "value": ["SA_0009", "SA_0010", "SA_0011", "SA_0014", "SA_0015", "SA_0016", "SA_0017", "SA_0018", "SA_0019", "SA_0022", "SA_0023", "SA_0024", "SA_0025", "SA_0026", "SA_0027", "SA_0030", "SA_0031", "SA_0032", "SA_0033", "SA_0034", "SA_0035", "SA_0038", "SA_0039", "SA_0040", "SA_0041", "SA_0042", "SA_0043", "SA_0046", "SA_0047", "SA_0048", "SA_0049", "SA_0050", "SA_0051"]
-        },
-        {
-          "type": "character",
-          "attributes": {},
-          "value": ["ON", "ON", "ON", "ON", "ON", "ON", "ON", "ON", "ON", "ON", "ON", "ON", "ON", "ON", "ON", "ON", "ON", "ON", "ON", "ON", "ON", "ON", "ON", "ON", "ON", "ON", "ON", "ON", "ON", "ON", "ON", "ON", "ON"]
         },
         {
           "type": "double",
