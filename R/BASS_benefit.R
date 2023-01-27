@@ -16,19 +16,19 @@
 #'
 #' @examples
 #'
-#' # Using example data psu_land_cover and psu_samples
+#' # Using example data psu_hexagons and psu_samples
 #'
 #' calculate_benefit(
-#'   grts_res = psu_samples,
-#'   att_long = psu_hexagons,
+#'   att_sf = psu_hexagons,
+#'   samples = psu_samples,
 #'   hex_id = hex_id,
 #'   non_random_set = c("SA_0009", "SA_0022", "SA_0047", "SA_0052"))
 #'
 #' # Specify a non-random set
 #'
 #' calculate_benefit(
-#'  grts_res = psu_samples,
-#'  att_long = psu_hexagons,
+#'  att_sf = psu_hexagons,
+#'  samples = psu_samples,
 #'  hex_id = hex_id,
 #'  non_random_set = c("SA_0009", "SA_0022", "SA_0047", "SA_0052"))
 #'
@@ -41,8 +41,8 @@
 #'   use_grts = FALSE)
 #'
 #' calculate_benefit(
-#'  grts_res = non_grts_samples,
-#'  att_long = psu_hexagons,
+#'  att_sf = psu_hexagons,
+#'  samples = non_grts_samples,
 #'  hex_id = hex_id)
 #'
 #'

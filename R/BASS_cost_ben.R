@@ -20,16 +20,14 @@
 #'
 #' @examples
 #'
-#' h <- prepare_hab_long(psu_land_cover, province)
-#' b <- calculate_benefit(grts_res = psu_samples,
-#'                        att_long = h,
+#' b <- calculate_benefit(att_sf = psu_hexagons,
+#'                        samples = psu_samples,
 #'                        hex_id = hex_id)
 #'
 #' inc <- calculate_inclusion_probs(
-#'   costs = psu_costs,
 #'   benefits = b,
-#'   hex_id = hex_id,
-#'   stratum_id = province)
+#'   costs = psu_costs,
+#'   hex_id = hex_id)
 #'
 calculate_inclusion_probs <- function(benefits, costs,
                                       hex_id, stratum_id = NULL,

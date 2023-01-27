@@ -2,17 +2,18 @@ test_that("draw_random_samples() - no GRTS", {
   pp <- palmerpenguins::penguins |>
     dplyr::mutate(across(.fns = as.character))
   names(pp) <- glue::glue("LC{1:ncol(pp)}")
-  expect_equal(
-    withr::with_seed({draw_random_samples(att_sf =  pp,
-                                          num_runs = 1, n_samples = 10, use_grts = F) |>
-        purrr::pluck('random_sample')},seed = 15
 
-    ),
-    withr::with_seed(15,
-                     {
-                       dplyr::slice_sample(pp, n= 10) |>
-                         dplyr::mutate(run = 1)
-                     }))
+  expect_equal(
+    withr::with_seed(seed = 15, {
+      draw_random_samples(
+        att_sf = pp, num_runs = 1, n_samples = 10, use_grts = F)
+    }),
+
+    withr::with_seed(seed = 15, {
+      dplyr::slice_sample(pp, n= 10) |>
+        dplyr::mutate(run = 1)
+    })
+  )
 })
 
 test_that("draw_random_samples() - with GRTS", {
@@ -30,9 +31,8 @@ test_that("draw_random_samples() - with GRTS", {
            n_runs, " runs and ",
            n_samples, " samples"))
 
-  expect_named(g, c("random_sample", "random_sample_long"))
+  expect_s3_class(g, "sf")
 
-  g <- g[["random_sample"]]
   expect_named(g, c("siteID", "siteuse", "replsite", "lon_WGS84", "lat_WGS84",
                     "stratum", "wgt", "ip", "caty", "run", "num_runs",
                     "n_samples", names(psu_hexagons)), ignore.order = TRUE)
