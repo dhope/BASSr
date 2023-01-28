@@ -4,18 +4,24 @@
 \alias{subsample_grts_and_calc_benefit}
 \title{Subsample GRTS and calculate benefit}
 \usage{
-subsample_grts_and_calc_benefit(nsamples, num_runs, grts_file, att, quick = T)
+subsample_grts_and_calc_benefit(
+  n_samples,
+  num_runs,
+  grts_file,
+  att_sf,
+  quick = T
+)
 }
 \arguments{
-\item{nsamples}{Number of Samples}
+\item{n_samples}{Number of Samples}
 
 \item{num_runs}{Number of iterations}
 
 \item{grts_file}{grts file to run}
 
-\item{att}{Att frame}
-
 \item{quick}{run it using CPP quick calc}
+
+\item{att}{Att frame}
 }
 \description{
 Subsample GRTS and calculate benefit

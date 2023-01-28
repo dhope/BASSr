@@ -5,32 +5,26 @@
 \title{A calculate BASS from random samples}
 \usage{
 noGRTS_BASS_run(
-  grts_output,
+  att_sf,
+  samples,
   num_runs,
-  nsamples,
-  att,
-  att.sp,
-  cost,
-  return_all = FALSE,
-  seed_ = as.integer(Sys.time())
+  n_samples,
+  costs,
+  seed = as.integer(Sys.time())
 )
 }
 \arguments{
-\item{grts_output}{Hypothetical sample set}
+\item{att_sf}{Spatial Data frame. sf attributes table.}
+
+\item{samples}{Hypothetical sample set}
 
 \item{num_runs}{The number of times to draw random samples from hexagons}
 
-\item{nsamples}{The number of samples to draw in each sample}
+\item{n_samples}{The number of samples to draw in each sample}
 
-\item{att}{the attribute table correctly formatted}
+\item{costs}{the cost table for each hexagon id}
 
-\item{att.sp}{the shape file from the attribute table}
-
-\item{cost}{the cost table for each hexagon id}
-
-\item{return_all}{return each piece of BASS implementation}
-
-\item{seed_}{random seed to use for random grts samples}
+\item{seed}{random seed to use for random grts samples}
 }
 \value{
 a table with inclusion probabilities

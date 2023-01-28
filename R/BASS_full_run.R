@@ -2,12 +2,13 @@
 #'
 #' @param num_runs The number of times to draw random samples from hexagons
 #' @param n_samples The number of samples to draw in each sample
-#' @param costs the cost table for each hexagon id
 #' @param return_all return each piece of BASS implementation
 #' @param seed random seed to use for random grts samples
-#' @param non_ran_set Non random set that is added to the hypothetical sample set in benefit calculation.
-#' @param lakeN The land cover number to represent open water. 1 for FNLC, 18 for CLC
-#' @param benefit_weight The weight assigned to benefit in the selection probabilities.0.5 is equal weighting of cost and benefits. 1.0 is zero weighting to cost.
+#' @param non_ran_set Non random set that is added to the hypothetical sample
+#'   set in benefit calculation.
+#' @param benefit_weight The weight assigned to benefit in the selection
+#'   probabilities.0.5 is equal weighting of cost and benefits. 1.0 is zero
+#'   weighting to cost.
 #' @param land_cover_weights data frame with lc and weights
 #'
 #' @inheritParams common_docs
@@ -15,6 +16,24 @@
 #' @return a table with inclusion probabilities
 #' @export
 #'
+#' @examples
+#'
+#' # With example data psu_hexagons and psu_costs...
+#'
+#' d <- full_BASS_run(
+#'   att_sf = psu_hexagons,
+#'   num_runs = 10,
+#'   n_samples = 3,
+#'   costs = psu_costs,
+#'   hex_id = hex_id)
+#'
+#' d <- full_BASS_run(
+#'   att_sf = psu_hexagons,
+#'   num_runs = 10,
+#'   n_samples = 0,
+#'   costs = psu_costs,
+#'   hex_id = hex_id)
+
 full_BASS_run <- function(att_sf, num_runs, n_samples, costs = NULL,
                           hex_id, stratum_id = NULL, omit_flag = NULL,
                           non_ran_set = NULL,

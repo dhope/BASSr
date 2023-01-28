@@ -5,29 +5,27 @@
 \title{Draw random sample}
 \usage{
 draw_random_samples(
-  att_cleaned,
-  att.sf,
+  att_sf,
   num_runs,
-  nsamples,
+  n_samples,
   use_grts = TRUE,
   quiet = FALSE,
   ...
 )
 }
 \arguments{
-\item{att_cleaned}{The attribute file for hexagons. Must include Habitat Layers and hexid}
+\item{att_sf}{Spatial Data frame. sf attributes table.}
 
-\item{att.sf}{The simple features shape.file object}
+\item{num_runs}{Numeric. Number of times to draw random samples from the
+attribute files.}
 
-\item{num_runs}{The number of times to draw random samples from the attribute files}
+\item{n_samples}{Numeric. Number of samples to draw from each run.}
 
-\item{nsamples}{The number of samples to draw from each run}
-
-\item{use_grts}{Logical. Indicates if should draw using GRTS or just random sample without
+\item{use_grts}{Logical. Whether to use GRTS or just sample randomly without
 spatial dispersion.}
 }
 \value{
-Returns a sample output in long and wide formats.
+Samples as spatial data frame.
 }
 \description{
 Draw random sample

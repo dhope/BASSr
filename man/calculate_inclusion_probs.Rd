@@ -5,27 +5,47 @@
 \title{BASS cost benefit calculation}
 \usage{
 calculate_inclusion_probs(
-  cost,
-  hexagon_benefits,
-  HexID,
-  StratumID = StudyAreaID,
+  benefits,
+  costs,
+  hex_id,
+  stratum_id = NULL,
+  omit_flag = NULL,
   benefit_weight = 0.5
 )
 }
 \arguments{
-\item{cost}{data frame with costs for each hexagon in a RawCost format}
+\item{benefits}{Spatial Data frame. Benefits associated with each hexagon (
+output of \code{calculate_benefits()})}
 
-\item{hexagon_benefits}{data frame with benefits for each hexagon}
+\item{costs}{Data frame. Costs for each hexagon in a RawCost format.}
 
-\item{HexID}{column of hexagon ids}
+\item{hex_id}{Column containing hexagon IDs.}
 
-\item{StratumID}{Column of larger area id}
+\item{stratum_id}{Column containing larger area id (e.g., Province,
+StudyAreaID). Default StudyAreaID.}
 
-\item{benefit_weight}{The weight assigned to benefit in the selection probabilities.0.5 is equal weighting of cost and benefits. 1.0 is zero weighting to cost.}
+\item{benefit_weight}{Numeric. Weight assigned to benefit in the selection
+probabilities. 0.5 is equal weighting of cost and benefits. 1.0 is zero
+weighting to cost. Default 0.5.}
+
+\item{omit}{Column identifying hexes to omit (e.g., water hexes). Default
+INLAKE.}
 }
 \value{
 A data frame with full inclusion probabilities for each raster.
 }
 \description{
-Caculate the cost benefits and inclusion probabilities
+Calculate the cost benefits and inclusion probabilities
+}
+\examples{
+
+b <- calculate_benefit(att_sf = psu_hexagons,
+                       samples = psu_samples,
+                       hex_id = hex_id)
+
+inc <- calculate_inclusion_probs(
+  benefits = b,
+  costs = psu_costs,
+  hex_id = hex_id)
+
 }

@@ -5,6 +5,7 @@
 #' @param stratum_id Column. Identifies larger area (e.g., `StudyAreaID` or
 #'   `Province`)
 #' @param hex_id Columns. Identifies hexagon ids (e.g., `hex_id` or `ET_Index`)
+#' @param costs Data frame. Costs for each hexagon in a RawCost format.
 #'
 #' @details
 #' Use `@inheritParams common_docs` to include the above in any function
