@@ -5,7 +5,7 @@ test_that("prepare_hab_long()", {
 
   # Dimensions and categories
   lc <- stringr::str_subset(names(psu_hexagons), "LC")
-  expect_true(all(c("hex_id", "HexArea", "province", "lc", "ha", "ha_total",
+  expect_true(all(c("hex_id", "province", "lc", "ha", "ha_total",
                     "total_phab") %in% names(h)))
   expect_equal(nrow(h),
                dplyr::n_distinct(psu_hexagons$hex_id) * length(lc))
@@ -22,10 +22,11 @@ test_that("prepare_hab_long()", {
                unique(h$ha_total[h$lc == "LC1"]) / sum(unique(h$ha_total)))
 
   # Pass through variables
-  expect_equal(dplyr::select(h, "hex_id","HexArea", "province", "lc", "ha"),
+  expect_equal(dplyr::select(h, "hex_id","province", "lc", "ha"),
                tidyr::pivot_longer(psu_hexagons, cols = dplyr::matches("LC"),
                                    values_to = "ha", names_to = "lc") %>%
-                 dplyr::select("hex_id","HexArea", "province", "lc", "ha"))
+                 dplyr::select("hex_id", "province", "lc", "ha") %>%
+                 sf::st_drop_geometry())
 
 
   # With stratum_id
@@ -121,7 +122,7 @@ test_that("calculate_benefit()", {
     })
   })
 
-  expect_s3_class(b1, "data.frame")
+  expect_s3_class(b1, "sf")
   expect_equal(nrow(b1), nrow(psu_hexagons))
   expect_true(all(b1$hex_id %in% psu_hexagons$hex_id))
 
@@ -163,7 +164,7 @@ test_that("calculate_benefit() without GRTS", {
     })
   })
 
-  expect_s3_class(b, "data.frame")
+  expect_s3_class(b, "sf")
   expect_equal(nrow(b), nrow(psu_hexagons))
   expect_true(all(b$hex_id %in% psu_hexagons$hex_id))
 

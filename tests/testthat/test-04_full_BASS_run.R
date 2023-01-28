@@ -13,7 +13,7 @@ test_that("full_BASS_run()", {
 
   expect_s3_class(f1, "data.frame")
   expect_equal(nrow(f1), nrow(psu_hexagons))
-  expect_named(f1, c("hex_id", "benefit", "num_runs", "n_samples"))
+  expect_named(f1, c("hex_id", "benefit", "x", "num_runs", "n_samples"))
 
 
   # With costs
@@ -59,11 +59,12 @@ test_that("full_BASS_run()", {
 
   # Expect same benefits
   nms <- names(f1)
-  expect_equal(f1, sf::st_drop_geometry(f2[nms]))
-  expect_equal(f3[["benefits"]],
-               sf::st_drop_geometry(f4[["inclusion_probs"]][nms]))
-  expect_equal(f1,
-               sf::st_drop_geometry(f4[["inclusion_probs"]][nms]))
+  expect_equal(dplyr::as_tibble(f1) %>% sf::st_as_sf(), # For comparison
+               f2[nms])
+  expect_equal(dplyr::as_tibble(f3[["benefits"]]) %>% sf::st_as_sf(),
+               f4[["inclusion_probs"]][nms])
+  expect_equal(dplyr::as_tibble(f1) %>% sf::st_as_sf(),
+               f4[["inclusion_probs"]][nms])
 
   # Expect same costs
   expect_equal(f2, f4[["inclusion_probs"]])

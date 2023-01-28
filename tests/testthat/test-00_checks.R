@@ -31,3 +31,19 @@ test_that("check_column()", {
 test_that("check_costs()", {
 
 })
+
+test_that("check_lc_names()", {
+
+})
+
+test_that("check_att_sf()", {
+
+})
+
+test_that("check_land_cover()", {
+
+})
+
+test_that("check_points()", {
+
+})

@@ -6,7 +6,7 @@
         "names": {
           "type": "character",
           "attributes": {},
-          "value": ["hex_id", "benefit", "num_runs", "n_samples"]
+          "value": ["hex_id", "benefit", "x", "num_runs", "n_samples"]
         },
         "row.names": {
           "type": "integer",
@@ -16,19 +16,479 @@
         "class": {
           "type": "character",
           "attributes": {},
-          "value": ["tbl_df", "tbl", "data.frame"]
+          "value": ["sf", "data.frame"]
+        },
+        "sf_column": {
+          "type": "character",
+          "attributes": {},
+          "value": ["x"]
+        },
+        "agr": {
+          "type": "integer",
+          "attributes": {
+            "names": {
+              "type": "character",
+              "attributes": {},
+              "value": ["hex_id", "benefit", "num_runs", "n_samples"]
+            },
+            "levels": {
+              "type": "character",
+              "attributes": {},
+              "value": ["constant", "aggregate", "identity"]
+            },
+            "class": {
+              "type": "character",
+              "attributes": {},
+              "value": ["factor"]
+            }
+          },
+          "value": ["NA", "NA", "NA", "NA"]
         }
       },
       "value": [
         {
           "type": "character",
-          "attributes": {},
+          "attributes": {
+            "class": {
+              "type": "character",
+              "attributes": {},
+              "value": ["glue", "character"]
+            }
+          },
           "value": ["SA_0009", "SA_0010", "SA_0011", "SA_0014", "SA_0015", "SA_0016", "SA_0017", "SA_0018", "SA_0019", "SA_0022", "SA_0023", "SA_0024", "SA_0025", "SA_0026", "SA_0027", "SA_0030", "SA_0031", "SA_0032", "SA_0033", "SA_0034", "SA_0035", "SA_0038", "SA_0039", "SA_0040", "SA_0041", "SA_0042", "SA_0043", "SA_0046", "SA_0047", "SA_0048", "SA_0049", "SA_0050", "SA_0051"]
         },
         {
           "type": "double",
           "attributes": {},
           "value": [0.02528368, 0.03485357, 0.03141667, 0.02566625, 0.01928652, 0.02382907, 0.02182787, 0.03402855, 0.02863136, 0.03151551, 0.03196036, 0.03608763, 0.03165296, 0.04535179, 0.0349252, 0.02787689, 0.04238222, 0.03646896, 0.0181828, 0.05344517, 0.04244337, 0.02169283, 0.0265782, 0.03240868, 0.02073265, 0.06066311, 0.03760137, 0.02339519, 0.01853099, 0.02108828, 0.0316076, 0.01898059, 0.01609197]
+        },
+        {
+          "type": "list",
+          "attributes": {
+            "class": {
+              "type": "character",
+              "attributes": {},
+              "value": ["sfc_POINT", "sfc"]
+            },
+            "precision": {
+              "type": "double",
+              "attributes": {},
+              "value": [0]
+            },
+            "crs": {
+              "type": "list",
+              "attributes": {
+                "names": {
+                  "type": "character",
+                  "attributes": {},
+                  "value": ["input", "wkt"]
+                },
+                "class": {
+                  "type": "character",
+                  "attributes": {},
+                  "value": ["crs"]
+                }
+              },
+              "value": [
+                {
+                  "type": "character",
+                  "attributes": {},
+                  "value": ["+proj=lcc +lat_0=0 +lon_0=-85 +lat_1=44.5 +lat_2=53.5 +x_0=930000 +y_0=6430000 +datum=NAD83 +units=m +no_defs"]
+                },
+                {
+                  "type": "character",
+                  "attributes": {},
+                  "value": ["PROJCRS[\"unknown\",\n    BASEGEOGCRS[\"unknown\",\n        DATUM[\"North American Datum 1983\",\n            ELLIPSOID[\"GRS 1980\",6378137,298.257222101,\n                LENGTHUNIT[\"metre\",1]],\n            ID[\"EPSG\",6269]],\n        PRIMEM[\"Greenwich\",0,\n            ANGLEUNIT[\"degree\",0.0174532925199433],\n            ID[\"EPSG\",8901]]],\n    CONVERSION[\"unknown\",\n        METHOD[\"Lambert Conic Conformal (2SP)\",\n            ID[\"EPSG\",9802]],\n        PARAMETER[\"Latitude of false origin\",0,\n            ANGLEUNIT[\"degree\",0.0174532925199433],\n            ID[\"EPSG\",8821]],\n        PARAMETER[\"Longitude of false origin\",-85,\n            ANGLEUNIT[\"degree\",0.0174532925199433],\n            ID[\"EPSG\",8822]],\n        PARAMETER[\"Latitude of 1st standard parallel\",44.5,\n            ANGLEUNIT[\"degree\",0.0174532925199433],\n            ID[\"EPSG\",8823]],\n        PARAMETER[\"Latitude of 2nd standard parallel\",53.5,\n            ANGLEUNIT[\"degree\",0.0174532925199433],\n            ID[\"EPSG\",8824]],\n        PARAMETER[\"Easting at false origin\",930000,\n            LENGTHUNIT[\"metre\",1],\n            ID[\"EPSG\",8826]],\n        PARAMETER[\"Northing at false origin\",6430000,\n            LENGTHUNIT[\"metre\",1],\n            ID[\"EPSG\",8827]]],\n    CS[Cartesian,2],\n        AXIS[\"(E)\",east,\n            ORDER[1],\n            LENGTHUNIT[\"metre\",1,\n                ID[\"EPSG\",9001]]],\n        AXIS[\"(N)\",north,\n            ORDER[2],\n            LENGTHUNIT[\"metre\",1,\n                ID[\"EPSG\",9001]]]]"]
+                }
+              ]
+            },
+            "n_empty": {
+              "type": "integer",
+              "attributes": {},
+              "value": [0]
+            },
+            "bbox": {
+              "type": "double",
+              "attributes": {
+                "names": {
+                  "type": "character",
+                  "attributes": {},
+                  "value": ["xmin", "ymin", "xmax", "ymax"]
+                },
+                "class": {
+                  "type": "character",
+                  "attributes": {},
+                  "value": ["bbox"]
+                }
+              },
+              "value": [25, 43.30127019, 275, 259.80762114]
+            }
+          },
+          "value": [
+            {
+              "type": "double",
+              "attributes": {
+                "class": {
+                  "type": "character",
+                  "attributes": {},
+                  "value": ["XY", "POINT", "sfg"]
+                }
+              },
+              "value": [25, 43.30127019]
+            },
+            {
+              "type": "double",
+              "attributes": {
+                "class": {
+                  "type": "character",
+                  "attributes": {},
+                  "value": ["XY", "POINT", "sfg"]
+                }
+              },
+              "value": [25, 129.90381057]
+            },
+            {
+              "type": "double",
+              "attributes": {
+                "class": {
+                  "type": "character",
+                  "attributes": {},
+                  "value": ["XY", "POINT", "sfg"]
+                }
+              },
+              "value": [25, 216.50635095]
+            },
+            {
+              "type": "double",
+              "attributes": {
+                "class": {
+                  "type": "character",
+                  "attributes": {},
+                  "value": ["XY", "POINT", "sfg"]
+                }
+              },
+              "value": [50, 86.60254038]
+            },
+            {
+              "type": "double",
+              "attributes": {
+                "class": {
+                  "type": "character",
+                  "attributes": {},
+                  "value": ["XY", "POINT", "sfg"]
+                }
+              },
+              "value": [50, 173.20508076]
+            },
+            {
+              "type": "double",
+              "attributes": {
+                "class": {
+                  "type": "character",
+                  "attributes": {},
+                  "value": ["XY", "POINT", "sfg"]
+                }
+              },
+              "value": [50, 259.80762114]
+            },
+            {
+              "type": "double",
+              "attributes": {
+                "class": {
+                  "type": "character",
+                  "attributes": {},
+                  "value": ["XY", "POINT", "sfg"]
+                }
+              },
+              "value": [75, 43.30127019]
+            },
+            {
+              "type": "double",
+              "attributes": {
+                "class": {
+                  "type": "character",
+                  "attributes": {},
+                  "value": ["XY", "POINT", "sfg"]
+                }
+              },
+              "value": [75, 129.90381057]
+            },
+            {
+              "type": "double",
+              "attributes": {
+                "class": {
+                  "type": "character",
+                  "attributes": {},
+                  "value": ["XY", "POINT", "sfg"]
+                }
+              },
+              "value": [75, 216.50635095]
+            },
+            {
+              "type": "double",
+              "attributes": {
+                "class": {
+                  "type": "character",
+                  "attributes": {},
+                  "value": ["XY", "POINT", "sfg"]
+                }
+              },
+              "value": [100, 86.60254038]
+            },
+            {
+              "type": "double",
+              "attributes": {
+                "class": {
+                  "type": "character",
+                  "attributes": {},
+                  "value": ["XY", "POINT", "sfg"]
+                }
+              },
+              "value": [100, 173.20508076]
+            },
+            {
+              "type": "double",
+              "attributes": {
+                "class": {
+                  "type": "character",
+                  "attributes": {},
+                  "value": ["XY", "POINT", "sfg"]
+                }
+              },
+              "value": [100, 259.80762114]
+            },
+            {
+              "type": "double",
+              "attributes": {
+                "class": {
+                  "type": "character",
+                  "attributes": {},
+                  "value": ["XY", "POINT", "sfg"]
+                }
+              },
+              "value": [125, 43.30127019]
+            },
+            {
+              "type": "double",
+              "attributes": {
+                "class": {
+                  "type": "character",
+                  "attributes": {},
+                  "value": ["XY", "POINT", "sfg"]
+                }
+              },
+              "value": [125, 129.90381057]
+            },
+            {
+              "type": "double",
+              "attributes": {
+                "class": {
+                  "type": "character",
+                  "attributes": {},
+                  "value": ["XY", "POINT", "sfg"]
+                }
+              },
+              "value": [125, 216.50635095]
+            },
+            {
+              "type": "double",
+              "attributes": {
+                "class": {
+                  "type": "character",
+                  "attributes": {},
+                  "value": ["XY", "POINT", "sfg"]
+                }
+              },
+              "value": [150, 86.60254038]
+            },
+            {
+              "type": "double",
+              "attributes": {
+                "class": {
+                  "type": "character",
+                  "attributes": {},
+                  "value": ["XY", "POINT", "sfg"]
+                }
+              },
+              "value": [150, 173.20508076]
+            },
+            {
+              "type": "double",
+              "attributes": {
+                "class": {
+                  "type": "character",
+                  "attributes": {},
+                  "value": ["XY", "POINT", "sfg"]
+                }
+              },
+              "value": [150, 259.80762114]
+            },
+            {
+              "type": "double",
+              "attributes": {
+                "class": {
+                  "type": "character",
+                  "attributes": {},
+                  "value": ["XY", "POINT", "sfg"]
+                }
+              },
+              "value": [175, 43.30127019]
+            },
+            {
+              "type": "double",
+              "attributes": {
+                "class": {
+                  "type": "character",
+                  "attributes": {},
+                  "value": ["XY", "POINT", "sfg"]
+                }
+              },
+              "value": [175, 129.90381057]
+            },
+            {
+              "type": "double",
+              "attributes": {
+                "class": {
+                  "type": "character",
+                  "attributes": {},
+                  "value": ["XY", "POINT", "sfg"]
+                }
+              },
+              "value": [175, 216.50635095]
+            },
+            {
+              "type": "double",
+              "attributes": {
+                "class": {
+                  "type": "character",
+                  "attributes": {},
+                  "value": ["XY", "POINT", "sfg"]
+                }
+              },
+              "value": [200, 86.60254038]
+            },
+            {
+              "type": "double",
+              "attributes": {
+                "class": {
+                  "type": "character",
+                  "attributes": {},
+                  "value": ["XY", "POINT", "sfg"]
+                }
+              },
+              "value": [200, 173.20508076]
+            },
+            {
+              "type": "double",
+              "attributes": {
+                "class": {
+                  "type": "character",
+                  "attributes": {},
+                  "value": ["XY", "POINT", "sfg"]
+                }
+              },
+              "value": [200, 259.80762114]
+            },
+            {
+              "type": "double",
+              "attributes": {
+                "class": {
+                  "type": "character",
+                  "attributes": {},
+                  "value": ["XY", "POINT", "sfg"]
+                }
+              },
+              "value": [225, 43.30127019]
+            },
+            {
+              "type": "double",
+              "attributes": {
+                "class": {
+                  "type": "character",
+                  "attributes": {},
+                  "value": ["XY", "POINT", "sfg"]
+                }
+              },
+              "value": [225, 129.90381057]
+            },
+            {
+              "type": "double",
+              "attributes": {
+                "class": {
+                  "type": "character",
+                  "attributes": {},
+                  "value": ["XY", "POINT", "sfg"]
+                }
+              },
+              "value": [225, 216.50635095]
+            },
+            {
+              "type": "double",
+              "attributes": {
+                "class": {
+                  "type": "character",
+                  "attributes": {},
+                  "value": ["XY", "POINT", "sfg"]
+                }
+              },
+              "value": [250, 86.60254038]
+            },
+            {
+              "type": "double",
+              "attributes": {
+                "class": {
+                  "type": "character",
+                  "attributes": {},
+                  "value": ["XY", "POINT", "sfg"]
+                }
+              },
+              "value": [250, 173.20508076]
+            },
+            {
+              "type": "double",
+              "attributes": {
+                "class": {
+                  "type": "character",
+                  "attributes": {},
+                  "value": ["XY", "POINT", "sfg"]
+                }
+              },
+              "value": [250, 259.80762114]
+            },
+            {
+              "type": "double",
+              "attributes": {
+                "class": {
+                  "type": "character",
+                  "attributes": {},
+                  "value": ["XY", "POINT", "sfg"]
+                }
+              },
+              "value": [275, 43.30127019]
+            },
+            {
+              "type": "double",
+              "attributes": {
+                "class": {
+                  "type": "character",
+                  "attributes": {},
+                  "value": ["XY", "POINT", "sfg"]
+                }
+              },
+              "value": [275, 129.90381057]
+            },
+            {
+              "type": "double",
+              "attributes": {
+                "class": {
+                  "type": "character",
+                  "attributes": {},
+                  "value": ["XY", "POINT", "sfg"]
+                }
+              },
+              "value": [275, 216.50635095]
+            }
+          ]
         },
         {
           "type": "double",
@@ -51,7 +511,7 @@
         "names": {
           "type": "character",
           "attributes": {},
-          "value": ["hex_id", "province", "X", "Y", "RawCost", "benefit", "x", "LogCost", "ScLogCost", "scale_ben", "partIP", "weightedIP", "inclpr", "num_runs", "n_samples"]
+          "value": ["hex_id", "province", "RawCost", "benefit", "x", "LogCost", "ScLogCost", "scale_ben", "partIP", "weightedIP", "inclpr", "num_runs", "n_samples"]
         },
         "row.names": {
           "type": "integer",
@@ -74,7 +534,7 @@
             "names": {
               "type": "character",
               "attributes": {},
-              "value": ["hex_id", "province", "X", "Y", "RawCost", "benefit", "LogCost", "ScLogCost", "scale_ben", "partIP", "weightedIP", "inclpr", "num_runs", "n_samples"]
+              "value": ["hex_id", "province", "RawCost", "benefit", "LogCost", "ScLogCost", "scale_ben", "partIP", "weightedIP", "inclpr", "num_runs", "n_samples"]
             },
             "levels": {
               "type": "character",
@@ -87,7 +547,7 @@
               "value": ["factor"]
             }
           },
-          "value": ["NA", "NA", "NA", "NA", "NA", "NA", "NA", "NA", "NA", "NA", "NA", "NA", "NA", "NA"]
+          "value": ["NA", "NA", "NA", "NA", "NA", "NA", "NA", "NA", "NA", "NA", "NA", "NA"]
         }
       },
       "value": [
@@ -110,17 +570,7 @@
         {
           "type": "double",
           "attributes": {},
-          "value": [25, 25, 25, 50, 50, 50, 75, 75, 75, 100, 100, 100, 125, 125, 125, 150, 150, 150, 175, 175, 175, 200, 200, 200, 225, 225, 225, 250, 250, 250, 275, 275, 275]
-        },
-        {
-          "type": "double",
-          "attributes": {},
-          "value": [43.30127019, 129.90381057, 216.50635095, 86.60254038, 173.20508076, 259.80762114, 43.30127019, 129.90381057, 216.50635095, 86.60254038, 173.20508076, 259.80762114, 43.30127019, 129.90381057, 216.50635095, 86.60254038, 173.20508076, 259.80762114, 43.30127019, 129.90381057, 216.50635095, 86.60254038, 173.20508076, 259.80762114, 43.30127019, 129.90381057, 216.50635095, 86.60254038, 173.20508076, 259.80762114, 43.30127019, 129.90381057, 216.50635095]
-        },
-        {
-          "type": "double",
-          "attributes": {},
-          "value": [1734432401.92275763, 1591303575.71051788, 1774704272.40789223, 1669167304.02675748, 1522117753.92177868, 2002952259.96330976, 2176967921.93306, 2240909920.22029, 1686563714.22549248, 1706649319.13986206, 1754164592.16582346, 1342539923.94812179, 1735381030.95330811, 1675176739.99072576, 2306466307.87221, 1616529508.47083116, 1998651235.31030917, 1572551881.37816453, 1276888635.45998001, 2382096174.37554, 1795738616.94375181, 1271175837.12326503, 1578422880.3360765, 2514740559.37316, 2021498787.6364634, 1776813125.62567043, 1959533320.41084838, 1681181910.71428013, 1408475451.16912603, 1787143921.61118937, 1175556387.88056803, 928873972.05501461, 1960902641.01128149]
+          "value": [1734432401.92275763, 1591303575.71051788, 1774704272.40789223, 1669167304.02675724, 1522117753.92177868, 2002952259.96330976, 2176967921.93306, 2240909920.22029, 1686563714.22549248, 1706649319.13986158, 1754164592.16582346, 1342539923.94812179, 1735381030.95330811, 1675176739.99072576, 2306466307.87221, 1616529508.47083116, 1998651235.31030917, 1572551881.37816477, 1276888635.45998001, 2382096174.37554, 1795738616.94375181, 1271175837.12326503, 1578422880.3360765, 2514740559.37316, 2021498787.6364634, 1776813125.62567019, 1959533320.41084838, 1681181910.71428037, 1408475451.16912627, 1787143921.61118937, 1175556387.88056803, 928873972.05501461, 1960902641.01128149]
         },
         {
           "type": "double",
