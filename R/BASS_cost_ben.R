@@ -2,9 +2,8 @@
 #'
 #' Calculate the cost benefits and inclusion probabilities
 #'
-#' @param costs Data frame. Costs for each hexagon in a RawCost format
-#' @param benefits Data frame. Benefits associated with each hexagon ( output of
-#'   `calculate_benefits()`)
+#' @param benefits Spatial Data frame. Benefits associated with each hexagon (
+#'   output of `calculate_benefits()`)
 #' @param hex_id Column containing hexagon IDs.
 #' @param omit Column identifying hexes to omit (e.g., water hexes). Default
 #'   INLAKE.
@@ -13,6 +12,8 @@
 #' @param benefit_weight Numeric. Weight assigned to benefit in the selection
 #'   probabilities. 0.5 is equal weighting of cost and benefits. 1.0 is zero
 #'   weighting to cost. Default 0.5.
+#'
+#' @inheritParams common_docs
 #'
 #' @return A data frame with full inclusion probabilities for each raster.
 #'
@@ -43,10 +44,9 @@ calculate_inclusion_probs <- function(benefits, costs,
   costs <- check_costs(costs, {{ hex_id }}, {{ omit_flag }}, quiet = TRUE)
 
   # Add benefits
-  costs <- dplyr::left_join(costs, benefits,
+  costs <- dplyr::right_join(benefits, costs,
                             by = rlang::as_label(rlang::enquo(hex_id))) %>%
-    dplyr::select({{ hex_id }}, {{ stratum_id }},
-                  "X", "Y", "RawCost", "benefit")
+    dplyr::select({{ hex_id }}, {{ stratum_id }}, "RawCost", "benefit")
 
   # Calculate inclusion probabilities
   costs %>%

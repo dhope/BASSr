@@ -55,7 +55,6 @@ calculate_benefit <- function(att_sf, samples,
   # ADD CHECKS
 
   # Prep data
-  att_sf <- sf::st_drop_geometry(att_sf)
   samples <- sf::st_drop_geometry(samples)
 
   att_long <- prepare_hab_long(att_sf, {{ stratum_id }})
@@ -118,8 +117,9 @@ calculate_benefit <- function(att_sf, samples,
     d = hexes,
     samples = random_sample_summary_widenest,
     land_cover_summary = total, land_cover_weights = land_cover_weights,
-    hex_id = {{ hex_id }}, print = FALSE)
-
+    hex_id = {{ hex_id }}, print = FALSE) %>%
+    dplyr::left_join(dplyr::select(att_sf, {{ hex_id }}), .,
+                      by = rlang::as_label(rlang::enquo(hex_id)))
 }
 
 
@@ -139,6 +139,8 @@ calculate_benefit <- function(att_sf, samples,
 
 prepare_hab_long <- function(att_sf, stratum_id = NULL) {
   # sa_a <- sum(att$area)
+
+  att_sf <- sf::st_drop_geometry(att_sf)
 
   land_cover_summary <- att_sf %>%
     dplyr::group_by({{ stratum_id }}) %>%

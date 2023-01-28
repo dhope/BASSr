@@ -29,23 +29,56 @@ check_lc_names <- function(cols, pattern) {
   }
 }
 
+check_att_sf <- function(att_sf, quiet) {
+
+  if (!inherits(att_sf, "sf")) {
+    rlang::abort(paste0("`att_sf` must be an 'sf' spatial object ",
+                        "(see https://r-spatial.github.io/sf/)"), call = NULL)
+  }
+
+  att_sf <- check_points(att_sf, quiet)
+
+  check_land_cover(att_sf)
+}
+
+check_land_cover <- function(att_sf) {
+  if(!any(grepl("^LC\\d",names(att_sf)))) {
+    rlang::abort(c("Land cover columns not formatted correctly",
+                   "*" = "Try running `clean_land_cover()`"), call = NULL)
+  }
+  if(sum(is.na(dplyr::select(att_sf, dplyr::matches("^LC\\d"))))) {
+    rlang::abort("Missing values in land cover columns", call = NULL)
+  }
+}
+
+#' Check POINT vs. POLYGON
+#'
+#' Checks for polygons and converts to points if necessary.
+#'
+#' @param att_sf
+#' @param quiet
+#'
+#' @noRd
+check_points <- function(att_sf, quiet) {
+
+  if (all(sf::st_is(att_sf, "POLYGON"))) {
+    if(!quiet) {
+      nm <- substitute(deparse(att_sf))
+      rlang::inform(c(
+        "i" = paste0("Spatial object ", nm, " should be POINTs not POLYGONs"),
+        "*" = "Don't worry, I'll fix it!",
+      "*" = "Assuming constant attributes and using centroids as points"))
+    }
+    att_sf <- att_sf %>%
+      sf::st_set_agr("constant") %>%
+      sf::st_centroid(att_sf)
+  }
+  att_sf
+}
+
 check_costs <- function(costs, hex_id, omit_flag, quiet) {
 
   if(is.null(costs)) rlang::abort("`costs` cannot be NULL", call = NULL)
-
-  if (!"X" %in% names(costs)) {
-    if(!quiet) rlang::inform(
-      c("!" = "Did you forget to add coordinates?",
-        "*" = "I am adding them based on centroids"))
-
-    costs <- sf::st_set_agr(costs, "constant") %>%
-      sf::st_centroid()
-
-    costs <- costs %>%
-      sf::st_coordinates() %>%
-      dplyr::as_tibble() %>%
-      dplyr::bind_cols(costs)
-  }
 
   # Make RawCosts NA, on omit column
   if(!rlang::quo_is_null(rlang::enquo(omit_flag))) {

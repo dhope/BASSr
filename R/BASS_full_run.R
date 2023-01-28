@@ -17,37 +17,26 @@
 #'
 full_BASS_run <- function(att_sf, num_runs, n_samples, costs = NULL,
                           hex_id, stratum_id = NULL, omit_flag = NULL,
-                          non_ran_set = NULL, lakeN = 18,
-                          benefit_weight = 0.5,
-                          land_cover_weights = NULL, return_grts = FALSE,
-                          seed = as.integer(Sys.time()),
+                          non_ran_set = NULL,
+                          benefit_weight = 0.5, land_cover_weights = NULL,
+                          return_grts = FALSE, seed = as.integer(Sys.time()),
                           quiet = FALSE) {
 
-  # CHECK
-  ## Check if any NA in habitat columns
+  # Input checks
+  check_column(att_sf, {{ hex_id }})
+  check_column(att_sf, {{ stratum_id }})
+  check_att_sf(att_sf)
 
   set.seed(seed)
 
-  if (!"sf" %in% class(att_sf)) {
-    stop("Spatial object att_sf must be an object of package sf. Please fix and try again")
-  } else {
-    if (all(sf::st_is(att_sf, "POLYGON"))) {
-      if(!quiet) message("Spatial Feature object should be points not polygons or GRTS expects clusters. Don't worry, I'll fix it!")
-      att_sf <- sf::st_centroid(att_sf)
-    }
-  }
-
-  if(!any(grepl("^LC\\d",names(att_sf)))) rlang::abort(message = "Habitat data table not formatted correctly. Try running clean_forBass.")
-  if(is.na(rowSums(dplyr::summarize(sf::st_drop_geometry(att_sf), dplyr::across(dplyr::matches("^LC\\d"), sum))))) rlang::abort(message = "Habitat data table not formatted correctly. Try running clean_forBass.")
-
-
   if (n_samples == 0) grts_output <- NULL
+
   if (n_samples != 0) {
     grts_output <- draw_random_samples(
       att_sf = att_sf,
       num_runs = num_runs, n_samples = n_samples,
       quiet = quiet)
-    if(!quiet) message("sample draw complete")
+    if(!quiet) rlang::inform("Sample draw complete")
   }
 
   # Benefits
