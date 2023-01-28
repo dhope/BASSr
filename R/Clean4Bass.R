@@ -1,22 +1,21 @@
-#' Clean habitat data for BASS
+#' Clean land cover habitat data
 #'
-#' This is a general function to clean land cover data for BASS functions
+#' This is a general function to clean land cover columns.
 #'
-#' @param df Habitat data frame
-#' @param s String to search and replace with 'LC'
-#' @param id_col Column name to use for filtering from f_vec
-#' @param f_vec Vector of id to include
-#' @param appended String to append to end of LandCover Code
+#' @param pattern Character. Pattern to match and replace with 'LC'
+#' @param append Character. Text to append to end of land cover code
+#'
+#' @inheritParams common_docs
 #'
 #' @return
 #' @export
 #'
 #' @examples
 #'
-#' psu_hex_clean <- clean_forBass(psu_hex_dirty, pattern = "CLC0013_")
+#' psu_hex_clean <- clean_land_cover(psu_hex_dirty, pattern = "CLC0013_")
 #'
 #'
-clean_forBass <- function(att_sf, pattern = "CLC15_", append = "",
+clean_land_cover <- function(att_sf, pattern = "CLC15_", append = "",
                           quiet = FALSE) {
 
   pattern <- glue::glue("^{pattern}")
@@ -34,24 +33,11 @@ clean_forBass <- function(att_sf, pattern = "CLC15_", append = "",
       ))
   }
 
-  att_sf <- dplyr::rename_with(
+  dplyr::rename_with(
     att_sf,
     .fn = lc_rename, pattern = pattern, append = append,
     .cols = dplyr::matches(pattern)
     )
-
-  # Check POINT vs. POLYGON
-  if(!quiet) {
-    rlang::inform(c(
-      "i" = "Spatial Feature object should be POINTs not POLYGONs",
-      "*" = "Don't worry, I'll fix it!",
-      "*" = "Assuming constant attributes and using centroids as points"))
-    att_sf <- att_sf %>%
-      sf::st_set_agr("constant") %>%
-      sf::st_centroid(att_sf)
-  }
-
-  att_sf
 }
 
 lc_rename <- function(nms, pattern, append = "") {
