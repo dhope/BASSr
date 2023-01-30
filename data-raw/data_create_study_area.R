@@ -55,9 +55,7 @@ psu_hexagons <- sf::st_join(psu_hexagons, stars_df) %>%
   tidyr::pivot_wider(names_from = clumps, values_from = Area, names_prefix = "LC",
                      values_fill = list(Area = units::set_units(0, "m^2"))) %>%
   dplyr::mutate(province = "ON") %>%
-  dplyr::left_join(psu_hexagons, ., by = c("hex_id", "province")) %>%
-  sf::st_set_agr("constant") %>%
-  sf::st_centroid()
+  dplyr::left_join(psu_hexagons, ., by = c("hex_id", "province"))
 usethis::use_data(psu_hexagons, overwrite = TRUE)
 
 ssu_land_cover <- sf::st_buffer(ssu_points, 2.5) %>%
@@ -122,9 +120,7 @@ lobstr::obj_sizes(psu_hexagons, psu_costs, psu_samples,
 psu_hex_dirty <- psu_hexagons %>%
   # Bad names
   dplyr::rename_with(~paste0("CLC0013_", stringr::str_remove(., "LC")),
-                     starts_with("LC")) %>%
-  # Polygons
-  sf::st_buffer(dist = 1000)
+                     starts_with("LC"))
 
 usethis::use_data(psu_hex_dirty, overwrite = TRUE)
 

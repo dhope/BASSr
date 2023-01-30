@@ -6,7 +6,7 @@ test_that("draw_random_samples() - no GRTS", {
   expect_equal(
     withr::with_seed(seed = 15, {
       draw_random_samples(
-        att_sf = pp, num_runs = 1, n_samples = 10, use_grts = F)
+        att_sf = pp, num_runs = 1, n_samples = 10, use_grts = FALSE)
     }),
 
     withr::with_seed(seed = 15, {
@@ -27,9 +27,10 @@ test_that("draw_random_samples() - with GRTS", {
     att_sf = psu_hexagons,
     num_runs = n_runs,
     n_samples = n_samples),
-    paste0("Finished GRTS draw of ",
-           n_runs, " runs and ",
-           n_samples, " samples"))
+    "Spatial object att_sf should be") %>%
+    expect_message(paste0("Finished GRTS draw of ",
+                          n_runs, " runs and ",
+                          n_samples, " samples"))
 
   expect_s3_class(g, "sf")
 
@@ -49,6 +50,7 @@ test_that("draw_random_samples() - with GRTS", {
                  dplyr::select(dplyr::any_of(names(psu_hexagons))) %>%
                  dplyr::distinct(),
                psu_hexagons %>%
+                 check_att_sf(quiet = TRUE) %>%
                  dplyr::filter(.data$hex_id %in% g$hex_id) %>%
                  dplyr::select(dplyr::any_of(names(g))),
                ignore_attr = TRUE)
