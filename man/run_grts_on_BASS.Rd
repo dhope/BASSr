@@ -5,34 +5,33 @@
 \title{Run grts sampling on BASSr results}
 \usage{
 run_grts_on_BASS(
-  n_grts_tests,
-  study_area_results,
+  probs,
+  num_runs,
   nARUs,
   os,
-  idcol,
-  hexid,
-  removedhexes = c("None"),
-  return_points = F,
-  Stratum = None,
-  ...
+  hex_id = NULL,
+  stratum_id = NULL,
+  remove_hexes = NULL
 )
 }
 \arguments{
-\item{n_grts_tests}{Number of times to draw arus from grts}
+\item{probs}{Data frame. Output of \code{calculate_inclusion_probs()} or
+\code{full_BASS_run()}.}
 
-\item{study_area_results}{BASSr results}
+\item{num_runs}{Numeric. Number of times to draw random samples.}
 
-\item{nARUs}{Number of samples}
+\item{nARUs}{Numeric vector. Number of samples or named vector of number of
+samples per stratum.}
 
-\item{os}{Over sample size (proportional)}
+\item{os}{Numeric vector. Over sample size (proportional) or named vector of
+number of samples per stratum.}
 
-\item{idcol}{Identification column for units}
+\item{hex_id}{Columns. Identifies hexagon ids (e.g., \code{hex_id} or \code{ET_Index})}
 
-\item{hexid}{Column for hexagon identification}
+\item{stratum_id}{Column. Identifies larger area (e.g., \code{StudyAreaID} or
+\code{Province})}
 
-\item{removedhexes}{Vector of names of hexagons to remove}
-
-\item{return_points}{}
+\item{removed_hexes}{Character Vector. Ids of hexagons to remove.}
 }
 \description{
 Run grts sampling on BASSr results

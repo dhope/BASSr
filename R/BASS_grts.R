@@ -5,8 +5,6 @@
 
 #' Draw random sample
 #'
-#' @param num_runs Numeric. Number of times to draw random samples from the
-#'   attribute files.
 #' @param n_samples Numeric. Number of samples to draw from each run.
 #' @param use_grts Logical. Whether to use GRTS or just sample randomly without
 #'   spatial dispersion.

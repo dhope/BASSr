@@ -1,6 +1,7 @@
 # common_docs ------------------
 #' Common arguments and documentation for various functions
 #'
+#' @param num_runs Numeric. Number of times to draw random samples.
 #' @param att_sf Spatial Data frame. sf attributes table.
 #' @param stratum_id Column. Identifies larger area (e.g., `StudyAreaID` or
 #'   `Province`)

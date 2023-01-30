@@ -4,6 +4,8 @@
 \alias{common_docs}
 \title{Common arguments and documentation for various functions}
 \arguments{
+\item{num_runs}{Numeric. Number of times to draw random samples.}
+
 \item{att_sf}{Spatial Data frame. sf attributes table.}
 
 \item{stratum_id}{Column. Identifies larger area (e.g., \code{StudyAreaID} or

@@ -16,8 +16,7 @@ draw_random_samples(
 \arguments{
 \item{att_sf}{Spatial Data frame. sf attributes table.}
 
-\item{num_runs}{Numeric. Number of times to draw random samples from the
-attribute files.}
+\item{num_runs}{Numeric. Number of times to draw random samples.}
 
 \item{n_samples}{Numeric. Number of samples to draw from each run.}
 
