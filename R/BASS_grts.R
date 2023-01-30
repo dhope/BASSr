@@ -21,9 +21,10 @@ draw_random_samples <- function(att_sf, num_runs, n_samples,
   args <- list(...)
 
   # CHECKS
-  att_sf <- check_att_sf(att_sf, quiet = quiet)
 
   if (isTRUE(use_grts)) {
+
+    att_sf <- check_att_sf(att_sf, quiet = quiet)
 
     mindis <-  NULL
     maxtry <-  10

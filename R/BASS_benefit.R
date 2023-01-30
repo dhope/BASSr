@@ -50,9 +50,11 @@
 calculate_benefit <- function(att_sf, samples,
                               hex_id, stratum_id = NULL,
                               non_random_set = NULL,
-                              land_cover_weights = NULL) {
+                              land_cover_weights = NULL,
+                              quiet = FALSE) {
 
   # ADD CHECKS
+  att_sf <- check_att_sf(att_sf, quiet = quiet)
 
   # Prep data
   samples <- sf::st_drop_geometry(samples)
