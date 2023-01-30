@@ -18,6 +18,13 @@ knitr::opts_chunk$set(
 library(DiagrammeR)
 ```
 
+- yellow are helper functions
+- dark blue are main runner functions
+- light blue are exported, user-facing functions
+- white are un-exported, internal functions
+- grey are deprecated functions
+
+
 ```{r, echo = FALSE, out.width="100%"}
 grViz("digraph boxes_and_circles {
 
