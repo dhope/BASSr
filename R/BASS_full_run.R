@@ -44,7 +44,7 @@ full_BASS_run <- function(att_sf, num_runs, n_samples, costs = NULL,
   # Input checks
   check_column(att_sf, {{ hex_id }})
   check_column(att_sf, {{ stratum_id }})
-  check_att_sf(att_sf)
+  att_sf <- check_att_sf(att_sf, quiet = quiet)
 
   set.seed(seed)
 
@@ -55,7 +55,6 @@ full_BASS_run <- function(att_sf, num_runs, n_samples, costs = NULL,
       att_sf = att_sf,
       num_runs = num_runs, n_samples = n_samples,
       quiet = quiet)
-    if(!quiet) rlang::inform("Sample draw complete")
   }
 
   # Benefits

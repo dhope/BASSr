@@ -21,6 +21,7 @@ draw_random_samples <- function(att_sf, num_runs, n_samples,
   args <- list(...)
 
   # CHECKS
+  att_sf <- check_att_sf(att_sf, quiet = quiet)
 
   if (isTRUE(use_grts)) {
 
@@ -61,8 +62,9 @@ draw_random_samples <- function(att_sf, num_runs, n_samples,
                     num_runs = .env$num_runs,
                     n_samples = .env$n_samples)
 
-    if(!quiet) message("Finished GRTS draw of ", num_runs, " runs and ",
-                       n_samples, " samples")
+    if(!quiet) rlang::inform(
+      c("i" = paste0("Finished GRTS draw of ", num_runs, " runs and ",
+             n_samples, " samples")))
   }
 
   if (isFALSE(use_grts)) {

@@ -219,16 +219,18 @@ quick_ben <- function(d, samples, land_cover_summary, hex_id, print,
 
 
   if (all(round(rowSums(hexes), 0) == 100) | all(round(rowSums(hexes), 0) == 1)) {
-    stop("I think you have inputed percentages into your hexagons.
-                This will not calculate accurate benefit values.")
+    rlang::abort(
+      paste0("I think you have inputed percentages into your hexagons. ",
+             "This will not calculate accurate benefit values."), call = NULL)
   }
   hexNames <- dplyr::as_tibble(d) %>%
     dplyr::select({{ hex_id }}) |>
     dplyr::pull(1)
 
   if (nrow(land_cover_summary) > dplyr::n_distinct(land_cover_summary$lc)) {
-    stop("Stratification of benefit calculation not yet supported. ",
-         "Your land cover summary had too many rows.")
+    rlang::abort(
+      paste0("Stratification of benefit calculation not yet supported. ",
+             "Your land cover summary had too many rows."), call = NULL)
   }
   total <- land_cover_summary  |>
     dplyr::select(lc, ha)  |>
@@ -237,8 +239,9 @@ quick_ben <- function(d, samples, land_cover_summary, hex_id, print,
   total <- total[names(hexes)]
 
   if (all(round(rowSums(total), 0) == 100) | all(round(rowSums(total), 0) == 1)) {
-    stop("I think you have inputed percentages into your total values.
-                This will not calculate accurate benefit values.")
+    rlang::abort(
+      paste0("I think you have inputed percentages into your total values. ",
+             "This will not calculate accurate benefit values."), call = NULL)
   }
 
   samp <-  dplyr::select(samples, matches("LC\\d"))
@@ -267,24 +270,25 @@ quick_ben <- function(d, samples, land_cover_summary, hex_id, print,
   }
 
   if (all(round(rowSums(samp), 0) == 100) | all(round(rowSums(samp), 0) == 1)) {
-    stop("I think you have inputed percentages into your sample values.
-                This will not calculate accurate benefit values.")
+    rlang::abort(
+      paste0("I think you have inputed percentages into your sample values.",
+             "This will not calculate accurate benefit values."), call = NULL)
   }
 
   if (all(names(hexes) != names(total))) {
     print(names(hexes))
     print(names(total))
-    stop("Hexes and total are not organized correctly")
+    rlang::abort("Hexes and total are not organized correctly", call = NULL)
   }
   if (all(names(hexes) != names(samp))) {
     print(names(hexes))
     print(names(samp))
-    stop("Hexes and samples are not organized correctly")
+    rlang::abort("Hexes and samples are not organized correctly", call = NULL)
   }
   if (all(names(samp) != names(total))) {
     print(names(samp))
     print(names(total))
-    stop("Samples and total are not organized correctly")
+    rlang::abort("Samples and total are not organized correctly", call = NULL)
   }
 
   h <- as.matrix(hexes)

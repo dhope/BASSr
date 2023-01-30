@@ -41,7 +41,7 @@ calculate_inclusion_probs <- function(benefits, costs,
   check_column(costs, {{ stratum_id }})
   check_column(benefits, {{ hex_id }})
 
-  costs <- check_costs(costs, {{ hex_id }}, {{ omit_flag }}, quiet = TRUE)
+  costs <- check_costs(costs, {{ hex_id }}, {{ omit_flag }})
 
   # Add benefits
   costs <- dplyr::right_join(benefits, costs,

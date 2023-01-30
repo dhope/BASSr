@@ -37,8 +37,9 @@ check_att_sf <- function(att_sf, quiet) {
   }
 
   att_sf <- check_points(att_sf, quiet)
-
   check_land_cover(att_sf)
+
+  att_sf
 }
 
 check_land_cover <- function(att_sf) {
@@ -63,7 +64,7 @@ check_points <- function(att_sf, quiet) {
 
   if (all(sf::st_is(att_sf, "POLYGON"))) {
     if(!quiet) {
-      nm <- substitute(deparse(att_sf))
+      nm <- deparse(substitute(att_sf))
       rlang::inform(c(
         "i" = paste0("Spatial object ", nm, " should be POINTs not POLYGONs"),
         "*" = "Don't worry, I'll fix it!",
@@ -76,7 +77,7 @@ check_points <- function(att_sf, quiet) {
   att_sf
 }
 
-check_costs <- function(costs, hex_id, omit_flag, quiet) {
+check_costs <- function(costs, hex_id, omit_flag) {
 
   if(is.null(costs)) rlang::abort("`costs` cannot be NULL", call = NULL)
 
