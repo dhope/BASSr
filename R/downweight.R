@@ -51,7 +51,8 @@ downweight_selection_pr <- function(sample_locs,
 #' @param existing_sampling exisint sampling to down weight around (points)
 #'
 #' @return sf_distance matrix of distances with sample locations as rows and existing sampling as columns
-#' @export
+#'
+#' @noRd
 #'
 #' @examples gen_dist_mat(BASSr::all_study_areas[1:10,], BASSr::all_study_areas[20:30,])
 gen_dist_mat <- function(sample_locs,existing_sampling){

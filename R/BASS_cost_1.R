@@ -159,7 +159,8 @@ estimate_cost_study_area <- function(narus, StudyAreas, pr, sr, wr = 0,
 #' @param ... You can include multisession with the furrr package. Needs to include Multicor=T
 #'
 #' @return Returns a tibble with area covered by each road types and their proportion of the study area
-#' @export
+#'
+#' @noRd
 #'
 getroaddensity <- function(hexes, sa, pr, sr, wr, r, idcol, ...) {
   # message(sa)

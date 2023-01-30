@@ -3,15 +3,12 @@
 #' @param ... Original function arguments
 #'
 #' @name BASSr-defunct
-#'
-#' @description
-#'
+#' @order 1
 #'
 NULL
 
 
 #' @rdname BASSr-defunct
 clean_forBass <- function(...) {
-  rlang::abort("'clean_forBass()' is defunct. Use 'clean_land_cover()` instead",
-               call = NULL)
+  .Defunct("clean_land_cover()")
 }

@@ -13,7 +13,7 @@
 #' @param crs_ CRS to add to the points. Should be based on the centroids. Does not to be specificied if df is an 'sf' object.
 #'
 #' @return Returns an sf object with points within provided hexagons
-#' @export
+#' @noRd
 generate_Points_around_centroid <- function(df, crs_ = NULL) {
 
   if (is.null(crs_)) {

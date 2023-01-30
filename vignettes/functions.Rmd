@@ -21,6 +21,8 @@ library(DiagrammeR)
 ```{r, echo = FALSE, out.width="100%"}
 grViz("digraph boxes_and_circles {
 
+  compound=true;
+
   # a 'graph' statement
   graph [overlap = true, fontsize = 10]
 
@@ -28,12 +30,9 @@ grViz("digraph boxes_and_circles {
   node [shape = rectangle, fontname = 'Courier New', 
         fixedsize = false, style=filled, fillcolor=white]
         
-  full [label = 'full_BASS_run()' fillcolor = 'cadetblue3']
   no_grts [label = 'noGRTS_BASS_run()' fillcolor = 'cadetblue3']
-  full_sel [label = 'run_full_BASS_w_selection()' fillcolor = 'cadetblue3']
   
-  prepare_hab_long [label = 'prepare_hab_long()' fillcolor = 'lightblue1']
-  calc_benefit [label = 'calculate_benefit()' fillcolor = 'lightblue1']
+  prepare_hab_long [label = 'prepare_hab_long()']
   quick_ben [label = 'quick_ben()']
   allhexes [label = 'allhexes()' fillcolor = 'pink']
   draw_rand [label = 'draw_random_samples()' fillcolor = 'lightblue1']
@@ -41,7 +40,7 @@ grViz("digraph boxes_and_circles {
   # Helpers
   costs [label = 'estimate_cost_study_area()' fillcolor = 'khaki1']
   study_area [label = 'create_study_area()' fillcolor = 'khaki1']
-  clean [label = 'clean_forBass()' fillcolor = 'khaki1']
+  clean [label = 'clean_land_cover()' fillcolor = 'khaki1']
   prepare_cost [label = 'prepare_cost()' fillcolor = 'khaki1']
   get_road [label = 'getroaddensity()']
 
@@ -49,14 +48,15 @@ grViz("digraph boxes_and_circles {
   calc_inc_prob [label = 'calculate_inclusion_probs()' fillcolor = 'lightblue1']
   
   # Selection?
-  grts [label = 'run_grts_on_BASS()' fillcolor = 'lightblue1']
+  grts [label = 'run_grts_on_BASS()' fillcolor = 'cadetblue3']
   subsample_benefit [label = 'subsample_grts_and_calc_benefit()']
   select_ssu [label = 'select_ssu()' fillcolor = 'lightblue1']
-  down [label = 'downweight_selection_pr()']
+  down [label = 'downweight_selection_pr()' fillcolor = 'lightblue1']
   gen_dist_mat [label = 'gen_dist_mat()']
-  genSSU [label = 'genSSU()']
+  genSSU [label = 'genSSU()' fillcolor = 'lightblue1']
   
   # Deprecated?
+  full_sel [label = 'run_full_BASS_w_selection()' fillcolor = 'grey70']
   extract_habitat_cost [label = 'extract_habitat_cost()' fillcolor = 'grey70']
   genraster [label = 'genraster()' fillcolor = 'grey70']
 
@@ -69,31 +69,42 @@ grViz("digraph boxes_and_circles {
   getresults [label = 'getresults_BASS()']
   genpoints [label = 'generate_Points_around_centroid()']
 
+  subgraph cluster_1 {
+    style=filled;
+    fillcolor = 'cadetblue3';
+    label = 'full_BASS_run()';
+		fontname = 'Courier New';
+		fontsize = 14;
+		node[];
+    draw_rand->prepare_hab_long [lhead=cluster_0];
+    allhexes->calc_inc_prob
+    
+    subgraph cluster_0 {
+      style=filled;
+		  fillcolor = 'lightblue1'
+		  node [style=filled,color=white];
+		  prepare_hab_long -> quick_ben -> allhexes;
+		  label = 'calculate_benefit()';
+		  fontname = 'Courier New';
+		  fontsize = 14;
+    }
+  }
+	  
 
   # several 'edge' statements
   edge []
   
-  clean->full [style=dashed]
-  costs->full [style=dashed]
-  full->calc_benefit->quick_ben->allhexes
-  full->prepare_hab_long
-  full->draw_rand
-  full->calc_inc_prob
+  clean->draw_rand [style=dashed,lhead=cluster_1];
+  costs->draw_rand [lhead=cluster_1, style=dashed]
+  costs->calc_inc_prob [style=dashed]
+  costs->no_grts [style=dashed]
   
   prepare_cost->get_road
   down->gen_dist_mat
   
-  subsample_benefit->calc_benefit
+  subsample_benefit->prepare_hab_long[lhead=cluster_0];
   
-  no_grts->prepare_hab_long
-  no_grts->calc_inc_prob
-  no_grts->calc_benefit
-  
-  full_sel->calc_inc_prob
-  full_sel->costs
-  full_sel->clean
-  full_sel->full
-  full_sel->grts
+  no_grts->prepare_hab_long[lhead=cluster_0];
   
   select_ssu->grts
   
