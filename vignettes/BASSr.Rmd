@@ -8,6 +8,7 @@ vignette: >
 ---
 
 ```{r}
+library(BASSr)
 library(sf)
 library(ggplot2)
 library(dplyr)
@@ -143,17 +144,15 @@ final <- psu_hex_dirty %>%
 
 ## Selection probabilities
 ```{r}
-#CRS  expected is 3395 (must be in first step)
 
 ggplot() + 
   geom_sf(data = psu_hex) +
-  geom_sf(data = st_as_sf(d, coords = c("X", "Y"), crs = 3395))
+  geom_sf(data = st_as_sf(final, coords = c("X", "Y")))
 
-sel <- run_grts_on_BASS(n_grts_tests = 1, 
-                        study_area_results = final, 
+sel <- run_grts_on_BASS(probs = final, 
+                        num_runs = 1, 
                         nARUs = 12, 
-                        os = 0.2,   # default?
-                        hex_id = hex_id)
+                        os = 0.2)
 
 ggplot(d_hex) +
   geom_sf() +
@@ -163,165 +162,6 @@ ggplot(d_hex) +
 
 ## SSUs
 
-```{r}
-lc <- select(b$SSU$CLC, "SW_ID", "COMP_ID", starts_with("CLC"), "TOTAL_m2") %>%
-  clean_forBass(s = "CLC15",
-                f_vec =  .$COMP_ID,
-                id_col = COMP_ID)
-
-hex_ssu <- select(b$SSU$Points, "COMP_ID") %>%
-  left_join(lc, by = "COMP_ID") %>%
-  select(-"Province") %>%
-  st_transform(3395)  # Otherwise wrong locations from run_grts_on_bass()
-
-ggplot(data = hex_ssu) +
-  geom_sf()
-
-set.seed(1111)
-
-ssu1 <- full_BASS_run(num_runs = 10, 
-                      nsamples = 3, 
-                      att = lc, 
-                      att.sp = hex_ssu, 
-                      HexID_ = COMP_ID,
-                      stratumID = Province,
-                      cost = NULL,
-                      noCost = TRUE,
-                      q = TRUE)
-
-# Seletion - run_grts_on_BASS()
-
-ssu2 <- map(unique(hex_ssu$SW_ID),
-            ~full_BASS_run(num_runs = 10, 
-                           nsamples = 3, 
-                           att = filter(lc, SW_ID == .x),
-                           att.sp = filter(hex_ssu, SW_ID == .x),
-                           HexID_ = COMP_ID,
-                           stratumID = Province,
-                           cost = NULL,
-                           noCost = TRUE,
-                           q = TRUE))
-
-ssu_sel <- map(ssu2, 
-               ~st_coordinates(.x) %>%
-               ~run_grts_on_BASS(n_grts_tests = 1, 
-                                 study_area_results = .x, 
-                                 nARUs = 12, 
-                                 os = 0.2,   # default?
-                                 idcol = "Province",
-                                 hexid = COMP_ID))
-
-```
+...
 
 
-
-## Selection probabilities all together
-```{r}
-#CRS  expected is 3395 (must be in first step)
-
-ggplot() + 
-  geom_sf(data = hex) +
-  geom_sf(data = st_as_sf(d, coords = c("X", "Y"), crs = 3395))
-
-d <- full_BASS_run(num_runs = 10,
-                   nsamples = 3,
-                   att.sp =  hex,
-                   att = lc,
-                   HexID_ = ET_Index,
-                   stratumID = Province,
-                   cost = costs,
-                   q = TRUE)
-
-d <- run_full_BASS_w_selection(study_areas_hab_cost,
-                               sample_units_w_hab,
-                               Number_of_Study_areas = 12, # nARUs run_grts_on_BASS()
-                               Number_of_sample_units,
-                               Size_of_HSS,        # nsamples full_BASS_run()
-                               Number_of_HSS,      # num_runs full_BASS_run()
-                               Weight_of_benefit,  # benefit_weight full_BASS_run()
-                               LandCoverType,
-                               RemovedLayers_,
-                               Area_of_interest,
-                               RandomSeed)
-
-ggplot(d_hex) +
-  geom_sf() +
-  geom_sf(data = sel[[1]]$sites_base)
-
-```
-  
-## After 
-
-```{r}
-run_grts_on_BASS()
-# OR
-run_full_BASS_w_selection()
-# OR
-select_ssu() #?
-
-```
-
-
-```{r}
-downweight_selection_pr()
-genSSU()
-
-
-```
-
-Helpers...?
-```{r}
-create_study_area()
-estimate_cost_study_area()
-clean_forBass()
-
-```
-
-## Potential workflow
-
-
-```{r, eval = FALSE}
-# Load hex landcover data
-hex <- st_read(...) %>%
-  clean_forBass(s = "CLC15", hex_id = "ET_Index")
-
-hex_ssu <- st_read(...) %>%
-  clean_forBass(s = "CLC15", psu_hex_id = "ET_Index", ssu_hex_id = "COMP_ID")
-
-# Estimate costs
-costs <- st_read(...) %>%
-  estimate_cost_study_area(narus = ..., ...)
-
-# Run PSU cost/benefit
-psu <- full_BASS_run(hex, costs, num_runs = 10, nsamples = 3, hex_id = "ET_Index")
-
-# Run selection on PSU
-psu_sub <- run_grts_on_BASS(bass_run = psu, 
-                            n_grts_tests = 1, 
-                            n_arus = 12, 
-                            os = 0.2,   # default?
-                            hex_id = ET_Index)
-
-# Run SSU cost/benefit
-hex_ssu <- filter(hex_ssu, .data$ET_Index %in% psu_sub$sites_base$ET_Index)
-ssu <- full_BASS_run(hex_ssu, costs_ssu, 
-                     num_runs = 10, nsamples = 3, hex_id = "COMP_ID",
-                     by = "ET_Index", sub = psu_sub$ET_Index)
-
-# Run selection on SSU
-ssu_sub <- run_grts_on_BASS(bass_run = psu, 
-                            n_grts_tests = 1, 
-                            n_arus = 12, 
-                            os = 0.2,   # default?
-                            hex_id = ET_Index)
-
-summarize_selection(ssu_sub)
-
-```
-
-
-
-  
-# Acronyms
-- GRTS - generalized random tessellation stratified sample
-- BMS
