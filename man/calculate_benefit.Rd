@@ -10,7 +10,8 @@ calculate_benefit(
   hex_id,
   stratum_id = NULL,
   non_random_set = NULL,
-  land_cover_weights = NULL
+  land_cover_weights = NULL,
+  quiet = FALSE
 )
 }
 \arguments{
