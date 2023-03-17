@@ -1,7 +1,6 @@
 ## Functions to extract data for a study area
+
 #' Extract Habitat and Cost
-#'
-#' ** Depreciated ** This function is no longer useful and too specific to be widely used. Leaving in as may be useful.
 #'
 #' @param number_iterations Number of iterations to draw samples from full GRTS
 #' @param n_samples_per_iter Number of samples to pull per iteration
@@ -30,7 +29,11 @@
 #' @param sa.rast.loc Study area location
 #' @param quick Run using cpp
 #'
-#' @return
+#'
+#' @name extract_habitat_cost-deprecated
+NULL
+
+#' @rdname BASSr-deprecated
 #' @export
 extract_habitat_cost <- function(number_iterations,
                                  n_samples_per_iter, sample_hexes,
@@ -42,8 +45,12 @@ extract_habitat_cost <- function(number_iterations,
                                  hexid_col = SampleUnitID,
                                  calc_cost = F, calc_hab = F,
                                  write_hexes = F, load_hexes = T,
-                                 rds.loc = "output", sa.rast.loc = "output", quick = T) {
-  warning("This function is depreciated and not recommended as it may contain non-generalizable routines.")
+                                 rds.loc = "output", sa.rast.loc = "output",
+                                 quick = T) {
+
+  .Deprecated(msg = "This function is depreciated and not recommended as it may contain non-generalizable routines.")
+
+
   message(glue::glue("Starting {id}"))
 
   if (isTRUE(load_hexes) & file.exists(glue::glue("{rds.loc}/studyArea_{id}_BassPrep.rds"))) {
@@ -242,7 +249,7 @@ extract_habitat_cost <- function(number_iterations,
 }
 
 
-#' Generatate Raster
+#' Generate Raster
 #'
 #' @param id_col Column to use
 #' @param studyareas Study area list
@@ -252,8 +259,17 @@ extract_habitat_cost <- function(number_iterations,
 #' @param outpath  Location of output
 #'
 #' @return
+#'
+#' @name genraster-deprecated
+NULL
+
+#' @rdname BASSr-deprecated
 #' @export
-genraster <- function(id_col, studyareas, id, hab_rast_location, writeout = T, outpath = "output") {
+genraster <- function(id_col, studyareas, id, hab_rast_location, writeout = T,
+                      outpath = "output") {
+
+  .Deprecated()
+
   hab_raster <- raster::raster(hab_rast_location)
   sa1 <- studyareas %>% dplyr::filter({{ id_col }} == id)
   sa1_lcc <- hab_raster %>%

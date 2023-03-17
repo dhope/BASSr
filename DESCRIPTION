@@ -14,11 +14,12 @@ Imports:
     dplyr (>= 1.0),
     tidyr (>= 1.0.0),
     rlang (>= 0.4.0),
-    spsurvey (>= 4.1),
+    spsurvey (>= 5.0),
     sf (>= 0.8),
     glue,
     methods,
-    Rcpp
+    Rcpp,
+    magrittr
 Suggests:
     knitr,
     rmarkdown,
@@ -28,7 +29,7 @@ Suggests:
 Encoding: UTF-8
 LazyData: true
 VignetteBuilder: knitr
-RoxygenNote: 7.2.2
+RoxygenNote: 7.2.3
 Roxygen: list(markdown = TRUE)
 URL: https://github.com/dhope/BASSr
 BugReports: https://github.com/dhope/BASSr/issues

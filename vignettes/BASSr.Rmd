@@ -1,0 +1,167 @@
+---
+title: "Getting Started"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Getting Started}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r}
+library(BASSr)
+library(sf)
+library(ggplot2)
+library(dplyr)
+```
+
+
+## Setup
+
+1. Get spatial data - Hexagonal grid (primary spatial units - PSU) with land cover characteristics for each hex
+2. Get cost data
+3. Run `full_BASS_run()`    
+
+
+### 1. Spatial Data
+- Spatial data frame (sf object) with 
+    - Columns Cell/Hex ID (e.g., `ET_Index`, `hex_id`)
+    - Columns defining land cover (e.g., CORINE land cover CLC `CLC15_1`)
+- This must be either POINT or (MULTI)POLYGON (will be converted to points)
+
+> Land cover characteristics should not be percentages, but should be XXXX?
+
+
+**Clean up hex data**
+```{r}
+psu_hex <- clean_land_cover(psu_hex_dirty,  pattern = "CLC0013_") %>%
+  units::drop_units() # for plotting, get rid of m^2
+
+ggplot(data = psu_hex, aes(fill = LC01)) +
+  geom_sf() +
+  scale_fill_viridis_c()
+```
+
+
+### Basic Run
+```{r}
+d <- full_BASS_run(att_sf = psu_hex, 
+                   num_runs = 10,
+                   n_samples = 3,
+                   hex_id = hex_id)
+
+ggplot(data = d, aes(colour = benefit)) +
+  geom_sf() +
+  labs(colour = "Benefit") +
+  scale_colour_viridis_c()
+
+d_hex <- left_join(psu_hex, st_drop_geometry(d), by = "hex_id")
+
+ggplot(data = d_hex, aes(fill = benefit)) +
+  geom_sf() +
+  labs(fill = "Benefit") +
+  scale_fill_viridis_c()
+```
+
+### Including Costs
+
+```{r}
+d <- full_BASS_run(att_sf = psu_hex, 
+                   num_runs = 10,
+                   n_samples = 3,
+                   costs = psu_costs,
+                   hex_id = hex_id)
+
+d_hex <- left_join(psu_hex, st_drop_geometry(d), by = "hex_id")
+
+ggplot(data = d_hex, aes(fill = inclpr)) +
+  geom_sf() +
+  labs(fill = "Inclusion\nProbability") +
+  scale_fill_viridis_c()
+```
+
+What if the costs of that highly beneficial points was much higher?
+
+```{r}
+which.max(d$benefit)
+high_cost <- psu_costs
+high_cost$RawCost[26] <- high_cost$RawCost[26] * 100
+
+d <- full_BASS_run(att_sf = psu_hex, 
+                   num_runs = 10,
+                   n_samples = 3,
+                   costs = high_cost,
+                   hex_id = hex_id)
+
+d_hex <- left_join(psu_hex, st_drop_geometry(d), by = "hex_id")
+
+ggplot(data = d_hex, aes(fill = inclpr)) +
+  geom_sf() +
+  labs(fill = "Inclusion\nProbability") +
+  scale_fill_viridis_c()
+
+```
+
+Still high inclusion probability, but other points become relatively 'better'.
+
+### Runs by 'hand'
+
+```{r}
+psu_hex <- clean_land_cover(psu_hex_dirty, pattern = "CLC0013_")
+samples <- draw_random_samples(psu_hex, num_runs = 10, n_samples = 3)
+benefit <- calculate_benefit(psu_hex, samples, hex_id = hex_id)
+inc_prob <- calculate_inclusion_probs(benefit, 
+                                      costs = psu_costs, 
+                                      hex_id = hex_id)
+
+d_hex <- left_join(psu_hex, st_drop_geometry(inc_prob), by = "hex_id")
+
+ggplot(data = d_hex, aes(fill = inclpr)) +
+  geom_sf() +
+  labs(fill = "Inclusion\nProbability") +
+  scale_fill_viridis_c()
+```
+
+Alternative pipe
+
+```{r}
+final <- psu_hex_dirty %>%
+  clean_land_cover(pattern = "CLC0013_") %>%
+  draw_random_samples(num_runs = 10, n_samples = 3) %>%
+  calculate_benefit(psu_hex, samples = ., hex_id = hex_id) %>%
+  calculate_inclusion_probs(costs = psu_costs, hex_id = hex_id)
+```
+
+
+### Weights? (e.g., Akimiski_Island.Rmd)
+
+
+## Calculating Costs
+
+- Need number of ARUs which to deploy
+
+...
+
+
+## Selection probabilities
+```{r}
+
+ggplot() + 
+  geom_sf(data = psu_hex) +
+  geom_sf(data = st_as_sf(final, coords = c("X", "Y")))
+
+sel <- run_grts_on_BASS(probs = final, 
+                        num_runs = 1, 
+                        nARUs = 12, 
+                        os = 0.2)
+
+ggplot(d_hex) +
+  geom_sf() +
+  geom_sf(data = sel[[1]]$sites_base)
+
+```
+
+## SSUs
+
+...
+
+

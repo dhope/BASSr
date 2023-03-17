@@ -22,6 +22,11 @@
 #' @param Non random set of study areas and sample units in form of named list.
 #'
 #' @return List of sample units and a summary comparing land cover to the local area
+#'
+#' @name run_full_BASS_w_selection-defunct
+NULL
+
+#' @rdname BASSr-defunct
 #' @export
 run_full_BASS_w_selection <- function(
                                       study_areas_hab_cost,
@@ -43,6 +48,9 @@ run_full_BASS_w_selection <- function(
                                       weighted_benefits_df = list(SA = NULL, SU=NULL),
                                       non_ran = list(SA = NULL, SU=NULL),
                                       Stratum = Province) {
+  .Defunct(msg = "Use full_BASS_run() and run_grts_on_BASS() workflow instead")
+
+
   start_time1 <- start_time <- Sys.time()
   # Define layers to remove
   slvar <- enquos(RemovedLayers_)
@@ -203,7 +211,7 @@ start_time <- Sys.time()
 
 
   } else{
-    # pt <- map_df(
+    # pt <- purrr::map_df(
     #   unique(att_prep_focalSA$StudyAreaID),
     #   ~ calculate_inclusion_probs(cost = st_centroid(focal_SampleUnits_cost %>% filter(StudyAreaID == .x)),
     #                                       hexagon_benefits = benefit_dfs$SU %>% filter(StudyAreaID == .x),

@@ -1,39 +1,67 @@
-
-
-
-
-
 #' BASS cost benefit calculation
 #'
-#' Caculate the cost benefits and inclusion probabilities
+#' Calculate the cost benefits and inclusion probabilities
 #'
-#' @param cost data frame with costs for each hexagon in a RawCost format
-#' @param hexagon_benefits data frame with benefits for each hexagon
-#' @param HexID column of hexagon ids
-#' @param StratumID Column of larger area id
-#' @param benefit_weight The weight assigned to benefit in the selection probabilities.0.5 is equal weighting of cost and benefits. 1.0 is zero weighting to cost.
+#' @param benefits Spatial Data frame. Benefits associated with each hexagon (
+#'   output of `calculate_benefits()`)
+#' @param hex_id Column containing hexagon IDs.
+#' @param omit Column identifying hexes to omit (e.g., water hexes). Default
+#'   INLAKE.
+#' @param stratum_id Column containing larger area id (e.g., Province,
+#'   StudyAreaID). Default StudyAreaID.
+#' @param benefit_weight Numeric. Weight assigned to benefit in the selection
+#'   probabilities. 0.5 is equal weighting of cost and benefits. 1.0 is zero
+#'   weighting to cost. Default 0.5.
+#'
+#' @inheritParams common_docs
 #'
 #' @return A data frame with full inclusion probabilities for each raster.
+#'
 #' @export
 #'
-calculate_inclusion_probs <- function(cost, hexagon_benefits, HexID, StratumID = StudyAreaID, benefit_weight = 0.5) {
-  if (!"RawCost" %in% names(cost)) {
-    cost <- cost %>%
-      mutate(RawCost = ifelse(NEAR_DIST > 1000, 5000, NEAR_DIST)) ## scale the distance so anything greater than 1000m from the road is given a value of 5000
-  }
+#' @examples
+#'
+#' b <- calculate_benefit(att_sf = psu_hexagons,
+#'                        samples = psu_samples,
+#'                        hex_id = hex_id)
+#'
+#' inc <- calculate_inclusion_probs(
+#'   benefits = b,
+#'   costs = psu_costs,
+#'   hex_id = hex_id)
+#'
+calculate_inclusion_probs <- function(benefits, costs,
+                                      hex_id, stratum_id = NULL,
+                                      omit_flag = NULL,
+                                      benefit_weight = 0.5) {
 
+  # Checks
+  check_column(costs, {{ hex_id }})
+  check_column(costs, {{ omit_flag }})
+  check_column(costs, {{ stratum_id }})
+  check_column(benefits, {{ hex_id }})
 
-  left_join(cost, hexagon_benefits) %>%
-    filter(INLAKE == F) %>% ## delete any centroids that are in water
-    ## any NA in the 'INLAKE' column will be converted to a 0
-    dplyr::select({{ HexID }}, {{ StratumID }}, X, Y, RawCost, benefit) %>%
-    group_by({{StratumID}}) %>%
-    mutate(
-      LogCost = log10(RawCost),
-      ScLogCost = LogCost / (max(LogCost, na.rm = T) + 1),
-      scale_ben = benefit / max(benefit, na.rm = T),
-      partIP = (1 - ScLogCost) * scale_ben, ## Inclusion probability
-      weightedIP = (1 - (ScLogCost * (1 - benefit_weight))) * scale_ben * benefit_weight, # Benefit weighted by benefit weight
-      inclpr = weightedIP / max(weightedIP, na.rm = T) ## scaled Inclusion probability
-    ) %>% ungroup
+  costs <- check_costs(costs, {{ hex_id }}, {{ omit_flag }})
+
+  # Add benefits
+  costs <- dplyr::right_join(benefits, costs,
+                            by = rlang::as_label(rlang::enquo(hex_id))) %>%
+    dplyr::select({{ hex_id }}, {{ stratum_id }}, "RawCost", "benefit")
+
+  # Calculate inclusion probabilities
+  costs %>%
+    dplyr::group_by({{ stratum_id }}) %>%   # By stratum if applicable
+    dplyr::mutate(
+      LogCost = log10(.data$RawCost),
+      ScLogCost = .data$LogCost / (max(.data$LogCost, na.rm = TRUE) + 1),
+      scale_ben = .data$benefit / max(.data$benefit, na.rm = TRUE),
+      # Inclusion probability
+      partIP = (1 - .data$ScLogCost) * .data$scale_ben,
+      # Benefit weighted by benefit weight
+      weightedIP = (1 - (.data$ScLogCost * (1 - .env$benefit_weight))) *
+        .data$scale_ben * .env$benefit_weight,
+      # Scaled inclusion probability
+      inclpr = .data$weightedIP / max(.data$weightedIP, na.rm = TRUE)
+    ) %>%
+    dplyr::ungroup()
 }

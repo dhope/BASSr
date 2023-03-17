@@ -1,142 +1,122 @@
 #' A full BASS run
 #'
 #' @param num_runs The number of times to draw random samples from hexagons
-#' @param nsamples The number of samples to draw in each sample
-#' @param att  the attribute table correctly formatted
-#' @param att.sp the shape file from the attribute table
-#' @param cost the cost table for each hexagon id
+#' @param n_samples The number of samples to draw in each sample
 #' @param return_all return each piece of BASS implementation
-#' @param seed_ random seed to use for random grts samples
-#' @param HexID_ Column for hexagon id
-#' @param stratumID Column for larger area id. Likely StudyAreaID or Province
-#' @param q Run the benefit calculation quickly
-#' @param non_ran_set Non random set that is added to the hypothetical sample set in benefit calculation.
-#' @param lakeN The land cover number to represent open water. 1 for FNLC, 18 for CLC
-#' @param benefit_weight The weight assigned to benefit in the selection probabilities.0.5 is equal weighting of cost and benefits. 1.0 is zero weighting to cost.
-#' @param noCost Do you only want to run the benefit calculation?
-#' @param weighted_benefits data frame with lc and weights
+#' @param seed random seed to use for random grts samples
+#' @param non_ran_set Non random set that is added to the hypothetical sample
+#'   set in benefit calculation.
+#' @param benefit_weight The weight assigned to benefit in the selection
+#'   probabilities.0.5 is equal weighting of cost and benefits. 1.0 is zero
+#'   weighting to cost.
+#' @param land_cover_weights data frame with lc and weights
+#'
+#' @inheritParams common_docs
 #'
 #' @return a table with inclusion probabilities
 #' @export
 #'
-full_BASS_run <- function(num_runs, nsamples, att, att.sp, cost, return_all = F, seed_ = as.integer(Sys.time()),
-                          HexID_ = HEX100, stratumID = StudyAreaID, q = F, non_ran_set = NULL, lakeN = 18,
-                          benefit_weight = 0.5, noCost = F, weighted_benefits = NULL) {
-  ## Check if habitat and sp object have same numbers of rows
-  if(nrow(att.sp)!= nrow(att)) rlang::abort(message = "att.sp and att must be the same size. They do not currently have the same number of rows")
-  ## Check if any NA in habitat columns
-  if(!any(grepl("^LC\\d",names(att)))) rlang::abort(message = "Habitat data table not formatted correctly. Try running clean_forBass.")
-  if (!"sf" %in% class(att)){
-    if(is.na(rowSums(summarise(att , across( matches("^LC\\d"), sum))))) rlang::abort(message = "Habitat data table not formatted correctly. Try running clean_forBass.")
-  }else{
-    if(is.na(rowSums(summarise(st_drop_geometry(att) , across( matches("^LC\\d"), sum))))) rlang::abort(message = "Habitat data table not formatted correctly. Try running clean_forBass.")
+#' @examples
+#'
+#' # With example data psu_hexagons and psu_costs...
+#'
+#' d <- full_BASS_run(
+#'   att_sf = psu_hexagons,
+#'   num_runs = 10,
+#'   n_samples = 3,
+#'   costs = psu_costs,
+#'   hex_id = hex_id)
+#'
+#' d <- full_BASS_run(
+#'   att_sf = psu_hexagons,
+#'   num_runs = 10,
+#'   n_samples = 0,
+#'   costs = psu_costs,
+#'   hex_id = hex_id)
+
+full_BASS_run <- function(att_sf, num_runs, n_samples, costs = NULL,
+                          hex_id, stratum_id = NULL, omit_flag = NULL,
+                          non_ran_set = NULL,
+                          benefit_weight = 0.5, land_cover_weights = NULL,
+                          return_grts = FALSE, seed = as.integer(Sys.time()),
+                          quiet = FALSE) {
+
+  # Input checks
+  check_column(att_sf, {{ hex_id }})
+  check_column(att_sf, {{ stratum_id }})
+  att_sf <- check_att_sf(att_sf, quiet = quiet)
+
+  set.seed(seed)
+
+  if (n_samples == 0) grts_output <- NULL
+
+  if (n_samples != 0) {
+    grts_output <- draw_random_samples(
+      att_sf = att_sf,
+      num_runs = num_runs, n_samples = n_samples,
+      quiet = quiet)
   }
 
-  set.seed(seed_)
+  # Benefits
+  benefits <- calculate_benefit(
+    att_sf = att_sf, samples = grts_output,
+    non_random_set = non_ran_set,
+    hex_id = {{ hex_id }},
+    stratum_id = {{ stratum_id }},
+    land_cover_weights = land_cover_weights
+  )
 
-  if (!"INLAKE" %in% names(cost) & !isTRUE(noCost)) {
-    message("Did you forget to add a lake specification to the cost? I am addig it based on dominant land cover for now.")
-    inlake <- NA
-    try(inlake <- filter_at(att, vars(matches("^D_.+")), any_vars(. == lakeN)))
-    cost <- mutate(cost, INLAKE = {{ HexID_ }} %in% inlake[[as_label(enquo(HEXID_))]])
-  }
-  if (!"sf" %in% class(att.sp)) {
-    stop("Spatial object att.sp must be an object of package sf. Please fix and try again")
+  # Costs
+  if (!is.null(costs)) {
+    r <- calculate_inclusion_probs(
+      benefits = benefits, costs = costs,
+      hex_id = {{ hex_id }}, stratum_id = {{ stratum_id }},
+      benefit_weight = benefit_weight)
+    type <- "inclusion_probs"
   } else {
-    if (all(sf::st_is(att.sp, "POLYGON"))) {
-      message("Spatial Feature object should be points not polygons or GRTS expects clusters. Don't worry, I'll fix it!")
-      att.sp <- st_centroid(att.sp)
-    }
-  }
-  if (!"X" %in% names(cost) & !isTRUE(noCost)) {
-    message("Did you forget to add coordinates? I am adding it based centroids of the att.sp for now.")
-    cost <- cost %>%
-      bind_cols(as_tibble(
-        st_coordinates(.)
-      ))
+    r <- benefits
+    type <- "benefits"
   }
 
-  if(nsamples ==0){grts_output <- NULL}
-  if(nsamples !=0){
-  grts_output <- draw_random_samples(att_cleaned = att, att.sf = att.sp, num_runs = num_runs, nsamples = nsamples)
-  message("sample draw complete")
-  }
+  # Meta
+  r <- dplyr::mutate(r,
+                     num_runs = .env$num_runs,
+                     n_samples = .env$n_samples)
 
-  att_cleaned_long <- prepare_hab_long(att, {{ stratumID }})
 
-  if (!isTRUE(return_all)) {
-    benefits <- calculate_benefit(
-      grts_res = grts_output, att_long = att_cleaned_long, non_random_set = non_ran_set,
-      output = "benefit_by_run", HexID = {{ HexID_ }}, quick = q, land_cover_weights = weighted_benefits
-    )
-    if (isTRUE(noCost)) {
-      return(benefits %>% mutate(num_runs = num_runs, nsamples = nsamples))
-    }
+  # GRTS
+  if(return_grts) r <- setNames(list(r, grts_output), c(type, "grts_output"))
 
-    pointswith_inclusion <- calculate_inclusion_probs(cost = cost, hexagon_benefits = benefits, HexID = {{ HexID_ }}, StratumID = {{ stratumID }}, benefit_weight = benefit_weight)
-
-    return(pointswith_inclusion %>% mutate(num_runs = num_runs, nsamples = nsamples))
-  }
-  if (isTRUE(return_all)) {
-    benefits <- calculate_benefit(
-      grts_res = grts_output, att_long = att_cleaned_long, non_random_set = non_ran_set,
-      output = "all", HexID = {{ HexID_ }}, quick = q, land_cover_weights = weighted_benefits
-    )
-    if (isTRUE(noCost)) {
-      return(benefits %>% mutate(num_runs = num_runs, nsamples = nsamples))
-    }
-    if (isTRUE(q)) {
-      b <- benefits
-    } else {
-      b <- benefits$hexagon_benefits
-    }
-    pointswith_inclusion <- calculate_inclusion_probs(
-      cost = cost, hexagon_benefits = b,
-      HexID = {{ HexID_ }},
-      StratumID = {{ stratumID }},
-      benefit_weight = benefit_weight
-    )
-
-    return(list(
-      inclusionPr = pointswith_inclusion %>% mutate(num_runs = num_runs, nsamples = nsamples),
-      benefits_full = benefits, grts_samples = grts_output, att_long = att_cleaned_long
-    ))
-  }
+  r
 }
 
 
 #' A calculate BASS from random samples
 #'
-#' @param grts_output Hypothetical sample set
+#' @param samples Hypothetical sample set
 #' @param num_runs The number of times to draw random samples from hexagons
-#' @param nsamples The number of samples to draw in each sample
-#' @param att  the attribute table correctly formatted
-#' @param att.sp the shape file from the attribute table
-#' @param cost the cost table for each hexagon id
-#' @param return_all return each piece of BASS implementation
-#' @param seed_ random seed to use for random grts samples
+#' @param n_samples The number of samples to draw in each sample
+#' @param costs the cost table for each hexagon id
+#' @param seed random seed to use for random grts samples
+#'
+#' @inheritParams common_docs
 #'
 #' @return a table with inclusion probabilities
 #' @export
 #'
-noGRTS_BASS_run <- function(grts_output, num_runs, nsamples, att, att.sp, cost, return_all = F, seed_ = as.integer(Sys.time())) {
-  att_cleaned_long <- prepare_hab_long(att)
+noGRTS_BASS_run <- function(att_sf, samples, num_runs, n_samples, costs,
+                            seed = as.integer(Sys.time())) {
 
-  if (!isTRUE(return_all)) {
-    benefits <- calculate_benefit(grts_res = grts_output, att_long = att_cleaned_long, output = "mean_benefit")
+  set.seed(seed)
 
-    pointswith_inclusion <- calculate_inclusion_probs(cost = cost, hexagon_benefits = benefits)
+  benefits <- calculate_benefit(samples = samples,
+                                att_sf = att_sf,
+                                output = "mean_benefit")
 
-    return(pointswith_inclusion %>% mutate(num_runs = num_runs, nsamples = nsamples))
-  }
-  if (isTRUE(return_all)) {
-    benefits <- calculate_benefit(grts_res = grts_output, att_long = att_cleaned_long, output = "all")
+  pointswith_inclusion <- calculate_inclusion_probs(
+    costs = costs, benefits = benefits)
 
-    pointswith_inclusion <- calculate_inclusion_probs(cost = cost, hexagon_benefits = benefits$hexagon_benefits)
-
-    return(list(
-      inclusionPr = pointswith_inclusion %>% mutate(num_runs = num_runs, nsamples = nsamples),
-      benefits_full = benefits, grts_samples = grts_output, att_long = att_cleaned_long
-    ))
-  }
+  dplyr::mutate(pointswith_inclusion,
+                num_runs = .env$num_runs,
+                n_samples = .env$n_samples)
 }

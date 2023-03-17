@@ -66,17 +66,18 @@ cost_vars <- list(
 #'
 #' @return
 #' @export
-estimate_cost_study_area <- function(narus, StudyAreas, pr, sr,wr = 0,
-                                     dist_base_sa, dist_airport_sa, dist2airport_base,
-                                     AirportType, vars) {
+estimate_cost_study_area <- function(narus, StudyAreas, pr, sr, wr = 0,
+                                     dist_base_sa, dist_airport_sa,
+                                     dist2airport_base, AirportType, vars) {
+
   list2env(vars, envir = environment())
-  # browser()
+
   StudyAreas %>%
-    mutate(AT = {{AirportType}}) %>%
+    dplyr::mutate(AT = {{AirportType}}) %>%
     {if("lCost" %in% names(.)){.} else{
-    left_join(x=.,helicopter_airport_cost_per_l,
+      dplyr::left_join(x = ., helicopter_airport_cost_per_l,
               by = c("AT" = "AirportType") ) }} %>%
-    mutate(
+    dplyr::mutate(
 
     # Cost of survey the study area by truck
     primary_cost = truck_cost_per_day * narus / (truck_arus_per_crew_per_day), #* truck_n_crews),
@@ -93,10 +94,10 @@ estimate_cost_study_area <- function(narus, StudyAreas, pr, sr,wr = 0,
 
     # Fuel cost
     # Based on distance to base from airport and distance from base to sa
-    heli_cost_per_l = ifelse({{ dist_airport_sa }} < helicopter_max_km_from_base,
-                             lCost,
+    heli_cost_per_l = dplyr::if_else({{ dist_airport_sa }} < helicopter_max_km_from_base,
+                                     lCost,
       # helicopter_airport_cost_per_l,
-      ifelse({{ dist_base_sa }} < helicopter_max_km_from_base,
+      dplyr::if_else({{ dist_base_sa }} < helicopter_max_km_from_base,
         helicopter_base_cost_per_l, helicopter_2nd_base_cost_per_l
       )
     ),
@@ -158,7 +159,8 @@ estimate_cost_study_area <- function(narus, StudyAreas, pr, sr,wr = 0,
 #' @param ... You can include multisession with the furrr package. Needs to include Multicor=T
 #'
 #' @return Returns a tibble with area covered by each road types and their proportion of the study area
-#' @export
+#'
+#' @noRd
 #'
 getroaddensity <- function(hexes, sa, pr, sr, wr, r, idcol, ...) {
   # message(sa)
@@ -167,11 +169,11 @@ getroaddensity <- function(hexes, sa, pr, sr, wr, r, idcol, ...) {
   # }
   args_ <- list(...)
   if(isTRUE(args_$Multcor)){
-    hex <- filter(hexes, .data[[idcol]] == sa)
+    hex <- dplyr::filter(hexes, .data[[idcol]] == sa)
     sr_h <- dplyr::filter(hex, .data[[idcol]] == "CLIMATE ACTION NOW")
     pr_h <- dplyr::filter(hex, .data[[ idcol ]] == "CATBURGLER")
   }else{
-    hex <- filter(hexes, {{ idcol }} == sa)
+    hex <- dplyr::filter(hexes, {{ idcol }} == sa)
     sr_h <- dplyr::filter(hex, {{ idcol }} == "CLIMATE ACTION NOW")
     pr_h <- dplyr::filter(hex, {{ idcol }} == "CATBURGLER")
   }
@@ -198,32 +200,32 @@ getroaddensity <- function(hexes, sa, pr, sr, wr, r, idcol, ...) {
 
   # browser()
   #if (any((st_intersects(hex, pr, sparse = F)))) {
-    pr_h <- st_intersection(pr, hex)
+    pr_h <- sf::st_intersection(pr, hex)
   #} # else{print("No Prime")}#,
   # %>% st_area() %>% sum#ifelse(isTRUE(st_contains(hex, pr), sparse =F),, 0)
  # if (any((st_intersects(hex, sr, sparse = F)))) {
-    sr_h <- st_intersection(sr, hex)
+    sr_h <- sf::st_intersection(sr, hex)
   #} # else{print("No Sec")}
   ## %>% st_area() %>% sum#ifelse(isTRUE(st_contains(hex, sr, sparse =F)), ,0)
-    sr_h_noP <- if_else((nrow(pr_h) == 0) | (nrow(sr_h) == 0), sr_h, st_difference(sr_h, pr_h))
+    sr_h_noP <- dplyr::if_else((nrow(pr_h) == 0) | (nrow(sr_h) == 0), sr_h, sf::st_difference(sr_h, pr_h))
 
-  pr_a <- st_area(pr_h) %>%
+  pr_a <- sf::st_area(pr_h) %>%
     as.numeric() %>%
     sum()
-  sr_a <- st_area(sr_h_noP) %>%
+  sr_a <- sf::st_area(sr_h_noP) %>%
     as.numeric() %>%
     sum()
-  r_h <- st_intersection(r, hex) %>%
-    st_area() %>%
+  r_h <- sf::st_intersection(r, hex) %>%
+    sf::st_area() %>%
     as.numeric() %>%
     sum() # ifelse(isTRUE(st_contains(hex, r, sparse =F)), ,0)
-  wr_h <- st_intersection(wr, hex) %>%
-    st_area() %>%
+  wr_h <- sf::st_intersection(wr, hex) %>%
+    sf::st_area() %>%
     as.numeric() %>%
     sum() # ifelse(isTRUE(st_contains(hex, r, sparse =F)), ,0)
 
   if(sr_a>saa){simpleError(glue::glue("Secondary Road {sr_a} is less than study area {saa}"))}
-  tibble(
+  dplyr::tibble(
     saa = saa,
     pr = ifelse(length(pr_a) == 0, 0, pr_a),
     sr = ifelse(length(sr_a) == 0, 0, sr_a),
@@ -231,7 +233,7 @@ getroaddensity <- function(hexes, sa, pr, sr, wr, r, idcol, ...) {
     wr = ifelse(length(wr_h) == 0, 0, wr_h),
     {{ idcol }} := as.character(sa)
   ) %>%
-    mutate(
+    dplyr::mutate(
       p_pr = pr / saa, # Covert to proportion of area
       p_sr = sr / saa,
       p_wr = wr / saa
@@ -294,7 +296,7 @@ prepare_cost <- function(truck_roads, atv_roads, winter_roads, all_roads, airpor
         left_join(x = hexagons, y = .) %>%
         st_as_sf()
     }else{
-    hexagons_w_roads <- map_df(ids, ~{pb$tick();getroaddensity(sa = .x,
+    hexagons_w_roads <- purrr::map_df(ids, ~{pb$tick();getroaddensity(sa = .x,
       hexes = hexagons, wr = winter_roads,
       pr = truck_roads, sr = atv_roads, r = all_roads, idcol = {{ idcol_ }}, ... )}
     ) %>%

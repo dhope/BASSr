@@ -29,6 +29,7 @@ create_study_area <- function(landscape, hexagon_size, units, HexagonID_label, H
       "x" = "Current values for these units are provide the  distance between the centroids of adjacent hexagons.",
       "i" = "Future implementation will allow selection of diameters and radii of the hexagons"))
 
+
   # Convert units to diameter of hexagon from vertex to vertex.
   # If units are provided as an area, much use small gemetric function to convert to m
   calculate_cellsize <- function(area_ha){2* (sqrt(2*area_ha/(3*sqrt(3)))) * sqrt(3)/2 * 100}

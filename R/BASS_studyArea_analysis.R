@@ -1,157 +1,96 @@
 #' Run grts sampling on BASSr results
 #'
-#' @param n_grts_tests Number of times to draw arus from grts
-#' @param study_area_results BASSr results
-#' @param nARUs Number of samples
-#' @param os Over sample size (proportional)
-#' @param idcol Identification column for units
-#' @param hexid Column for hexagon identification
-#' @param removedhexes Vector of names of hexagons to remove
-#' @param return_points
+#' @param probs Data frame. Output of `calculate_inclusion_probs()` or
+#'   `full_BASS_run()`.
+#' @param nARUs Numeric vector. Number of samples or named vector of number of
+#'   samples per stratum.
+#' @param os Numeric vector. Over sample size (proportional) or named vector of
+#'   number of samples per stratum.
+#' @param removed_hexes Character Vector. Ids of hexagons to remove.
+#'
+#' @inheritParams common_docs
 #'
 #' @return
 #' @export
 #'
-run_grts_on_BASS <- function(n_grts_tests, study_area_results, nARUs, os,
-                             idcol, hexid, removedhexes = c("None"), return_points = F, Stratum = None, ...) {
-  if (as_label(enquo(hexid)) == "<empty>") stop("run_grts_on_BASS now requires you to specify hexagon column under hexid. Please correct and try again.")
+run_grts_on_BASS <- function(probs, num_runs, nARUs, os,
+                             hex_id = NULL,
+                             stratum_id = NULL,
+                             remove_hexes = NULL) {
 
-  if(packageVersion("spsurvey")<5){
-    if (is.list(study_area_results) & !is.data.frame(study_area_results)) {
-      if (!is_null(study_area_results$inclusionPr)) {
-        attframe <- study_area_results$inclusionPr
-      }
-      if (is_null(study_area_results$inclusionPr)) {
-        fbr_t <- study_area_results %>% transpose()
-        attframe <- fbr_t %>%
-          .[["inclusion_probs"]] %>%
-          do.call("rbind", .) %>%
-          as_tibble() %>%
-          dplyr::select(-geometry) %>%
-          filter(!is.na(X))
-      }
-    } else {
-      if ("geometry" %in% names(study_area_results)) {
-        attframe <- as_tibble(study_area_results) %>%
-          dplyr::select(-geometry) %>%
-          filter(!is.na(X))
-      } else {
-        attframe <- as_tibble(study_area_results)
-      }
+  mindis <-  NULL
+  maxtry <-  10
+
+  check_column(probs, {{ stratum_id }})
+
+  # Check that NOT LIST, HAS geometry
+  if(!is.null(remove_hexes)) {
+    if(rlang::quo_is_null(rlang::enquo(hex_id))) {
+      rlang::abort("`hex_id` must be specified to use `remove_hexes`",
+                   call = NULL)
     }
-    attframe <- filter(attframe, !{{ hexid }} %in% removedhexes)
-  if(as_label(enquo(Stratum)) == "None"){
-  Stratdesgn <- rep(list(PanelOne = list # a list named 'None" that contains:
-  (
-    panel = c(PanelOne = rep(nARUs)),
-    over = rep(nARUs * os), # panelOne indicates the number of samples you want
-    seltype = "Continuous"
-  )), length(unique(attframe[[idcol]])))
-  names(Stratdesgn) <- unique(attframe[[idcol]])
-  } else{
-    l_s <- unique(attframe[[idcol]])
-      Stratdesgn <-
-        purrr::map(l_s, ~list # a list named 'None" that contains:
-                             (
-                               panel = c(PanelOne =  nARUs$N[nARUs[[idcol]] == .x],
-                               over = max(round(nARUs$N[nARUs[[idcol]] == .x] * os,0),1)), # panelOne indicates the number of samples you want
-                               seltype = "Continuous" )
-                             )
-      names(Stratdesgn) <- l_s
+
+    check_column(probs, {{ hex_id }})
+    attframe <- dplyr::filter(probs,
+                              !{{ hex_id }} %in% remove_hexes)
+  } else {
+    attframe <- probs
   }
 
+  stratum_id <- rlang::enquo(stratum_id)
 
-  # browser()
-  invisible(capture.output(grts_output <- purrr::map(
-    1:n_grts_tests,
-    ~ grts(
-      design = Stratdesgn, ## selects the reference equaldesgn object
-      src.frame = "att.frame", # the sample frame is coming from a shapefile
-      # sf.object = att.sf, # the shape file used
-      att.frame = attframe, # attribute data frame
-      type.frame = "finite", # type-area vs linear
-      DesignID = "sample", # the prefix for each point name
-      xcoord = "X",
-      ycoord = "Y",
-      stratum = idcol,
-      mdcaty = "inclpr",
-      shapefile = FALSE,
-    ) # no shapefile created here, will be created below)
-  )))
-  return(grts_output)
-  }
-  if(packageVersion("spsurvey")>=5){
-    # browser()
-    mindis <-  NULL
-    maxtry <-  10
-    DesignID <-  "Sample"
-    crs <- 3395 #4326 # This is the default crs if not provided. It is not lat/lon, so perhaps should be removed
+  if (rlang::quo_is_null(stratum_id)) {
+    # Not stratified
+    stratum_name <- NULL
+
+    Stratdsgn <- rep(nARUs, length(nARUs))
+    n_os <-  round(nARUs*os)
+    if(n_os==0) n_os <- NULL
+
+  } else {
+    #Stratified
+
+    stratum_name <- rlang::as_label(stratum_id)
+
+    strata_vector <- attframe %>% # Vector of strata
+      dplyr::pull({{ stratum_id }}) %>%
+      unique()
 
 
+    ## CHECK THE FOLLOWING....
+    if (all(strata_vector %in% names(nARUs))){
+      Stratdsgn <- nARUs
+      #if(length(os)==1){
+      #  n_os <- lapply(FUN = function(x) x * os, X = nARUs )
+      #  if(n_os==0) n_os <- NULL
+      #} else if ( all(strata_vector %in% names(nARUs)) ){
+      n_os <- os
 
-    list2env(list(...), envir = environment())
-
-    if (is.list(study_area_results) & !is.data.frame(study_area_results)) {
-      if (!is_null(study_area_results$inclusionPr)) {
-        attframe <- study_area_results$inclusionPr
+      if(!length(os) %in% c(1, length(nARUs))) {
+        rlang::abort(
+          c("x" = "Not all strata found in `os`, but `os` has length > 1",
+            "*" = paste0("`os` should either be single value or named vector, ",
+                         "one for each stratum.")))
       }
-      if (is_null(study_area_results$inclusionPr)) {
-        fbr_t <- study_area_results %>% transpose()
-        attframe <- fbr_t %>%
-          .[["inclusion_probs"]] %>%
-          do.call("rbind", .) %>%
-          as_tibble() %>%
-          # dplyr::select(-geometry) %>%
-          filter(!is.na(X))
-      }
+    }  else {
+      rlang::abort(
+        c("x" = "Not all strata found in `nARUs`, but `nARUs` has length >1",
+          "*" = paste0("`nARUs` should either be single value or named vector, ",
+                       "one for each stratum.")))
     }
-    if (!"geometry" %in% names(study_area_results)) {
-        attframe <- study_area_results %>%
-          filter(!is.na(X)) |>
-          st_as_sf(coords = c("X", "Y"), crs = crs)
-      } else {
-        attframe <- st_as_sf(study_area_results)
-      }
-
-    attframe <- filter(attframe, !{{ hexid }} %in% removedhexes)
-
-    if(as_label(enquo(Stratum)) == "None"){
-      Stratdsgn <- rep(nARUs, length(nARUs))
-      n_os <-  round(nARUs*os)
-      names(Stratdsgn) <- unique(attframe[[idcol]])
-      if(n_os==0) n_os <- NULL
-    } else {
-      strata_vector <- study_area_results %>% # Vector of strata
-        dplyr::pull({{ Stratum }}) %>%
-        unique()
-      if ( all(strata_vector %in% names(nARUs)) ){
-      Stratdsgn <- N
-      if(length(os)==1){
-        if(n_os==0){ n_os <- NULL
-        } else  n_os <- lapply(FUN = function(x) x * os, X = N )
-      } else if ( all(strata_vector %in% names(N)) ){
-        n_os <- os
-      } else{rlang::abort("OS should either be single value or list with all strata ID. Not all Strata found in OS and OS has length >1")}
-    }  else {rlang::abort("N should either be single value or list with all strata ID. Not all Strata found in N and N has length >1")} }
-
-      browser()
-    invisible(capture.output(grts_output <- purrr::map(
-      1:n_grts_tests,
-      ~ spsurvey::grts(sframe = attframe,
-                       n_over = n_os,
-                       n_base = Stratdsgn,
-                       stratum_var = idcol,
-                       mindis = mindis,
-                       DesignID = "sample",
-                       aux_var = "inclpr",
-                       maxtry = maxtry)
-    )
-    )
-    )
-
-    return(grts_output)
   }
 
+  purrr::map(
+    1:num_runs,
+    ~ spsurvey::grts(sframe = attframe,
+                     n_over = n_os,
+                     n_base = Stratdsgn,
+                     stratum_var = stratum_name,
+                     mindis = mindis,
+                     DesignID = "sample",
+                     aux_var = "inclpr",
+                     maxtry = maxtry)
+  )
 }
 
 
@@ -162,13 +101,12 @@ run_grts_on_BASS <- function(n_grts_tests, study_area_results, nARUs, os,
 #' @param nARUs Number of ARUs to deploy
 #'
 #' @return
-#' @export
 #'
 getresults_BASS <- function(grts_output, study_area_results, nARUs) {
   fbr_t <- study_area_results %>% transpose()
   landcover <- fbr_t %>% .[["landcover"]]
   studyareas <- fbr_t$study_area %>% do.call("c", .)
-  sa_habsum <- map_df(1:length(study_area_results), ~ as_tibble(landcover[[.x]])) %>%
+  sa_habsum <- purrr::map_df(1:length(study_area_results), ~ as_tibble(landcover[[.x]])) %>%
     dplyr::select(-geometry, -X, -Y) %>%
     pivot_longer(cols = matches("LC\\d"), names_to = "LC", values_to = "hab_ha", values_drop_na = F) %>%
     mutate(hab_ha = replace_na(hab_ha, 0)) %>%
@@ -184,7 +122,7 @@ getresults_BASS <- function(grts_output, study_area_results, nARUs) {
     #             mutate(LC_all = glue::glue("LC{stringr::str_pad(value, width= 2, pad = 0)}"))
     sa <- (landcover[[saN]]$StudyAreaID %>% unique())
     fixgrtsout <- function(i, saN, nARUs) {
-      invisible(capture.output(spbal <- spsurvey::spbalance(grts_output[[i]],
+      invisible(utils::capture.output(spbal <- spsurvey::spbalance(grts_output[[i]],
         grts_output[[i]]@data %>%
           left_join(st_centroid(landcover[[saN]]), .) %>%
           filter(panel == "PanelOne" &
@@ -205,7 +143,7 @@ getresults_BASS <- function(grts_output, study_area_results, nARUs) {
         left_join(sa_habsum, by = c("StudyAreaID", "LC"))
     }
 
-    outputs <- map_df(1:length(grts_output), fixgrtsout, saN = saN, nARUs = nARUs)
+    outputs <- purrr::map_df(1:length(grts_output), fixgrtsout, saN = saN, nARUs = nARUs)
 
     plt <- ggplot(outputs, aes(LC, pHab)) +
       geom_point() +

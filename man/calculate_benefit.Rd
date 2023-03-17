@@ -5,30 +5,58 @@
 \title{Calculate the benefit of a hexagon from  grts results.}
 \usage{
 calculate_benefit(
-  grts_res,
-  HexID,
-  att_long,
-  output = "all",
-  quick = F,
+  att_sf,
+  samples,
+  hex_id,
+  stratum_id = NULL,
   non_random_set = NULL,
-  land_cover_weights = NULL
+  land_cover_weights = NULL,
+  quiet = FALSE
 )
 }
 \arguments{
-\item{grts_res}{Results from GRTS random sample set.}
+\item{samples}{(Spatial) Data frame. Results from \code{draw_random_samples()}.}
 
-\item{HexID}{column for hexagons}
+\item{non_random_set}{Set of hexagons to include as a non randomly selected
+set}
 
-\item{att_long}{Data frame with habitat information, in long format}
-
-\item{output}{if not using quick. Output format}
-
-\item{quick}{should you run it fast?}
-
-\item{non_random_set}{Set of hexagons to include as a non randomly selected set}
-
-\item{land_cover_weights}{Data table with 'lc' and 'weights' column. Or could be NULL to have all equal.}
+\item{land_cover_weights}{Data table with 'lc' and 'weights' column. Or could
+be NULL to have all equal.}
 }
 \description{
 Calculate the benefit of a hexagon from  grts results.
+}
+\examples{
+
+# Using example data psu_hexagons and psu_samples
+
+calculate_benefit(
+  att_sf = psu_hexagons,
+  samples = psu_samples,
+  hex_id = hex_id,
+  non_random_set = c("SA_0009", "SA_0022", "SA_0047", "SA_0052"))
+
+# Specify a non-random set
+
+calculate_benefit(
+ att_sf = psu_hexagons,
+ samples = psu_samples,
+ hex_id = hex_id,
+ non_random_set = c("SA_0009", "SA_0022", "SA_0047", "SA_0052"))
+
+# Without GRTS
+
+non_grts_samples <- draw_random_samples(
+  att_sf = psu_hexagons,
+  num_runs = 3,
+  n_samples = 10,
+  use_grts = FALSE)
+
+calculate_benefit(
+ att_sf = psu_hexagons,
+ samples = non_grts_samples,
+ hex_id = hex_id)
+
+
+
 }

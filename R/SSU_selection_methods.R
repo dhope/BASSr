@@ -84,7 +84,7 @@ select_ssu <- function(SSUs,PSU_id,  SSU_id, type, nsamples, os, cluster_size, A
     )
 
 
-    clusters <- map_df(1:nrow(ExampleSSUcentroids), ~ {
+    clusters <- purrr::map_df(1:nrow(ExampleSSUcentroids), ~ {
       ExampleSSUcentroids[.x, ] %>%
         bind_rows(exssuex[NNcentroids$nn[[.x]], ]) %>%
         mutate(
@@ -97,7 +97,7 @@ select_ssu <- function(SSUs,PSU_id,  SSU_id, type, nsamples, os, cluster_size, A
       mutate(pc_n_cluster = row_number()) # ,
     # ARU_PC = ifelse(pc_n_cluster<=2, "ARU", "PC"))
 
-    aruN <- map_df(1:(nosclusters + nclusters), ~ {
+    aruN <- purrr::map_df(1:(nosclusters + nclusters), ~ {
       cl <- clusters[clusters$cluster == .x, ] %>% st_distance(by_element = F)
       rownames(cl) <- clusters[[SSU_id]][clusters$cluster == .x]
       colnames(cl) <- clusters[[SSU_id]][clusters$cluster == .x]
@@ -321,7 +321,7 @@ select_ssu <- function(SSUs,PSU_id,  SSU_id, type, nsamples, os, cluster_size, A
         ) %>%
         ungroup()
     }
-    fullHexAlg <- map_df(1:length(selp), theAlgorithm, cluster_size = cluster_size)
+    fullHexAlg <- purrr::map_df(1:length(selp), theAlgorithm, cluster_size = cluster_size)
     fh <- fullHexAlg %>%
       mutate(origin = p0, lineid = row_number()) %>%
       dplyr::select(-matches("^value")) %>%

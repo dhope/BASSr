@@ -1,0 +1,130 @@
+---
+title: "Function relationships"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Function relationships}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+```{r setup}
+library(DiagrammeR)
+```
+
+- yellow are helper functions
+- dark blue are main runner functions
+- light blue are exported, user-facing functions
+- white are un-exported, internal functions
+- grey are deprecated functions
+
+
+```{r, echo = FALSE, out.width="100%"}
+grViz("digraph boxes_and_circles {
+
+  compound=true;
+
+  # a 'graph' statement
+  graph [overlap = true, fontsize = 10]
+
+  # several 'node' statements
+  node [shape = rectangle, fontname = 'Courier New', 
+        fixedsize = false, style=filled, fillcolor=white]
+        
+  no_grts [label = 'noGRTS_BASS_run()' fillcolor = 'cadetblue3']
+  
+  prepare_hab_long [label = 'prepare_hab_long()']
+  quick_ben [label = 'quick_ben()']
+  allhexes [label = 'allhexes()' fillcolor = 'pink']
+  draw_rand [label = 'draw_random_samples()' fillcolor = 'lightblue1']
+  
+  # Helpers
+  costs [label = 'estimate_cost_study_area()' fillcolor = 'khaki1']
+  study_area [label = 'create_study_area()' fillcolor = 'khaki1']
+  clean [label = 'clean_land_cover()' fillcolor = 'khaki1']
+  prepare_cost [label = 'prepare_cost()' fillcolor = 'khaki1']
+  get_road [label = 'getroaddensity()']
+
+  #  
+  calc_inc_prob [label = 'calculate_inclusion_probs()' fillcolor = 'lightblue1']
+  
+  # Selection?
+  grts [label = 'run_grts_on_BASS()' fillcolor = 'cadetblue3']
+  subsample_benefit [label = 'subsample_grts_and_calc_benefit()']
+  select_ssu [label = 'select_ssu()' fillcolor = 'lightblue1']
+  down [label = 'downweight_selection_pr()' fillcolor = 'lightblue1']
+  gen_dist_mat [label = 'gen_dist_mat()']
+  genSSU [label = 'genSSU()' fillcolor = 'lightblue1']
+  
+  # Deprecated?
+  full_sel [label = 'run_full_BASS_w_selection()' fillcolor = 'grey70']
+  extract_habitat_cost [label = 'extract_habitat_cost()' fillcolor = 'grey70']
+  genraster [label = 'genraster()' fillcolor = 'grey70']
+
+
+  opposite [label = 'oppositeSigns()' fillcolor = 'pink']
+  sumH [label = 'sumH()' fillcolor = 'pink']
+  sumC [label = 'sumC()' fillcolor = 'pink']
+  speedbass [label = 'speedbass()' fillcolor = 'pink']
+  
+  getresults [label = 'getresults_BASS()']
+  genpoints [label = 'generate_Points_around_centroid()']
+
+  subgraph cluster_1 {
+    style=filled;
+    fillcolor = 'cadetblue3';
+    label = 'full_BASS_run()';
+		fontname = 'Courier New';
+		fontsize = 14;
+		node[];
+    draw_rand->prepare_hab_long [lhead=cluster_0];
+    allhexes->calc_inc_prob
+    
+    subgraph cluster_0 {
+      style=filled;
+		  fillcolor = 'lightblue1'
+		  node [style=filled,color=white];
+		  prepare_hab_long -> quick_ben -> allhexes;
+		  label = 'calculate_benefit()';
+		  fontname = 'Courier New';
+		  fontsize = 14;
+    }
+  }
+	  
+
+  # several 'edge' statements
+  edge []
+  
+  clean->draw_rand [style=dashed,lhead=cluster_1];
+  costs->draw_rand [lhead=cluster_1, style=dashed]
+  costs->calc_inc_prob [style=dashed]
+  costs->no_grts [style=dashed]
+  
+  prepare_cost->get_road
+  down->gen_dist_mat
+  
+  subsample_benefit->prepare_hab_long[lhead=cluster_0];
+  
+  no_grts->prepare_hab_long[lhead=cluster_0];
+  
+  select_ssu->grts
+  
+  # C++
+  speedbass->sumC
+  opposite->sumH [style=invis]
+  
+  # Dep
+  extract_habitat_cost->genraster
+  
+  # Random
+  genSSU->getresults->genpoints [style=invis]
+  
+  
+}", )
+```

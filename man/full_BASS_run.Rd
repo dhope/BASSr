@@ -5,57 +5,69 @@
 \title{A full BASS run}
 \usage{
 full_BASS_run(
+  att_sf,
   num_runs,
-  nsamples,
-  att,
-  att.sp,
-  cost,
-  return_all = F,
-  seed_ = as.integer(Sys.time()),
-  HexID_ = HEX100,
-  stratumID = StudyAreaID,
-  q = F,
+  n_samples,
+  costs = NULL,
+  hex_id,
+  stratum_id = NULL,
+  omit_flag = NULL,
   non_ran_set = NULL,
-  lakeN = 18,
   benefit_weight = 0.5,
-  noCost = F,
-  weighted_benefits = NULL
+  land_cover_weights = NULL,
+  return_grts = FALSE,
+  seed = as.integer(Sys.time()),
+  quiet = FALSE
 )
 }
 \arguments{
+\item{att_sf}{Spatial Data frame. sf attributes table.}
+
 \item{num_runs}{The number of times to draw random samples from hexagons}
 
-\item{nsamples}{The number of samples to draw in each sample}
+\item{n_samples}{The number of samples to draw in each sample}
 
-\item{att}{the attribute table correctly formatted}
+\item{costs}{Data frame. Costs for each hexagon in a RawCost format.}
 
-\item{att.sp}{the shape file from the attribute table}
+\item{hex_id}{Columns. Identifies hexagon ids (e.g., \code{hex_id} or \code{ET_Index})}
 
-\item{cost}{the cost table for each hexagon id}
+\item{stratum_id}{Column. Identifies larger area (e.g., \code{StudyAreaID} or
+\code{Province})}
+
+\item{non_ran_set}{Non random set that is added to the hypothetical sample
+set in benefit calculation.}
+
+\item{benefit_weight}{The weight assigned to benefit in the selection
+probabilities.0.5 is equal weighting of cost and benefits. 1.0 is zero
+weighting to cost.}
+
+\item{land_cover_weights}{data frame with lc and weights}
+
+\item{seed}{random seed to use for random grts samples}
 
 \item{return_all}{return each piece of BASS implementation}
-
-\item{seed_}{random seed to use for random grts samples}
-
-\item{HexID_}{Column for hexagon id}
-
-\item{stratumID}{Column for larger area id. Likely StudyAreaID or Province}
-
-\item{q}{Run the benefit calculation quickly}
-
-\item{non_ran_set}{Non random set that is added to the hypothetical sample set in benefit calculation.}
-
-\item{lakeN}{The land cover number to represent open water. 1 for FNLC, 18 for CLC}
-
-\item{benefit_weight}{The weight assigned to benefit in the selection probabilities.0.5 is equal weighting of cost and benefits. 1.0 is zero weighting to cost.}
-
-\item{noCost}{Do you only want to run the benefit calculation?}
-
-\item{weighted_benefits}{data frame with lc and weights}
 }
 \value{
 a table with inclusion probabilities
 }
 \description{
 A full BASS run
+}
+\examples{
+
+# With example data psu_hexagons and psu_costs...
+
+d <- full_BASS_run(
+  att_sf = psu_hexagons,
+  num_runs = 10,
+  n_samples = 3,
+  costs = psu_costs,
+  hex_id = hex_id)
+
+d <- full_BASS_run(
+  att_sf = psu_hexagons,
+  num_runs = 10,
+  n_samples = 0,
+  costs = psu_costs,
+  hex_id = hex_id)
 }
