@@ -6,7 +6,7 @@
 ## Overview
 
 This is the code associated with CWS Ontario’s preferred approach to
-sampling Boreal Birds in our boreal. The code should allow you to start
+sampling Boreal Birds in our boreal forest. The code should allow you to start
 understanding our process. The vignettes associated with the package are
 a good place to start.
 

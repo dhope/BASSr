@@ -1,6 +1,6 @@
-#' BASSr: Boreal Avian Strategic Sampling in R
+#' BASSr: Benefit Applied Strategic Sampling in R
 #'
-#' The BASSr package implements the Boreal Approach to Suitable Sampling Design
+#' The BASSr package implements the Benefit Applied Strategic Sampling
 #'
 #' @docType package
 #' @name BASSr

@@ -2,27 +2,32 @@
 % Please edit documentation in R/create_study_area.R
 \name{create_study_area}
 \alias{create_study_area}
-\title{Create Study Area}
+\title{Create Hexagonal grid}
 \usage{
 create_study_area(
   landscape,
-  study_area_size,
-  study_unit_size,
+  hexagon_size,
   units,
-  output = "small"
+  HexagonID_label,
+  HexagonID_prefix
 )
 }
 \arguments{
-\item{landscape}{larger area}
+\item{landscape}{larger area to create hexagonal grid over.must be sf object}
 
-\item{study_area_size}{size of study area in area or diameter (valid values include 'm2', 'ha', 'km2','km', 'm')}
+\item{hexagon_size}{size of hexagon in area or diameter in units (see variable units for options)}
 
-\item{study_unit_size}{size of study unit in area or diameter (valid values include 'm2', 'ha', 'km2','km', 'm')}
+\item{units}{Units of hexagonal units in area or diameter (valid values include 'm2', 'ha', 'km2','km', 'm')}
 
-\item{units}{Units of study area and sample units (valid values include 'm2', 'ha', 'km2','km', 'm')}
+\item{HexagonID_label}{Name of column for hexigon id}
 
-\item{output}{output type}
+\item{HexagonID_prefix}{Prefix to affix to hexagon ID}
+}
+\value{
+Returns a sf polygon layer of hexagons with unique IDs
 }
 \description{
-Create Study Area
+Function that takes a landscape as an sf object and returns a hexagonal grid of a given size.
+Allowed inputs are hectres ('ha'), metres squared ('m2'), metres or kilometres ('m', or 'km')
+as the diameter of each hexagon
 }

@@ -3,7 +3,7 @@
 \docType{package}
 \name{BASSr}
 \alias{BASSr}
-\title{BASSr: Boreal Avian Strategic Sampling in R}
+\title{BASSr: Benefit Applied Strategic Sampling in R}
 \description{
-The BASSr package implements the Boreal Approach to Suitable Sampling Design
+The BASSr package implements the Benefit Applied Strategic Sampling
 }
