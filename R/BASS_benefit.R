@@ -124,8 +124,27 @@ calculate_benefit <- function(att_sf, samples,
                       by = rlang::as_label(rlang::enquo(hex_id)))
 }
 
-
-
+#' Summarize land cover attributes by stratum
+#'
+#' Land cover attributes (columns starting with `LC`) are summarized by total
+#' and proportion of area.
+#'
+#' @inheritParams common_docs
+#'
+#' @return Sumary of land cover types by area
+#'
+#' @noRd
+calculate_land_cover_summary <- function(att_sf, stratum_id){
+   att_sf %>%
+    dplyr::group_by({{ stratum_id }}) %>%
+    dplyr::summarize(dplyr::across(dplyr::matches("^LC\\d+$"), sum)) %>%
+    tidyr::pivot_longer(cols = dplyr::matches("^LC\\d+$"),
+                        names_to = "lc", values_to = "ha_total") %>%
+    dplyr::mutate(total_phab = .data$ha_total / sum(.data$ha_total,
+                                                    na.rm = TRUE)) %>%
+    dplyr::ungroup() %>%
+    sf::st_drop_geometry()
+}
 
 
 #' Summarize land cover attributes
@@ -144,15 +163,7 @@ prepare_hab_long <- function(att_sf, stratum_id = NULL) {
 
   att_sf <- sf::st_drop_geometry(att_sf)
 
-  land_cover_summary <- att_sf %>%
-    dplyr::group_by({{ stratum_id }}) %>%
-    dplyr::summarize(dplyr::across(dplyr::matches("^LC\\d+$"), sum)) %>%
-    tidyr::pivot_longer(cols = dplyr::matches("^LC\\d+$"),
-                        names_to = "lc", values_to = "ha_total") %>%
-    dplyr::mutate(total_phab = .data$ha_total / sum(.data$ha_total,
-                                                    na.rm = TRUE)) %>%
-    dplyr::ungroup() %>%
-    sf::st_drop_geometry()
+  land_cover_summary <- calculate_land_cover_summary(att_sf, {{stratum_id}})
 
   by <- c("lc", rlang::as_label(rlang::enquo(stratum_id)))
   by <- by[by != "NULL"] # omit NULL turned to label
