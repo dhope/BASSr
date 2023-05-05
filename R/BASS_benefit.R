@@ -232,9 +232,9 @@ quick_ben <- function(d, samples, land_cover_summary, hex_id, print,
 
 
   if (all(round(rowSums(hexes), 0) == 100) | all(round(rowSums(hexes), 0) == 1)) {
-    rlang::abort(
-      paste0("I think you have inputed percentages into your hexagons. ",
-             "This will not calculate accurate benefit values."), call = NULL)
+    rlang::warn(c("!" = "Values across LC columns sum to 100 or 1, ",
+                  "i" =  "Check to be sure you have not input inputed percentages into your values.",
+                  "x" = "Using percentages will not calculate accurate benefit values."), call = NULL)
   }
   hexNames <- dplyr::as_tibble(d) %>%
     dplyr::select({{ hex_id }}) |>
@@ -283,9 +283,10 @@ quick_ben <- function(d, samples, land_cover_summary, hex_id, print,
   }
 
   if (all(round(rowSums(samp), 0) == 100) | all(round(rowSums(samp), 0) == 1)) {
-    rlang::abort(
-      paste0("I think you have inputed percentages into your sample values.",
-             "This will not calculate accurate benefit values."), call = NULL)
+
+    rlang::warn(c("!" = "Values across LC columns in samples sum to 100 or 1, ",
+                 "i" =  "Check samples to be sure you have not input inputed percentages into your values.",
+                 "x" = "Using percentages will not calculate accurate benefit values."), call = NULL)
   }
 
   if (all(names(hexes) != names(total))) {
