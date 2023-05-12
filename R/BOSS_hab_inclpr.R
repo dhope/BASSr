@@ -54,7 +54,6 @@ calculate_BOSS_hab_inlc_pr <- function(att_sf,
 #' @param quiet
 #'
 #' @return
-#' @export
 #'
 #' @examples
 calculate_z_scores <-  function(att_sf,
@@ -82,7 +81,7 @@ calculate_z_scores <-  function(att_sf,
   att_long |>
     dplyr::select(-ha_total, -total_phab) |>
     dplyr::left_join(att_sum, by = by) |>
-    dplyr::mutate(z_score = units::drop_units(ha-mean)/sd) |>
+    dplyr::mutate(z_score = units::set_units(ha-mean)/sd, NULL) |>
     dplyr::summarise(avg_z_score = mean(z_score, na.rm = T),
                      .by = {{hex_id}})
 
