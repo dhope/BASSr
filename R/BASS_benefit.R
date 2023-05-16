@@ -273,7 +273,7 @@ quick_ben <- function(d, samples, land_cover_summary, hex_id, print,
     if (!all(names(hexes) %in% land_cover_weights$lc)) {
       nm <- names(hexes)[!names(hexes) %in% names(land_cover_weights)]
       extraNw <- dplyr::select(hexes, dplyr::all_of(.env$nm))  |>
-        tidry::pivot_longer(cols = dplyr::everything(),
+        tidyr::pivot_longer(cols = dplyr::everything(),
                             values_to = "weights", names_to = "lc")  |>
         dplyr::mutate(weights = 1)
       land_cover_weights <- dplyr::bind_rows(land_cover_weights, extraNw)
