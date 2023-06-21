@@ -4,10 +4,8 @@ test_that("draw_random_samples() - no GRTS", {
   names(pp) <- glue::glue("LC{1:ncol(pp)}")
 
   expect_equal(
-    withr::with_seed(seed = 15, {
-      draw_random_samples(
-        land_hex = pp, num_runs = 1, n_samples = 10, use_grts = FALSE)
-    }),
+    draw_random_samples(
+      land_hex = pp, num_runs = 1, n_samples = 10, use_grts = FALSE, seed = 15),
 
     withr::with_seed(seed = 15, {
       dplyr::slice_sample(pp, n= 10) |>
@@ -18,15 +16,14 @@ test_that("draw_random_samples() - no GRTS", {
 
 test_that("draw_random_samples() - with GRTS", {
 
-  withr::local_seed(1234)
-
   n_runs <- 10
   n_samples <- 3
 
   expect_message(g <- draw_random_samples(
     land_hex = psu_hexagons,
     num_runs = n_runs,
-    n_samples = n_samples),
+    n_samples = n_samples,
+    seed = 1234),
     "Spatial object land_hex should be") %>%
     expect_message(paste0("Finished GRTS draw of ",
                           n_runs, " runs and ",
@@ -55,4 +52,6 @@ test_that("draw_random_samples() - with GRTS", {
                  dplyr::select(dplyr::any_of(names(g))),
                ignore_attr = TRUE)
 
+  # Snapshots cannot be tested interactively
+  expect_snapshot_value(g, style = "json2", tolerance = 0.0004)
 })

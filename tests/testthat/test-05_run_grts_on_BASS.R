@@ -1,24 +1,21 @@
 test_that("run_grts_on_BASS()", {
 
   d <- full_BASS_run(land_hex = psu_hexagons,
-                     num_runs = 10,
-                     n_samples = 3,
+                     num_runs = 10, n_samples = 3,
                      costs = psu_costs,
                      hex_id = hex_id,
-                     quiet = TRUE,
-                     seed = 1234) %>%
+                     seed = 1234, quiet = TRUE) %>%
     dplyr::mutate(Province = "ON")
 
 
   # No stratification
   expect_silent(
-    withr::with_seed(1234, {
-      sel1 <- run_grts_on_BASS(probs = d,
-                               num_runs = 1,
-                               nARUs = 12,
-                               os = 0.2,
-                               hex_id = hex_id)[[1]]
-    })
+    sel1 <- run_grts_on_BASS(probs = d,
+                             num_runs = 1,
+                             nARUs = 12,
+                             os = 0.2,
+                             hex_id = hex_id,
+                             seed = 1234)[[1]]
   )
 
   expect_type(sel1, "list")
@@ -48,14 +45,13 @@ test_that("run_grts_on_BASS()", {
   d_strat <- dplyr::mutate(d, Province = c(rep("ON", 16), rep("MB", 17)))
 
   expect_silent(
-    withr::with_seed(1234, {
-      sel2 <- run_grts_on_BASS(probs = d_strat,
-                               num_runs = 1,
-                               nARUs = c("ON" = 6, "MB" = 4),
-                               os = c("ON" = 2, "MB" = 2),   # default?
-                               stratum_id = Province,
-                               hex_id = hex_id)[[1]]
-    })
+    sel2 <- run_grts_on_BASS(probs = d_strat,
+                             num_runs = 1,
+                             nARUs = c("ON" = 6, "MB" = 4),
+                             os = c("ON" = 2, "MB" = 2),   # default?
+                             stratum_id = Province,
+                             hex_id = hex_id,
+                             seed = 1234)[[1]]
   )
 
   expect_type(sel2, "list")
@@ -82,14 +78,13 @@ test_that("run_grts_on_BASS()", {
 
   # Strat but not really
   expect_silent(
-    withr::with_seed(1234, {
-      sel3 <- run_grts_on_BASS(probs = d,
-                               num_runs = 1,
-                               nARUs = c("ON" = 12),
-                               os = c("ON" = 2),   # default?
-                               stratum_id = Province,
-                               hex_id = hex_id)[[1]]
-    })
+    sel3 <- run_grts_on_BASS(probs = d,
+                             num_runs = 1,
+                             nARUs = c("ON" = 12),
+                             os = c("ON" = 2),   # default?
+                             stratum_id = Province,
+                             hex_id = hex_id,
+                             seed = 1234)[[1]]
   )
   expect_type(sel3, "list")
   expect_named(sel3, c("sites_legacy", "sites_base", "sites_over",
@@ -120,19 +115,16 @@ test_that("run_grts_on_BASS() remove_hexes", {
 
 
   expect_silent(
-    withr::with_seed(1234, {
-      sel1 <- run_grts_on_BASS(
-        probs = d,
-        num_runs = 1,
-        nARUs = 2,
-        os = 0.2,
-        hex_id = hex_id,
-        remove_hexes = d$hex_id[1:30])[[1]]
-    })
+    sel1 <- run_grts_on_BASS(
+      probs = d,
+      num_runs = 1,
+      nARUs = 2,
+      os = 0.2,
+      hex_id = hex_id,
+      remove_hexes = d$hex_id[1:30],
+      seed = 1234)[[1]]
   )
   expect_true(all(!d$hex_id[1:30] %in% sel1[["sites_base"]]$hex_id))
-
-
 
   expect_error(
     run_grts_on_BASS(

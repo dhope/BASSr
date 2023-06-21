@@ -6,7 +6,7 @@
 #'   samples per stratum.
 #' @param os Numeric vector. Over sample size (proportional) or named vector of
 #'   number of samples per stratum.
-#' @param removed_hexes Character Vector. Ids of hexagons to remove.
+#' @param remove_hexes Character Vector. Ids of hexagons to remove.
 #'
 #' @inheritParams common_docs
 #'
@@ -16,7 +16,7 @@
 run_grts_on_BASS <- function(probs, num_runs, nARUs, os,
                              hex_id = NULL,
                              stratum_id = NULL,
-                             remove_hexes = NULL) {
+                             remove_hexes = NULL, seed = NULL) {
 
   mindis <-  NULL
   maxtry <-  10
@@ -80,17 +80,19 @@ run_grts_on_BASS <- function(probs, num_runs, nARUs, os,
     }
   }
 
-  purrr::map(
-    1:num_runs,
-    ~ spsurvey::grts(sframe = attframe,
-                     n_over = n_os,
-                     n_base = Stratdsgn,
-                     stratum_var = stratum_name,
-                     mindis = mindis,
-                     DesignID = "sample",
-                     aux_var = "inclpr",
-                     maxtry = maxtry)
-  )
+  set_seed(seed, {
+    purrr::map(
+      1:num_runs,
+      ~ spsurvey::grts(sframe = attframe,
+                       n_over = n_os,
+                       n_base = Stratdsgn,
+                       stratum_var = stratum_name,
+                       mindis = mindis,
+                       DesignID = "sample",
+                       aux_var = "inclpr",
+                       maxtry = maxtry)
+    )
+  })
 }
 
 

@@ -35,7 +35,6 @@ test_that("prepare_hab_long()", {
 })
 
 test_that("allhexes()", {
-  withr::local_seed(1234)
 
   h <- dplyr::select(psu_hexagons, dplyr::starts_with("LC")) %>%
     sf::st_drop_geometry() %>%
@@ -44,12 +43,14 @@ test_that("allhexes()", {
   t <- as.vector(colSums(h))
 
   # Dummy sampling data
-  s <- psu_hexagons %>%
-    check_land_hex(quiet = TRUE) %>%
-    sf::st_drop_geometry() %>%
-    dplyr::slice_sample(n = 10) %>%
-    dplyr::select(dplyr::starts_with("LC")) %>%
-    as.matrix()
+  withr::with_seed(1234, {
+    s <- psu_hexagons %>%
+      check_land_hex(quiet = TRUE) %>%
+      sf::st_drop_geometry() %>%
+      dplyr::slice_sample(n = 10) %>%
+      dplyr::select(dplyr::starts_with("LC")) %>%
+      as.matrix()
+  })
 
   w <- rep(1, length(t))
 
@@ -116,12 +117,9 @@ test_that("quick_ben()", {
 test_that("calculate_benefit()", {
 
   expect_silent({
-    withr::with_seed(1234, {
-      b1 <- calculate_benefit(samples = psu_samples,
-                              land_hex = psu_hexagons,
-                              hex_id = hex_id,
-                              quiet = TRUE)
-    })
+    b1 <- calculate_benefit(samples = psu_samples,
+                            land_hex = psu_hexagons,
+                            hex_id = hex_id, quiet = TRUE)
   })
 
   expect_s3_class(b1, "sf")
@@ -130,14 +128,12 @@ test_that("calculate_benefit()", {
 
   # non_random_set
   expect_silent({
-    withr::with_seed(1234, {
-      b2 <- calculate_benefit(
-        land_hex = psu_hexagons,
-        samples = psu_samples,
-        hex_id = hex_id,
-        non_random_set = c("SA_0009", "SA_0022", "SA_0047", "SA_0052"),
-        quiet = TRUE)
-    })
+    b2 <- calculate_benefit(
+      land_hex = psu_hexagons,
+      samples = psu_samples,
+      hex_id = hex_id,
+      non_random_set = c("SA_0009", "SA_0022", "SA_0047", "SA_0052"),
+      quiet = TRUE)
   })
 
   expect_true(all(b1$hex_id == b2$hex_id))
@@ -151,22 +147,19 @@ test_that("calculate_benefit()", {
 
 test_that("calculate_benefit() without GRTS", {
 
-  withr::with_seed(1234, {
-    g <- draw_random_samples(
-      land_hex = psu_hexagons,
-      num_runs = 3,
-      n_samples = 10,
-      use_grts = FALSE,
-      quiet = TRUE)
-  })
+  g <- draw_random_samples(
+    land_hex = psu_hexagons,
+    num_runs = 3,
+    n_samples = 10,
+    use_grts = FALSE,
+    seed = 1234,
+    quiet = TRUE)
 
   expect_silent({
-    withr::with_seed(1234, {
-      b <- calculate_benefit(land_hex = psu_hexagons,
-                             samples = g,
-                             hex_id = hex_id,
-                             quiet = TRUE)
-    })
+    b <- calculate_benefit(land_hex = psu_hexagons,
+                           samples = g,
+                           hex_id = hex_id,
+                           quiet = TRUE)
   })
 
   expect_s3_class(b, "sf")

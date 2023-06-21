@@ -18,7 +18,7 @@ full_BASS_run(
   return_grts = FALSE,
   crs = 4326,
   coords = c("lon", "lat"),
-  seed = as.integer(Sys.time()),
+  seed = NULL,
   quiet = FALSE
 )
 }
@@ -54,7 +54,9 @@ be valid input to \code{sf::st_crs()}.}
 \item{coords}{Character vector. Names of the columns containing X and Y
 coordinates (default \code{c("lon", "lat")}).}
 
-\item{seed}{random seed to use for random grts samples}
+\item{seed}{Numeric. Random seed to use for random sampling. Seed only
+applies to specific sampling events (does not change seed in the
+environment). \code{NULL} does not set a seed.}
 
 \item{return_all}{return each piece of BASS implementation}
 }

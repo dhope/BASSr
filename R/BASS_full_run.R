@@ -3,7 +3,6 @@
 #' @param num_runs The number of times to draw random samples from hexagons
 #' @param n_samples The number of samples to draw in each sample
 #' @param return_all return each piece of BASS implementation
-#' @param seed random seed to use for random grts samples
 #' @param non_ran_set Non random set that is added to the hypothetical sample
 #'   set in benefit calculation.
 #' @param benefit_weight The weight assigned to benefit in the selection
@@ -40,14 +39,12 @@ full_BASS_run <- function(land_hex, num_runs, n_samples, costs = NULL,
                           benefit_weight = 0.5, land_cover_weights = NULL,
                           return_grts = FALSE,
                           crs = 4326, coords = c("lon", "lat"),
-                          seed = as.integer(Sys.time()), quiet = FALSE) {
+                          seed = NULL, quiet = FALSE) {
 
   # Input checks
   land_hex <- check_land_hex(land_hex, crs, coords, quiet)
   check_column(land_hex, {{ hex_id }})
   check_column(land_hex, {{ stratum_id }})
-
-  set.seed(seed)
 
   if (n_samples == 0) grts_output <- NULL
 
@@ -55,6 +52,7 @@ full_BASS_run <- function(land_hex, num_runs, n_samples, costs = NULL,
     grts_output <- draw_random_samples(
       land_hex = land_hex,
       num_runs = num_runs, n_samples = n_samples,
+      seed = seed,
       quiet = quiet)
   }
 
@@ -98,7 +96,6 @@ full_BASS_run <- function(land_hex, num_runs, n_samples, costs = NULL,
 #' @param num_runs The number of times to draw random samples from hexagons
 #' @param n_samples The number of samples to draw in each sample
 #' @param costs the cost table for each hexagon id
-#' @param seed random seed to use for random grts samples
 #'
 #' @inheritParams common_docs
 #'
@@ -107,11 +104,9 @@ full_BASS_run <- function(land_hex, num_runs, n_samples, costs = NULL,
 #'
 noGRTS_BASS_run <- function(land_hex, samples, num_runs, n_samples, costs,
                             crs = 4326, coords = c("lon", "lat"),
-                            seed = as.integer(Sys.time()), quiet = FALSE) {
+                            quiet = FALSE) {
 
   land_hex <- check_land_hex(land_hex, crs, coords, quiet)
-
-  set.seed(seed)
 
   benefits <- calculate_benefit(samples = samples,
                                 land_hex = land_hex,
@@ -120,6 +115,7 @@ noGRTS_BASS_run <- function(land_hex, samples, num_runs, n_samples, costs,
   pointswith_inclusion <- calculate_inclusion_probs(
     costs = costs, benefits = benefits)
 
+  # QUESTION: No actual sampling done here...
   dplyr::mutate(pointswith_inclusion,
                 num_runs = .env$num_runs,
                 n_samples = .env$n_samples)

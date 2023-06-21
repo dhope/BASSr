@@ -17,10 +17,10 @@
 draw_random_samples <- function(land_hex, num_runs, n_samples,
                                 use_grts = TRUE,
                                 crs = 4326, coords = c("lon", "lat"),
-                                quiet = FALSE, ...) {
+                                seed = NULL, quiet = FALSE, ...) {
   args <- list(...)
 
-  # CHECKS
+  # TODO: CHECKS
 
   if (isTRUE(use_grts)) {
 
@@ -45,16 +45,18 @@ draw_random_samples <- function(land_hex, num_runs, n_samples,
     #   } else{simpleError("OS should either be single value or list with all strata ID. Not all Strata found in OS and OS has length >1")}
     # }
 
-    grts_output <- purrr::map(
-      1:num_runs,
-      ~ spsurvey::grts(sframe = land_hex,
-                       # n_over = n_os,
-                       n_base = n_samples,
-                       # stratum_var = paste0(strat_),
-                       mindis = mindis,
-                       DesignID = "sample",
-                       maxtry = maxtry)
-    )
+    set_seed(seed, {
+      grts_output <- purrr::map(
+        1:num_runs,
+        ~ spsurvey::grts(sframe = land_hex,
+                         # n_over = n_os,
+                         n_base = n_samples,
+                         # stratum_var = paste0(strat_),
+                         mindis = mindis,
+                         DesignID = "sample",
+                         maxtry = maxtry)
+      )
+    })
 
     random_sample <- purrr::transpose(grts_output) |>
       purrr::pluck("sites_base") |>
@@ -72,10 +74,12 @@ draw_random_samples <- function(land_hex, num_runs, n_samples,
 
     #TODO: add checks
 
-    random_sample <- purrr::map_df(
-      1:num_runs,
-      ~{dplyr::slice_sample(land_hex, n = n_samples) |>
-          dplyr::mutate(run = .x)})
+    set_seed(seed, {
+      random_sample <- purrr::map_df(
+        1:num_runs,
+        ~{dplyr::slice_sample(land_hex, n = n_samples) |>
+            dplyr::mutate(run = .x)})
+    })
   }
 
   random_sample

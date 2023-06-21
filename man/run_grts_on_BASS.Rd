@@ -11,7 +11,8 @@ run_grts_on_BASS(
   os,
   hex_id = NULL,
   stratum_id = NULL,
-  remove_hexes = NULL
+  remove_hexes = NULL,
+  seed = NULL
 )
 }
 \arguments{
@@ -31,7 +32,11 @@ number of samples per stratum.}
 \item{stratum_id}{Column. Identifies larger area (e.g., \code{StudyAreaID} or
 \code{Province}).}
 
-\item{removed_hexes}{Character Vector. Ids of hexagons to remove.}
+\item{remove_hexes}{Character Vector. Ids of hexagons to remove.}
+
+\item{seed}{Numeric. Random seed to use for random sampling. Seed only
+applies to specific sampling events (does not change seed in the
+environment). \code{NULL} does not set a seed.}
 }
 \description{
 Run grts sampling on BASSr results

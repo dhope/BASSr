@@ -19,3 +19,7 @@ is_crs <- function(crs) {
   !(inherits(chk, "try-error") | is.na(chk) | is.null(chk))
 }
 
+
+set_seed <- function(seed, code) {
+  if(is.null(seed)) code else withr::with_seed(seed, code)
+}

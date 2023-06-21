@@ -93,12 +93,12 @@ psu_costs <- estimate_cost_study_area(narus = 3, costs_hex,
                                       vars = cost_vars)
 usethis::use_data(psu_costs, overwrite = TRUE)
 
-withr::with_seed(1234, {
-  psu_samples <- draw_random_samples(
-    land_hex = psu_hexagons,
-    num_runs = 10,
-    n_samples = 3)
-})
+
+psu_samples <- draw_random_samples(
+  land_hex = psu_hexagons,
+  num_runs = 10,
+  n_samples = 3,
+  seed = 1234)
 usethis::use_data(psu_samples, overwrite = TRUE)
 
 

@@ -14,6 +14,9 @@
 #'   be valid input to `sf::st_crs()`.
 #' @param coords Character vector. Names of the columns containing X and Y
 #'   coordinates (default `c("lon", "lat")`).
+#' @param seed Numeric. Random seed to use for random sampling. Seed only
+#'   applies to specific sampling events (does not change seed in the
+#'   environment). `NULL` does not set a seed.
 #'
 #' @details
 #' Use `@inheritParams common_docs` to include the above in any function

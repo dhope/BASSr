@@ -12,7 +12,6 @@ noGRTS_BASS_run(
   costs,
   crs = 4326,
   coords = c("lon", "lat"),
-  seed = as.integer(Sys.time()),
   quiet = FALSE
 )
 }
@@ -35,8 +34,6 @@ be valid input to \code{sf::st_crs()}.}
 
 \item{coords}{Character vector. Names of the columns containing X and Y
 coordinates (default \code{c("lon", "lat")}).}
-
-\item{seed}{random seed to use for random grts samples}
 }
 \value{
 a table with inclusion probabilities

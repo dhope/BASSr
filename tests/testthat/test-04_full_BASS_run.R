@@ -7,8 +7,8 @@ test_that("full_BASS_run()", {
   expect_silent({
     f1 <- full_BASS_run(num_runs = n_runs, n_samples = n_samples,
                         land_hex = psu_hexagons,
-                        hex_id = hex_id, seed = 1234,
-                        stratum_id = province, quiet = TRUE)
+                        hex_id = hex_id, stratum_id = province,
+                        seed = 1234, quiet = TRUE)
   })
 
   expect_s3_class(f1, "data.frame")
@@ -20,9 +20,9 @@ test_that("full_BASS_run()", {
   expect_silent({
     f2 <- full_BASS_run(num_runs = n_runs, n_samples = n_samples,
                         land_hex = psu_hexagons,
-                        hex_id = hex_id, seed = 1234,
-                        stratum_id = province,
-                        costs = psu_costs, quiet = TRUE)
+                        hex_id = hex_id, stratum_id = province,
+                        costs = psu_costs,
+                        seed = 1234, quiet = TRUE)
   })
 
   expect_s3_class(f2, "data.frame")
@@ -36,8 +36,8 @@ test_that("full_BASS_run()", {
     f3 <- full_BASS_run(num_runs = n_runs, n_samples = n_samples,
                         land_hex = psu_hexagons,
                         hex_id = hex_id, return_grts = TRUE,
-                        stratum_id = province, seed = 1234,
-                        quiet = TRUE)
+                        stratum_id = province,
+                        seed = 1234, quiet = TRUE)
   })
 
   expect_type(f3, "list")
@@ -49,8 +49,9 @@ test_that("full_BASS_run()", {
     f4 <- full_BASS_run(num_runs = n_runs, n_samples = n_samples,
                         land_hex = psu_hexagons,
                         hex_id = hex_id, return_grts = TRUE,
-                        stratum_id = province, seed = 1234,
-                        costs = psu_costs, quiet = TRUE)
+                        stratum_id = province,
+                        costs = psu_costs,
+                        seed = 1234, quiet = TRUE)
   })
 
   expect_type(f4, "list")
