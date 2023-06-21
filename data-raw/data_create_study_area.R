@@ -1,3 +1,4 @@
+# TODO: Update to use new create_study_area()
 
 withr::with_seed(1234, {
   nr <-  NLMR::nlm_randomcluster(
