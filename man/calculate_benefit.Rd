@@ -5,12 +5,14 @@
 \title{Calculate the benefit of a hexagon from  grts results.}
 \usage{
 calculate_benefit(
-  att_sf,
+  land_hex,
   samples,
   hex_id,
   stratum_id = NULL,
   non_random_set = NULL,
   land_cover_weights = NULL,
+  crs = 4326,
+  coords = c("lon", "lat"),
   quiet = FALSE
 )
 }
@@ -31,7 +33,7 @@ Calculate the benefit of a hexagon from  grts results.
 # Using example data psu_hexagons and psu_samples
 
 calculate_benefit(
-  att_sf = psu_hexagons,
+  land_hex = psu_hexagons,
   samples = psu_samples,
   hex_id = hex_id,
   non_random_set = c("SA_0009", "SA_0022", "SA_0047", "SA_0052"))
@@ -39,7 +41,7 @@ calculate_benefit(
 # Specify a non-random set
 
 calculate_benefit(
- att_sf = psu_hexagons,
+ land_hex = psu_hexagons,
  samples = psu_samples,
  hex_id = hex_id,
  non_random_set = c("SA_0009", "SA_0022", "SA_0047", "SA_0052"))
@@ -47,13 +49,13 @@ calculate_benefit(
 # Without GRTS
 
 non_grts_samples <- draw_random_samples(
-  att_sf = psu_hexagons,
+  land_hex = psu_hexagons,
   num_runs = 3,
   n_samples = 10,
   use_grts = FALSE)
 
 calculate_benefit(
- att_sf = psu_hexagons,
+ land_hex = psu_hexagons,
  samples = non_grts_samples,
  hex_id = hex_id)
 

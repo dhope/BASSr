@@ -94,7 +94,7 @@ usethis::use_data(psu_costs, overwrite = TRUE)
 
 withr::with_seed(1234, {
   psu_samples <- draw_random_samples(
-    att_sf = psu_hexagons,
+    land_hex = psu_hexagons,
     num_runs = 10,
     n_samples = 3)
 })

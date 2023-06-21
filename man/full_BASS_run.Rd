@@ -5,7 +5,7 @@
 \title{A full BASS run}
 \usage{
 full_BASS_run(
-  att_sf,
+  land_hex,
   num_runs,
   n_samples,
   costs = NULL,
@@ -16,12 +16,17 @@ full_BASS_run(
   benefit_weight = 0.5,
   land_cover_weights = NULL,
   return_grts = FALSE,
+  crs = 4326,
+  coords = c("lon", "lat"),
   seed = as.integer(Sys.time()),
   quiet = FALSE
 )
 }
 \arguments{
-\item{att_sf}{Spatial Data frame. sf attributes table.}
+\item{land_hex}{(Spatial) Data frame. Land Cover data by hexagon. If
+non-spatial, will be converted to spatial sf data frame using the \code{crs} and
+\code{coords} arguments. Requires columns identifying the Hex ID as well as the
+Stratum ID (see \code{hex_id} and \code{stratum_id} respectively).}
 
 \item{num_runs}{The number of times to draw random samples from hexagons}
 
@@ -29,10 +34,10 @@ full_BASS_run(
 
 \item{costs}{Data frame. Costs for each hexagon in a RawCost format.}
 
-\item{hex_id}{Columns. Identifies hexagon ids (e.g., \code{hex_id} or \code{ET_Index})}
+\item{hex_id}{Columns. Identifies hexagon ids (e.g., \code{hex_id} or \code{ET_Index}).}
 
 \item{stratum_id}{Column. Identifies larger area (e.g., \code{StudyAreaID} or
-\code{Province})}
+\code{Province}).}
 
 \item{non_ran_set}{Non random set that is added to the hypothetical sample
 set in benefit calculation.}
@@ -42,6 +47,12 @@ probabilities.0.5 is equal weighting of cost and benefits. 1.0 is zero
 weighting to cost.}
 
 \item{land_cover_weights}{data frame with lc and weights}
+
+\item{crs}{Numeric, character, or sf/sfc. Coordinate reference system. Must
+be valid input to \code{sf::st_crs()}.}
+
+\item{coords}{Character vector. Names of the columns containing X and Y
+coordinates (default \code{c("lon", "lat")}).}
 
 \item{seed}{random seed to use for random grts samples}
 
@@ -58,14 +69,14 @@ A full BASS run
 # With example data psu_hexagons and psu_costs...
 
 d <- full_BASS_run(
-  att_sf = psu_hexagons,
+  land_hex = psu_hexagons,
   num_runs = 10,
   n_samples = 3,
   costs = psu_costs,
   hex_id = hex_id)
 
 d <- full_BASS_run(
-  att_sf = psu_hexagons,
+  land_hex = psu_hexagons,
   num_runs = 10,
   n_samples = 0,
   costs = psu_costs,

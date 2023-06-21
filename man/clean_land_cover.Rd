@@ -4,10 +4,10 @@
 \alias{clean_land_cover}
 \title{Clean land cover habitat data}
 \usage{
-clean_land_cover(att_sf, pattern = "CLC15_", append = "", quiet = FALSE)
+clean_land_cover(land_raw, pattern = "CLC15_", append = "", quiet = FALSE)
 }
 \arguments{
-\item{att_sf}{Spatial Data frame. sf attributes table.}
+\item{land_raw}{(Spatial) data frame. Land Cover data to be cleaned.}
 
 \item{pattern}{Character. Pattern to match and replace with 'LC'}
 

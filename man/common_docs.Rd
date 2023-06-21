@@ -6,14 +6,23 @@
 \arguments{
 \item{num_runs}{Numeric. Number of times to draw random samples.}
 
-\item{att_sf}{Spatial Data frame. sf attributes table.}
+\item{land_hex}{(Spatial) Data frame. Land Cover data by hexagon. If
+non-spatial, will be converted to spatial sf data frame using the \code{crs} and
+\code{coords} arguments. Requires columns identifying the Hex ID as well as the
+Stratum ID (see \code{hex_id} and \code{stratum_id} respectively).}
 
 \item{stratum_id}{Column. Identifies larger area (e.g., \code{StudyAreaID} or
-\code{Province})}
+\code{Province}).}
 
-\item{hex_id}{Columns. Identifies hexagon ids (e.g., \code{hex_id} or \code{ET_Index})}
+\item{hex_id}{Columns. Identifies hexagon ids (e.g., \code{hex_id} or \code{ET_Index}).}
 
 \item{costs}{Data frame. Costs for each hexagon in a RawCost format.}
+
+\item{crs}{Numeric, character, or sf/sfc. Coordinate reference system. Must
+be valid input to \code{sf::st_crs()}.}
+
+\item{coords}{Character vector. Names of the columns containing X and Y
+coordinates (default \code{c("lon", "lat")}).}
 }
 \description{
 Common arguments and documentation for various functions

@@ -5,16 +5,21 @@
 \title{Draw random sample}
 \usage{
 draw_random_samples(
-  att_sf,
+  land_hex,
   num_runs,
   n_samples,
   use_grts = TRUE,
+  crs = 4326,
+  coords = c("lon", "lat"),
   quiet = FALSE,
   ...
 )
 }
 \arguments{
-\item{att_sf}{Spatial Data frame. sf attributes table.}
+\item{land_hex}{(Spatial) Data frame. Land Cover data by hexagon. If
+non-spatial, will be converted to spatial sf data frame using the \code{crs} and
+\code{coords} arguments. Requires columns identifying the Hex ID as well as the
+Stratum ID (see \code{hex_id} and \code{stratum_id} respectively).}
 
 \item{num_runs}{Numeric. Number of times to draw random samples.}
 
@@ -22,6 +27,12 @@ draw_random_samples(
 
 \item{use_grts}{Logical. Whether to use GRTS or just sample randomly without
 spatial dispersion.}
+
+\item{crs}{Numeric, character, or sf/sfc. Coordinate reference system. Must
+be valid input to \code{sf::st_crs()}.}
+
+\item{coords}{Character vector. Names of the columns containing X and Y
+coordinates (default \code{c("lon", "lat")}).}
 }
 \value{
 Samples as spatial data frame.

@@ -2,6 +2,7 @@
 #'
 #' This is a general function to clean land cover columns.
 #'
+#' @param land_raw (Spatial) data frame. Land Cover data to be cleaned.
 #' @param pattern Character. Pattern to match and replace with 'LC'
 #' @param append Character. Text to append to end of land cover code
 #'
@@ -15,11 +16,18 @@
 #' psu_hex_clean <- clean_land_cover(psu_hex_dirty, pattern = "CLC0013_")
 #'
 #'
-clean_land_cover <- function(att_sf, pattern = "CLC15_", append = "",
-                          quiet = FALSE) {
+clean_land_cover <- function(land_raw, pattern = "CLC15_", append = "",
+                             quiet = FALSE) {
+
+  # Checks
+  if(!inherits(land_raw, "data.frame")) {
+    rlang::abort(
+      "`land_raw` must be a (spatial) data frame containing land cover data to be cleaned",
+      call = NULL)
+  }
 
   pattern <- glue::glue("^{pattern}")
-  cols <- stringr::str_subset(names(att_sf), pattern)
+  cols <- stringr::str_subset(names(land_raw), pattern)
 
   check_lc_names(cols, pattern)
 
@@ -34,7 +42,7 @@ clean_land_cover <- function(att_sf, pattern = "CLC15_", append = "",
   }
 
   dplyr::rename_with(
-    att_sf,
+    land_raw,
     .fn = lc_rename, pattern = pattern, append = append,
     .cols = dplyr::matches(pattern)
     )

@@ -4,7 +4,7 @@
 \alias{calculate_BOSS_hab_inlc_pr}
 \title{Calculate habitat probabilities}
 \usage{
-calculate_BOSS_hab_inlc_pr(att_sf, hex_id, stratum_id = NULL, quiet = FALSE)
+calculate_BOSS_hab_inlc_pr(land_hex, hex_id, stratum_id = NULL, quiet = FALSE)
 }
 \arguments{
 \item{stratum_id}{}
@@ -16,6 +16,6 @@ https://doi.org/10.1371/journal.pone.0234494
 \examples{
 
 calculate_BOSS_hab_inlc_pr(
-  att_sf = psu_hexagons,
+  land_hex = psu_hexagons,
   hex_id = hex_id)
 }

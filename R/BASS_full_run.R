@@ -21,30 +21,31 @@
 #' # With example data psu_hexagons and psu_costs...
 #'
 #' d <- full_BASS_run(
-#'   att_sf = psu_hexagons,
+#'   land_hex = psu_hexagons,
 #'   num_runs = 10,
 #'   n_samples = 3,
 #'   costs = psu_costs,
 #'   hex_id = hex_id)
 #'
 #' d <- full_BASS_run(
-#'   att_sf = psu_hexagons,
+#'   land_hex = psu_hexagons,
 #'   num_runs = 10,
 #'   n_samples = 0,
 #'   costs = psu_costs,
 #'   hex_id = hex_id)
 
-full_BASS_run <- function(att_sf, num_runs, n_samples, costs = NULL,
+full_BASS_run <- function(land_hex, num_runs, n_samples, costs = NULL,
                           hex_id, stratum_id = NULL, omit_flag = NULL,
                           non_ran_set = NULL,
                           benefit_weight = 0.5, land_cover_weights = NULL,
-                          return_grts = FALSE, seed = as.integer(Sys.time()),
-                          quiet = FALSE) {
+                          return_grts = FALSE,
+                          crs = 4326, coords = c("lon", "lat"),
+                          seed = as.integer(Sys.time()), quiet = FALSE) {
 
   # Input checks
-  check_column(att_sf, {{ hex_id }})
-  check_column(att_sf, {{ stratum_id }})
-  att_sf <- check_att_sf(att_sf, quiet = quiet)
+  land_hex <- check_land_hex(land_hex, crs, coords, quiet)
+  check_column(land_hex, {{ hex_id }})
+  check_column(land_hex, {{ stratum_id }})
 
   set.seed(seed)
 
@@ -52,14 +53,14 @@ full_BASS_run <- function(att_sf, num_runs, n_samples, costs = NULL,
 
   if (n_samples != 0) {
     grts_output <- draw_random_samples(
-      att_sf = att_sf,
+      land_hex = land_hex,
       num_runs = num_runs, n_samples = n_samples,
       quiet = quiet)
   }
 
   # Benefits
   benefits <- calculate_benefit(
-    att_sf = att_sf, samples = grts_output,
+    land_hex = land_hex, samples = grts_output,
     non_random_set = non_ran_set,
     hex_id = {{ hex_id }},
     stratum_id = {{ stratum_id }},
@@ -104,13 +105,16 @@ full_BASS_run <- function(att_sf, num_runs, n_samples, costs = NULL,
 #' @return a table with inclusion probabilities
 #' @export
 #'
-noGRTS_BASS_run <- function(att_sf, samples, num_runs, n_samples, costs,
-                            seed = as.integer(Sys.time())) {
+noGRTS_BASS_run <- function(land_hex, samples, num_runs, n_samples, costs,
+                            crs = 4326, coords = c("lon", "lat"),
+                            seed = as.integer(Sys.time()), quiet = FALSE) {
+
+  land_hex <- check_land_hex(land_hex, crs, coords, quiet)
 
   set.seed(seed)
 
   benefits <- calculate_benefit(samples = samples,
-                                att_sf = att_sf,
+                                land_hex = land_hex,
                                 output = "mean_benefit")
 
   pointswith_inclusion <- calculate_inclusion_probs(

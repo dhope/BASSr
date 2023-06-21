@@ -5,16 +5,22 @@
 \title{A calculate BASS from random samples}
 \usage{
 noGRTS_BASS_run(
-  att_sf,
+  land_hex,
   samples,
   num_runs,
   n_samples,
   costs,
-  seed = as.integer(Sys.time())
+  crs = 4326,
+  coords = c("lon", "lat"),
+  seed = as.integer(Sys.time()),
+  quiet = FALSE
 )
 }
 \arguments{
-\item{att_sf}{Spatial Data frame. sf attributes table.}
+\item{land_hex}{(Spatial) Data frame. Land Cover data by hexagon. If
+non-spatial, will be converted to spatial sf data frame using the \code{crs} and
+\code{coords} arguments. Requires columns identifying the Hex ID as well as the
+Stratum ID (see \code{hex_id} and \code{stratum_id} respectively).}
 
 \item{samples}{Hypothetical sample set}
 
@@ -23,6 +29,12 @@ noGRTS_BASS_run(
 \item{n_samples}{The number of samples to draw in each sample}
 
 \item{costs}{the cost table for each hexagon id}
+
+\item{crs}{Numeric, character, or sf/sfc. Coordinate reference system. Must
+be valid input to \code{sf::st_crs()}.}
+
+\item{coords}{Character vector. Names of the columns containing X and Y
+coordinates (default \code{c("lon", "lat")}).}
 
 \item{seed}{random seed to use for random grts samples}
 }

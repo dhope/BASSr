@@ -14,15 +14,17 @@
 #' @return Samples as spatial data frame.
 #' @export
 #'
-draw_random_samples <- function(att_sf, num_runs, n_samples,
-                                use_grts = TRUE, quiet = FALSE, ...) {
+draw_random_samples <- function(land_hex, num_runs, n_samples,
+                                use_grts = TRUE,
+                                crs = 4326, coords = c("lon", "lat"),
+                                quiet = FALSE, ...) {
   args <- list(...)
 
   # CHECKS
 
   if (isTRUE(use_grts)) {
 
-    att_sf <- check_att_sf(att_sf, quiet = quiet)
+    land_hex <- check_land_hex(land_hex, crs, coords, quiet = quiet)
 
     mindis <-  NULL
     maxtry <-  10
@@ -45,7 +47,7 @@ draw_random_samples <- function(att_sf, num_runs, n_samples,
 
     grts_output <- purrr::map(
       1:num_runs,
-      ~ spsurvey::grts(sframe = att_sf,
+      ~ spsurvey::grts(sframe = land_hex,
                        # n_over = n_os,
                        n_base = n_samples,
                        # stratum_var = paste0(strat_),
@@ -67,9 +69,12 @@ draw_random_samples <- function(att_sf, num_runs, n_samples,
   }
 
   if (isFALSE(use_grts)) {
+
+    #TODO: add checks
+
     random_sample <- purrr::map_df(
       1:num_runs,
-      ~{dplyr::slice_sample(att_sf, n = n_samples) |>
+      ~{dplyr::slice_sample(land_hex, n = n_samples) |>
           dplyr::mutate(run = .x)})
   }
 

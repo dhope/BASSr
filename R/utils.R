@@ -9,3 +9,13 @@ add_coords <- function(sf) {
     dplyr::as_tibble() %>%
     dplyr::bind_cols(sf, .)
 }
+
+is_crs <- function(crs) {
+  chk <- withr::with_options(
+    list(warn = 2),
+    try(sf::st_crs(crs), silent = TRUE))
+
+  # No error/warning, no NA, no NULL = CRS!
+  !(inherits(chk, "try-error") | is.na(chk) | is.null(chk))
+}
+

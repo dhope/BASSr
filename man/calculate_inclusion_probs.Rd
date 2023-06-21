@@ -14,8 +14,8 @@ calculate_inclusion_probs(
 )
 }
 \arguments{
-\item{benefits}{Spatial Data frame. Benefits associated with each hexagon (
-output of \code{calculate_benefits()})}
+\item{benefits}{Spatial Data frame. Benefits associated with each hexagon
+(output of \code{calculate_benefits()})}
 
 \item{costs}{Data frame. Costs for each hexagon in a RawCost format.}
 
@@ -39,7 +39,7 @@ Calculate the cost benefits and inclusion probabilities
 }
 \examples{
 
-b <- calculate_benefit(att_sf = psu_hexagons,
+b <- calculate_benefit(land_hex = psu_hexagons,
                        samples = psu_samples,
                        hex_id = hex_id)
 

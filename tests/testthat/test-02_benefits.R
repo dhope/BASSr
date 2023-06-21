@@ -45,7 +45,7 @@ test_that("allhexes()", {
 
   # Dummy sampling data
   s <- psu_hexagons %>%
-    check_att_sf(quiet = TRUE) %>%
+    check_land_hex(quiet = TRUE) %>%
     sf::st_drop_geometry() %>%
     dplyr::slice_sample(n = 10) %>%
     dplyr::select(dplyr::starts_with("LC")) %>%
@@ -67,7 +67,7 @@ test_that("allhexes()", {
 
 test_that("quick_ben()", {
 
-  lc_sum <- check_att_sf(psu_hexagons, quiet = TRUE) %>%
+  lc_sum <- check_land_hex(psu_hexagons, quiet = TRUE) %>%
     prepare_hab_long() %>%
     dplyr::select("lc", "ha_total") %>%
     dplyr::distinct() %>%
@@ -118,7 +118,7 @@ test_that("calculate_benefit()", {
   expect_silent({
     withr::with_seed(1234, {
       b1 <- calculate_benefit(samples = psu_samples,
-                              att_sf = psu_hexagons,
+                              land_hex = psu_hexagons,
                               hex_id = hex_id,
                               quiet = TRUE)
     })
@@ -132,7 +132,7 @@ test_that("calculate_benefit()", {
   expect_silent({
     withr::with_seed(1234, {
       b2 <- calculate_benefit(
-        att_sf = psu_hexagons,
+        land_hex = psu_hexagons,
         samples = psu_samples,
         hex_id = hex_id,
         non_random_set = c("SA_0009", "SA_0022", "SA_0047", "SA_0052"),
@@ -153,7 +153,7 @@ test_that("calculate_benefit() without GRTS", {
 
   withr::with_seed(1234, {
     g <- draw_random_samples(
-      att_sf = psu_hexagons,
+      land_hex = psu_hexagons,
       num_runs = 3,
       n_samples = 10,
       use_grts = FALSE,
@@ -162,7 +162,7 @@ test_that("calculate_benefit() without GRTS", {
 
   expect_silent({
     withr::with_seed(1234, {
-      b <- calculate_benefit(att_sf = psu_hexagons,
+      b <- calculate_benefit(land_hex = psu_hexagons,
                              samples = g,
                              hex_id = hex_id,
                              quiet = TRUE)

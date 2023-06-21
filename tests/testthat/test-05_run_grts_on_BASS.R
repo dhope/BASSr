@@ -1,6 +1,6 @@
 test_that("run_grts_on_BASS()", {
 
-  d <- full_BASS_run(att_sf = psu_hexagons,
+  d <- full_BASS_run(land_hex = psu_hexagons,
                      num_runs = 10,
                      n_samples = 3,
                      costs = psu_costs,
@@ -109,7 +109,7 @@ test_that("run_grts_on_BASS()", {
 
 test_that("run_grts_on_BASS() remove_hexes", {
 
-  d <- full_BASS_run(att_sf = psu_hexagons,
+  d <- full_BASS_run(land_hex = psu_hexagons,
                      num_runs = 10,
                      n_samples = 3,
                      costs = psu_costs,

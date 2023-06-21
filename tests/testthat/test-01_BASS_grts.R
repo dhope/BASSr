@@ -1,12 +1,12 @@
 test_that("draw_random_samples() - no GRTS", {
   pp <- palmerpenguins::penguins |>
-    dplyr::mutate(across(.fns = as.character))
+    dplyr::mutate(across(.cols = dplyr::everything(), .fns = as.character))
   names(pp) <- glue::glue("LC{1:ncol(pp)}")
 
   expect_equal(
     withr::with_seed(seed = 15, {
       draw_random_samples(
-        att_sf = pp, num_runs = 1, n_samples = 10, use_grts = FALSE)
+        land_hex = pp, num_runs = 1, n_samples = 10, use_grts = FALSE)
     }),
 
     withr::with_seed(seed = 15, {
@@ -24,10 +24,10 @@ test_that("draw_random_samples() - with GRTS", {
   n_samples <- 3
 
   expect_message(g <- draw_random_samples(
-    att_sf = psu_hexagons,
+    land_hex = psu_hexagons,
     num_runs = n_runs,
     n_samples = n_samples),
-    "Spatial object att_sf should be") %>%
+    "Spatial object land_hex should be") %>%
     expect_message(paste0("Finished GRTS draw of ",
                           n_runs, " runs and ",
                           n_samples, " samples"))
@@ -50,7 +50,7 @@ test_that("draw_random_samples() - with GRTS", {
                  dplyr::select(dplyr::any_of(names(psu_hexagons))) %>%
                  dplyr::distinct(),
                psu_hexagons %>%
-                 check_att_sf(quiet = TRUE) %>%
+                 check_land_hex(quiet = TRUE) %>%
                  dplyr::filter(.data$hex_id %in% g$hex_id) %>%
                  dplyr::select(dplyr::any_of(names(g))),
                ignore_attr = TRUE)

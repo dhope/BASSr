@@ -19,7 +19,7 @@
 #' # Using example data psu_hexagons and psu_samples
 #'
 #' calculate_benefit(
-#'   att_sf = psu_hexagons,
+#'   land_hex = psu_hexagons,
 #'   samples = psu_samples,
 #'   hex_id = hex_id,
 #'   non_random_set = c("SA_0009", "SA_0022", "SA_0047", "SA_0052"))
@@ -27,7 +27,7 @@
 #' # Specify a non-random set
 #'
 #' calculate_benefit(
-#'  att_sf = psu_hexagons,
+#'  land_hex = psu_hexagons,
 #'  samples = psu_samples,
 #'  hex_id = hex_id,
 #'  non_random_set = c("SA_0009", "SA_0022", "SA_0047", "SA_0052"))
@@ -35,31 +35,32 @@
 #' # Without GRTS
 #'
 #' non_grts_samples <- draw_random_samples(
-#'   att_sf = psu_hexagons,
+#'   land_hex = psu_hexagons,
 #'   num_runs = 3,
 #'   n_samples = 10,
 #'   use_grts = FALSE)
 #'
 #' calculate_benefit(
-#'  att_sf = psu_hexagons,
+#'  land_hex = psu_hexagons,
 #'  samples = non_grts_samples,
 #'  hex_id = hex_id)
 #'
 #'
 #'
-calculate_benefit <- function(att_sf, samples,
+calculate_benefit <- function(land_hex, samples,
                               hex_id, stratum_id = NULL,
                               non_random_set = NULL,
                               land_cover_weights = NULL,
+                              crs = 4326, coords = c("lon", "lat"),
                               quiet = FALSE) {
 
-  # ADD CHECKS
-  att_sf <- check_att_sf(att_sf, quiet = quiet)
+  # TODO: ADD CHECKS
+  land_hex <- check_land_hex(land_hex, crs, coords, quiet = quiet)
 
   # Prep data
   samples <- sf::st_drop_geometry(samples)
 
-  att_long <- prepare_hab_long(att_sf, {{ stratum_id }})
+  att_long <- prepare_hab_long(land_hex, {{ stratum_id }})
 
   if (is.null(non_random_set)) {
     random_sample_summary_widenest <-
@@ -120,7 +121,7 @@ calculate_benefit <- function(att_sf, samples,
     samples = random_sample_summary_widenest,
     land_cover_summary = total, land_cover_weights = land_cover_weights,
     hex_id = {{ hex_id }}, print = FALSE) %>%
-    dplyr::left_join(dplyr::select(att_sf, {{ hex_id }}), .,
+    dplyr::left_join(dplyr::select(land_hex, {{ hex_id }}), .,
                       by = rlang::as_label(rlang::enquo(hex_id)))
 }
 
@@ -134,8 +135,8 @@ calculate_benefit <- function(att_sf, samples,
 #' @return Sumary of land cover types by area
 #'
 #' @noRd
-calculate_land_cover_summary <- function(att_sf, stratum_id){
-   att_sf %>%
+calculate_land_cover_summary <- function(land_hex, stratum_id){
+   land_hex %>%
     dplyr::group_by({{ stratum_id }}) %>%
     dplyr::summarize(dplyr::across(dplyr::matches("^LC\\d+$"), sum)) %>%
     tidyr::pivot_longer(cols = dplyr::matches("^LC\\d+$"),
@@ -158,18 +159,18 @@ calculate_land_cover_summary <- function(att_sf, stratum_id){
 #'
 #' @noRd
 
-prepare_hab_long <- function(att_sf, stratum_id = NULL) {
+prepare_hab_long <- function(land_hex, stratum_id = NULL) {
   # sa_a <- sum(att$area)
 
-  att_sf <- sf::st_drop_geometry(att_sf)
+  land_hex <- sf::st_drop_geometry(land_hex)
 
-  land_cover_summary <- calculate_land_cover_summary(att_sf, {{stratum_id}})
+  land_cover_summary <- calculate_land_cover_summary(land_hex, {{stratum_id}})
 
   by <- c("lc", rlang::as_label(rlang::enquo(stratum_id)))
   by <- by[by != "NULL"] # omit NULL turned to label
 
   tidyr::pivot_longer(
-    att_sf,
+    land_hex,
     cols = dplyr::matches("^LC\\d+$"),
     names_to = "lc", values_to = "ha"
   ) %>%
@@ -182,12 +183,12 @@ prepare_hab_long <- function(att_sf, stratum_id = NULL) {
 #' @param n_samples Number of Samples
 #' @param num_runs Number of iterations
 #' @param grts_file grts file to run
-#' @param att Att frame
+#' @param land_hex Att frame
 #' @param quick run it using CPP quick calc
 #'
 #' @return
 #' @export
-subsample_grts_and_calc_benefit <- function(n_samples, num_runs, grts_file, att_sf,
+subsample_grts_and_calc_benefit <- function(n_samples, num_runs, grts_file, land_hex,
                                             quick = T) {
   runs_to_pull <- sample(1:1000, num_runs)
 
@@ -199,7 +200,7 @@ subsample_grts_and_calc_benefit <- function(n_samples, num_runs, grts_file, att_
     ) %>%
     dplyr::filter(.data$run %in% .env$runs_to_pull)
 
-  calculate_benefit(grts_res = grts_res, att_sf = att_sf,
+  calculate_benefit(grts_res = grts_res, land_hex = land_hex,
                     output = "all", quick = quick)
 }
 

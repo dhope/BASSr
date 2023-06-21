@@ -4,7 +4,7 @@
 #' Based on Van Wilgenburg et al. 2020
 #' https://doi.org/10.1371/journal.pone.0234494
 #'
-#' @param att_sf
+#' @param land_hex
 #' @param hex_id
 #' @param stratum_id
 #'
@@ -13,23 +13,23 @@
 #' @examples
 #'
 #' calculate_BOSS_hab_inlc_pr(
-#'   att_sf = psu_hexagons,
+#'   land_hex = psu_hexagons,
 #'   hex_id = hex_id)
-calculate_BOSS_hab_inlc_pr <- function(att_sf,
+calculate_BOSS_hab_inlc_pr <- function(land_hex,
                               hex_id, stratum_id = NULL,
                               quiet = FALSE) {
 
   # ADD CHECKS
-  att_sf <- check_att_sf(att_sf, quiet = quiet)
+  land_hex <- check_land_hex(land_hex, quiet = quiet)
 
   # Prep data
 
-  att_long <- prepare_hab_long(att_sf, {{ stratum_id }})
+  att_long <- prepare_hab_long(land_hex, {{ stratum_id }})
 
   by <- c("lc", rlang::as_label(rlang::enquo(stratum_id)))
   by <- by[by != "NULL"] # omit NULL turned to label
 
-  att_summary <- calculate_land_cover_summary(att_sf, {{stratum_id }}) |>
+  att_summary <- calculate_land_cover_summary(land_hex, {{stratum_id }}) |>
     dplyr::group_by( across(by)) |>
     dplyr::mutate(p_hab_BOSS = 1/(n()*sum(ha_total)) ) |>
     dplyr::ungroup()
@@ -40,7 +40,7 @@ calculate_BOSS_hab_inlc_pr <- function(att_sf,
     dplyr::mutate(psel_hex_hab_BOSS = p_hab_BOSS * ha) |>
     dplyr::summarize(p_sel_BOSS_hab = units::set_units(sum(psel_hex_hab_BOSS), NULL),
               .by = c({{stratum_id}},{{hex_id}})) |>
-    dplyr::left_join(x = att_sf, by  = dplyr::join_by({{hex_id}}))
+    dplyr::left_join(x = land_hex, by  = dplyr::join_by({{hex_id}}))
 
 
 }
@@ -48,7 +48,7 @@ calculate_BOSS_hab_inlc_pr <- function(att_sf,
 
 #' Calculate z-scores for each hexagon by sum of individual z scores
 #'
-#' @param att_sf
+#' @param land_hex
 #' @param hex_id
 #' @param stratum_id
 #' @param quiet
@@ -56,12 +56,12 @@ calculate_BOSS_hab_inlc_pr <- function(att_sf,
 #' @return
 #'
 #' @examples
-calculate_z_scores <-  function(att_sf,
+calculate_z_scores <-  function(land_hex,
                                 hex_id, stratum_id = NULL,
                                 quiet = FALSE) {
 
   # ADD CHECKS
-  att_sf <- check_att_sf(att_sf, quiet = quiet)
+  land_hex <- check_land_hex(land_hex, quiet = quiet)
 
   by <- c("lc", rlang::as_label(rlang::enquo(stratum_id)))
   by <- by[by != "NULL"] # omit NULL turned to label
@@ -69,7 +69,7 @@ calculate_z_scores <-  function(att_sf,
 
   # Prep data
 
-  att_long <- prepare_hab_long(att_sf, {{ stratum_id }}) |>
+  att_long <- prepare_hab_long(land_hex, {{ stratum_id }}) |>
     mutate(ha = units::set_units(ha, NULL))
 
   # calculate mean and sd of eac land cover class

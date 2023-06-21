@@ -8,7 +8,7 @@ subsample_grts_and_calc_benefit(
   n_samples,
   num_runs,
   grts_file,
-  att_sf,
+  land_hex,
   quick = T
 )
 }
@@ -19,9 +19,9 @@ subsample_grts_and_calc_benefit(
 
 \item{grts_file}{grts file to run}
 
-\item{quick}{run it using CPP quick calc}
+\item{land_hex}{Att frame}
 
-\item{att}{Att frame}
+\item{quick}{run it using CPP quick calc}
 }
 \description{
 Subsample GRTS and calculate benefit

@@ -44,7 +44,7 @@ ggplot(data = psu_hex, aes(fill = LC01)) +
 
 ### Basic Run
 ```{r}
-d <- full_BASS_run(att_sf = psu_hex, 
+d <- full_BASS_run(land_hex = psu_hex, 
                    num_runs = 10,
                    n_samples = 3,
                    hex_id = hex_id)
@@ -65,7 +65,7 @@ ggplot(data = d_hex, aes(fill = benefit)) +
 ### Including Costs
 
 ```{r}
-d <- full_BASS_run(att_sf = psu_hex, 
+d <- full_BASS_run(land_hex = psu_hex, 
                    num_runs = 10,
                    n_samples = 3,
                    costs = psu_costs,
@@ -86,7 +86,7 @@ which.max(d$benefit)
 high_cost <- psu_costs
 high_cost$RawCost[26] <- high_cost$RawCost[26] * 100
 
-d <- full_BASS_run(att_sf = psu_hex, 
+d <- full_BASS_run(land_hex = psu_hex, 
                    num_runs = 10,
                    n_samples = 3,
                    costs = high_cost,

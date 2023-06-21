@@ -26,10 +26,10 @@ samples per stratum.}
 \item{os}{Numeric vector. Over sample size (proportional) or named vector of
 number of samples per stratum.}
 
-\item{hex_id}{Columns. Identifies hexagon ids (e.g., \code{hex_id} or \code{ET_Index})}
+\item{hex_id}{Columns. Identifies hexagon ids (e.g., \code{hex_id} or \code{ET_Index}).}
 
 \item{stratum_id}{Column. Identifies larger area (e.g., \code{StudyAreaID} or
-\code{Province})}
+\code{Province}).}
 
 \item{removed_hexes}{Character Vector. Ids of hexagons to remove.}
 }

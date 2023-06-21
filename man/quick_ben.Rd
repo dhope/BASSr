@@ -21,7 +21,7 @@ LC_}
 
 \item{land_cover_summary}{Land cover summary for larger area}
 
-\item{hex_id}{Columns. Identifies hexagon ids (e.g., \code{hex_id} or \code{ET_Index})}
+\item{hex_id}{Columns. Identifies hexagon ids (e.g., \code{hex_id} or \code{ET_Index}).}
 
 \item{print}{print details}
 

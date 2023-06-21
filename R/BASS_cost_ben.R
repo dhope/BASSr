@@ -2,8 +2,8 @@
 #'
 #' Calculate the cost benefits and inclusion probabilities
 #'
-#' @param benefits Spatial Data frame. Benefits associated with each hexagon (
-#'   output of `calculate_benefits()`)
+#' @param benefits Spatial Data frame. Benefits associated with each hexagon
+#'   (output of `calculate_benefits()`)
 #' @param hex_id Column containing hexagon IDs.
 #' @param omit Column identifying hexes to omit (e.g., water hexes). Default
 #'   INLAKE.
@@ -21,7 +21,7 @@
 #'
 #' @examples
 #'
-#' b <- calculate_benefit(att_sf = psu_hexagons,
+#' b <- calculate_benefit(land_hex = psu_hexagons,
 #'                        samples = psu_samples,
 #'                        hex_id = hex_id)
 #'
@@ -40,6 +40,7 @@ calculate_inclusion_probs <- function(benefits, costs,
   check_column(costs, {{ omit_flag }})
   check_column(costs, {{ stratum_id }})
   check_column(benefits, {{ hex_id }})
+  # TODO: add checks
 
   costs <- check_costs(costs, {{ hex_id }}, {{ omit_flag }})
 

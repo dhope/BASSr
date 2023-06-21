@@ -2,7 +2,7 @@ check_lc_names <- function(cols, pattern) {
 
   # Make sure matches
   if(length(cols) == 0) {
-    rlang::abort("`pattern` did not match any names in `att_sf`", call = NULL)
+    rlang::abort("`pattern` did not match any names in `land_hex`", call = NULL)
   }
 
   # Make sure leftover is numeric
@@ -29,25 +29,44 @@ check_lc_names <- function(cols, pattern) {
   }
 }
 
-check_att_sf <- function(att_sf, quiet) {
+check_land_hex <- function(land_hex, crs = NULL, coords = NULL, quiet) {
 
-  if (!inherits(att_sf, "sf")) {
-    rlang::abort(paste0("`att_sf` must be an 'sf' spatial object ",
-                        "(see https://r-spatial.github.io/sf/)"), call = NULL)
+  # If not sf, convert
+  if (!inherits(land_hex, "sf")) {
+    check_crs(crs)
+    if(all(is.na(coords)) || is.null(coords) || length(coords) != 2) {
+      rlang::abort(
+        paste0("`coords` must be names of coordinate columns in `land_hex` ",
+               "which can be used to convert\nthis data frame to a ",
+               "spatial data frame (see `coords` in ?sf::st_as_sf())."),
+        call = NULL)
+    }
+
+    check_column_text(land_hex, coords[1])
+    check_column_text(land_hex, coords[2])
+
+    land_hex <- sf::st_as_sf(land_hex, coords = coords, crs = crs)
+    if(!quiet) {
+      rlang::inform(
+        c("!" = "Converting `land_hex` to spatial data frame",
+          "*" = glue::glue("crs = {crs}"),
+          "*" = glue::glue("coords = {glue::glue_collapse(coords, ',')} (X,Y)")))
+    }
+
   }
 
-  att_sf <- check_points(att_sf, quiet)
-  check_land_cover(att_sf)
+  land_hex <- check_points(land_hex, quiet)
+  check_land_cover(land_hex)
 
-  att_sf
+  land_hex
 }
 
-check_land_cover <- function(att_sf) {
-  if(!any(grepl("^LC\\d",names(att_sf)))) {
+check_land_cover <- function(land_hex) {
+  if(!any(grepl("^LC\\d",names(land_hex)))) {
     rlang::abort(c("Land cover columns not formatted correctly",
                    "*" = "Try running `clean_land_cover()`"), call = NULL)
   }
-  if(sum(is.na(dplyr::select(att_sf, dplyr::matches("^LC\\d"))))) {
+  if(sum(is.na(dplyr::select(land_hex, dplyr::matches("^LC\\d"))))) {
     rlang::abort("Missing values in land cover columns", call = NULL)
   }
 }
@@ -56,25 +75,25 @@ check_land_cover <- function(att_sf) {
 #'
 #' Checks for polygons and converts to points if necessary.
 #'
-#' @param att_sf
+#' @param land_hex
 #' @param quiet
 #'
 #' @noRd
-check_points <- function(att_sf, quiet) {
+check_points <- function(land_hex, quiet) {
 
-  if (all(sf::st_is(att_sf, "POLYGON"))) {
+  if (all(sf::st_is(land_hex, "POLYGON"))) {
     if(!quiet) {
-      nm <- deparse(substitute(att_sf))
+      nm <- deparse(substitute(land_hex))
       rlang::inform(c(
         "i" = paste0("Spatial object ", nm, " should be POINTs not POLYGONs"),
         "*" = "Don't worry, I'll fix it!",
       "*" = "Assuming constant attributes and using centroids as points"))
     }
-    att_sf <- att_sf %>%
+    land_hex <- land_hex %>%
       sf::st_set_agr("constant") %>%
-      sf::st_centroid(att_sf)
+      sf::st_centroid(land_hex)
   }
-  att_sf
+  land_hex
 }
 
 check_costs <- function(costs, hex_id, omit_flag) {
@@ -131,3 +150,20 @@ check_column <- function(data, col) {
     }
   }
 }
+
+check_column_text <- function(data, col) {
+  if(!col %in% names(data)) {
+    rlang::abort(glue::glue(
+      "Column '{col}' not found in data frame `{deparse(substitute(data))}`"),
+      call = NULL)
+  }
+}
+
+check_crs <- function(crs) {
+  if(!is_crs(crs)) {
+    rlang::abort(
+      "`crs` must be a valid Coordinate Reference System for `sf::st_crs()`",
+      call = NULL)
+  }
+}
+
