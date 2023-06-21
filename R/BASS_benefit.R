@@ -60,7 +60,7 @@ calculate_benefit <- function(land_hex, samples,
   # Prep data
   samples <- sf::st_drop_geometry(samples)
 
-  att_long <- prepare_hab_long(land_hex, {{ stratum_id }})
+  land_long <- prepare_hab_long(land_hex, {{ stratum_id }})
 
   if (is.null(non_random_set)) {
     random_sample_summary_widenest <-
@@ -70,11 +70,11 @@ calculate_benefit <- function(land_hex, samples,
   }
   if (!is.null(non_random_set)) {
 
-    # CHECKS
+    # TODO: CHECKS
 
     if (is.vector(non_random_set)) {
 
-      extra <- att_long %>%
+      extra <- land_long %>%
         dplyr::mutate({{ hex_id }} := as.character({{ hex_id }})) %>%
         tidyr::pivot_wider(id_cols = {{ hex_id }},
                            names_from = "lc", values_from = "ha") %>%
@@ -106,12 +106,12 @@ calculate_benefit <- function(land_hex, samples,
                                   ~tidyr::replace_na(as.numeric(.x), 0)))
   }
 
-  hexes <- att_long %>%
+  hexes <- land_long %>%
     dplyr::select({{ hex_id }}, "lc", "ha") %>%
     dplyr::mutate({{ hex_id }} := as.character({{ hex_id }})) %>%
     tidyr::pivot_wider(names_from = "lc", values_from = "ha")
 
-  total <- att_long %>%
+  total <- land_long %>%
     dplyr::select("lc", "ha_total") %>%
     dplyr::distinct() %>%
     dplyr::rename("ha" = "ha_total")
@@ -160,7 +160,6 @@ calculate_land_cover_summary <- function(land_hex, stratum_id){
 #' @noRd
 
 prepare_hab_long <- function(land_hex, stratum_id = NULL) {
-  # sa_a <- sum(att$area)
 
   land_hex <- sf::st_drop_geometry(land_hex)
 

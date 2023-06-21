@@ -23,7 +23,7 @@ run_grts_on_BASS <- function(probs, num_runs, nARUs, os,
 
   check_column(probs, {{ stratum_id }})
 
-  # Check that NOT LIST, HAS geometry
+  # TODO: Check that NOT LIST, HAS geometry
   if(!is.null(remove_hexes)) {
     if(rlang::quo_is_null(rlang::enquo(hex_id))) {
       rlang::abort("`hex_id` must be specified to use `remove_hexes`",
@@ -31,10 +31,8 @@ run_grts_on_BASS <- function(probs, num_runs, nARUs, os,
     }
 
     check_column(probs, {{ hex_id }})
-    attframe <- dplyr::filter(probs,
+    probs <- dplyr::filter(probs,
                               !{{ hex_id }} %in% remove_hexes)
-  } else {
-    attframe <- probs
   }
 
   stratum_id <- rlang::enquo(stratum_id)
@@ -52,7 +50,7 @@ run_grts_on_BASS <- function(probs, num_runs, nARUs, os,
 
     stratum_name <- rlang::as_label(stratum_id)
 
-    strata_vector <- attframe %>% # Vector of strata
+    strata_vector <- probs %>% # Vector of strata
       dplyr::pull({{ stratum_id }}) %>%
       unique()
 
@@ -83,7 +81,7 @@ run_grts_on_BASS <- function(probs, num_runs, nARUs, os,
   set_seed(seed, {
     purrr::map(
       1:num_runs,
-      ~ spsurvey::grts(sframe = attframe,
+      ~ spsurvey::grts(sframe = probs,
                        n_over = n_os,
                        n_base = Stratdsgn,
                        stratum_var = stratum_name,
