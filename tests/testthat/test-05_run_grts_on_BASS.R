@@ -210,7 +210,7 @@ test_that("run_grts_on_BASS() mindis and maxtry", {
                      quiet = TRUE,
                      seed = 1234)
 
-  expect_message(
+  expect_no_error(
     sel1 <- run_grts_on_BASS(
       probs = d,
       nARUs = 15,
@@ -218,7 +218,12 @@ test_that("run_grts_on_BASS() mindis and maxtry", {
       mindis = 10000000000,
       maxtry = 1,
       seed = 1234)
-  )
+  ) |>
+    # spsurvey ~5.4 uses cat() for messages, later uses message()
+    suppressMessages() |>
+    capture.output() |>
+    invisible()
+
   expect_equal(warn_df$Warning,
                "Minimum distance between sites not attained after 1 attempts.")
   expect_equal(sel1$design$mindis$None, 10000000000)
