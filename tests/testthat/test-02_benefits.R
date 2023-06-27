@@ -5,27 +5,27 @@ test_that("prepare_hab_long()", {
 
   # Dimensions and categories
   lc <- stringr::str_subset(names(psu_hexagons), "LC")
-  expect_true(all(c("hex_id", "province", "lc", "ha", "ha_total",
+  expect_true(all(c("hex_id", "province", "lc", "area", "area_total",
                     "total_phab") %in% names(h)))
   expect_equal(nrow(h),
                dplyr::n_distinct(psu_hexagons$hex_id) * length(lc))
   expect_true(all(unique(h$lc) == lc))
   expect_true(all(h$hex_id %in% psu_hexagons$hex_id))
-  expect_equal(dplyr::n_distinct(h$ha_total),
+  expect_equal(dplyr::n_distinct(h$area_total),
                dplyr::n_distinct(h$lc))
 
-  # total_phab and ha_total unique to lc
+  # total_phab and area_total unique to lc
   expect_true(all(as.numeric(h$total_phab) >= 0 | as.numeric(h$total_phab) <= 1))
-  expect_equal(unique(h$ha_total[h$lc == "LC1"]),
-               sum(h$ha[h$lc == "LC1"]))
+  expect_equal(unique(h$area_total[h$lc == "LC1"]),
+               sum(h$area[h$lc == "LC1"]))
   expect_equal(unique(h$total_phab[h$lc == "LC1"]),
-               unique(h$ha_total[h$lc == "LC1"]) / sum(unique(h$ha_total)))
+               unique(h$area_total[h$lc == "LC1"]) / sum(unique(h$area_total)))
 
   # Pass through variables
-  expect_equal(dplyr::select(h, "hex_id","province", "lc", "ha"),
+  expect_equal(dplyr::select(h, "hex_id","province", "lc", "area"),
                tidyr::pivot_longer(psu_hexagons, cols = dplyr::matches("LC"),
-                                   values_to = "ha", names_to = "lc") %>%
-                 dplyr::select("hex_id", "province", "lc", "ha") %>%
+                                   values_to = "area", names_to = "lc") %>%
+                 dplyr::select("hex_id", "province", "lc", "area") %>%
                  sf::st_drop_geometry())
 
 
@@ -70,9 +70,9 @@ test_that("quick_ben()", {
 
   lc_sum <- check_land_hex(psu_hexagons, quiet = TRUE) %>%
     prepare_hab_long() %>%
-    dplyr::select("lc", "ha_total") %>%
+    dplyr::select("lc", "area_total") %>%
     dplyr::distinct() %>%
-    dplyr::rename(ha = ha_total)
+    dplyr::rename("area" = "area_total")
 
   samples <- psu_samples %>%
     dplyr::group_by(run) %>%

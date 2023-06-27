@@ -31,13 +31,13 @@ calculate_BOSS_hab_inlc_pr <- function(land_hex,
 
   att_summary <- calculate_land_cover_summary(land_hex, {{stratum_id }}) |>
     dplyr::group_by( across(by)) |>
-    dplyr::mutate(p_hab_BOSS = 1/(n()*sum(ha_total)) ) |>
+    dplyr::mutate(p_hab_BOSS = 1/(n()*sum(area_total)) ) |>
     dplyr::ungroup()
 
 
   dplyr::left_join(att_long, att_summary,
             by = by) |>
-    dplyr::mutate(psel_hex_hab_BOSS = p_hab_BOSS * ha) |>
+    dplyr::mutate(psel_hex_hab_BOSS = p_hab_BOSS * area) |>
     dplyr::summarize(p_sel_BOSS_hab = units::set_units(sum(psel_hex_hab_BOSS), NULL),
               .by = c({{stratum_id}},{{hex_id}})) |>
     dplyr::left_join(x = land_hex, by  = dplyr::join_by({{hex_id}}))
@@ -70,19 +70,19 @@ calculate_z_scores <-  function(land_hex,
   # Prep data
 
   att_long <- prepare_hab_long(land_hex, {{ stratum_id }}) |>
-    mutate(ha = units::set_units(ha, NULL))
+    mutate(area = units::set_units(area, NULL))
 
   # calculate mean and sd of eac land cover class
   att_sum <- att_long |>
-    summarize(mean = mean(ha),
-              sd = sd(ha),
+    summarize(mean = mean(area),
+              sd = sd(area),
               .by = by)
 
 
   att_long |>
-    dplyr::select(-ha_total, -total_phab) |>
+    dplyr::select(-area_total, -total_phab) |>
     dplyr::left_join(att_sum, by = by) |>
-    dplyr::mutate(z_score =(ha-mean)/sd) |>
+    dplyr::mutate(z_score =(area-mean)/sd) |>
     dplyr::summarise(avg_z_score = mean(z_score, na.rm = T),
                      .by = {{hex_id}})
 

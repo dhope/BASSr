@@ -77,7 +77,7 @@ calculate_benefit <- function(land_hex, samples,
       extra <- land_long %>%
         dplyr::mutate({{ hex_id }} := as.character({{ hex_id }})) %>%
         tidyr::pivot_wider(id_cols = {{ hex_id }},
-                           names_from = "lc", values_from = "ha") %>%
+                           names_from = "lc", values_from = "area") %>%
         dplyr::filter({{ hex_id }} %in% .env$non_random_set) %>%
         tidyr::expand_grid(run = 1:dplyr::n_distinct(samples$run))
 
@@ -107,14 +107,14 @@ calculate_benefit <- function(land_hex, samples,
   }
 
   hexes <- land_long %>%
-    dplyr::select({{ hex_id }}, "lc", "ha") %>%
+    dplyr::select({{ hex_id }}, "lc", "area") %>%
     dplyr::mutate({{ hex_id }} := as.character({{ hex_id }})) %>%
-    tidyr::pivot_wider(names_from = "lc", values_from = "ha")
+    tidyr::pivot_wider(names_from = "lc", values_from = "area")
 
   total <- land_long %>%
-    dplyr::select("lc", "ha_total") %>%
+    dplyr::select("lc", "area_total") %>%
     dplyr::distinct() %>%
-    dplyr::rename("ha" = "ha_total")
+    dplyr::rename("area" = "area_total")
 
   quick_ben(
     d = hexes,
@@ -140,8 +140,8 @@ calculate_land_cover_summary <- function(land_hex, stratum_id){
     dplyr::group_by({{ stratum_id }}) %>%
     dplyr::summarize(dplyr::across(dplyr::matches("^LC\\d+$"), sum)) %>%
     tidyr::pivot_longer(cols = dplyr::matches("^LC\\d+$"),
-                        names_to = "lc", values_to = "ha_total") %>%
-    dplyr::mutate(total_phab = .data$ha_total / sum(.data$ha_total,
+                        names_to = "lc", values_to = "area_total") %>%
+    dplyr::mutate(total_phab = .data$area_total / sum(.data$area_total,
                                                     na.rm = TRUE)) %>%
     dplyr::ungroup() %>%
     sf::st_drop_geometry()
@@ -171,7 +171,7 @@ prepare_hab_long <- function(land_hex, stratum_id = NULL) {
   tidyr::pivot_longer(
     land_hex,
     cols = dplyr::matches("^LC\\d+$"),
-    names_to = "lc", values_to = "ha"
+    names_to = "lc", values_to = "area"
   ) %>%
     dplyr::left_join(land_cover_summary, by = by)
 
@@ -195,7 +195,7 @@ subsample_grts_and_calc_benefit <- function(n_samples, num_runs, grts_file, land
     tidyr::pivot_longer(
       cols = dplyr::matches("LC\\d"),
       names_to = "lc",
-      values_to = "ha"
+      values_to = "area"
     ) %>%
     dplyr::filter(.data$run %in% .env$runs_to_pull)
 
@@ -246,8 +246,8 @@ quick_ben <- function(d, samples, land_cover_summary, hex_id, print,
              "Your land cover summary had too many rows."), call = NULL)
   }
   total <- land_cover_summary  |>
-    dplyr::select(lc, ha)  |>
-    tidyr::pivot_wider(names_from = lc, values_from = ha)
+    dplyr::select("lc", "area")  |>
+    tidyr::pivot_wider(names_from = lc, values_from = "area")
 
   total <- total[names(hexes)]
 
