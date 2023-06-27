@@ -143,22 +143,122 @@ final <- psu_hex_dirty %>%
 
 
 ## Selection probabilities
-```{r}
 
-ggplot() + 
-  geom_sf(data = psu_hex) +
-  geom_sf(data = st_as_sf(final, coords = c("X", "Y")))
+### Simple selection
+
+Here we'll sample 12 sites with a 20% over sample, resulting in a total of 14 
+sites selected.
+
+```{r}
+g <- ggplot() + 
+  geom_sf(data = psu_hex, fill = "white") +
+  geom_sf(data = final, colour = "grey70")
+
+g
 
 sel <- run_grts_on_BASS(probs = final, 
                         num_runs = 1, 
                         nARUs = 12, 
                         os = 0.2)
 
-ggplot(d_hex) +
-  geom_sf() +
-  geom_sf(data = sel[[1]]$sites_base)
+sel_plot <- bind_rows(sel[["sites_base"]],
+                      sel[["sites_over"]])
+
+g + 
+  geom_sf(data = sel_plot, aes(colour = siteuse), size = 5) +
+  scale_colour_viridis_d(name = "Type of\nsites sampled", end = 0.7)
 
 ```
+
+### Stratified selection
+
+First let's create a dummy stratification and add it to our hexes for plotting
+```{r}
+final <- mutate(final, strat = c(rep("A", 15), rep("B", 18)))
+psu_hex_strat <- select(final, "hex_id", "strat") |> 
+  st_drop_geometry() |>
+  left_join(psu_hex, y = _, by = "hex_id")
+
+g <- ggplot() + 
+  geom_sf(data = psu_hex_strat, aes(fill = strat), alpha = 0.4) +
+  geom_sf(data = final, colour = "grey70")
+g
+```
+
+Now we'll define how we want to sample these two strata.
+
+Let's assume we don't really care about habitat A, so we don't want to sample
+that one very much.
+
+```{r}
+nARUs <- list("A" = 2, "B" = 10)
+
+sel <- run_grts_on_BASS(probs = final, 
+                        num_runs = 1, 
+                        stratum_id = strat,
+                        nARUs = nARUs, 
+                        os = 0.2)
+
+sel_plot <- bind_rows(sel[["sites_base"]],
+                      sel[["sites_over"]])
+
+g + 
+  geom_sf(data = sel_plot, aes(colour = siteuse), size = 5) +
+  scale_colour_viridis_d(name = "Type of\nsites sampled", end = 0.7)
+
+```
+
+You can see that we've sampled much more of B than A, and that there are no 
+over samples in A, which makes sense:
+
+0.2 * 2 = 0.4 which rounds down to 0
+
+If we wanted an over sample for A, we could define specific over sample amounts instead.
+
+```{r}
+nARUs <- list("A" = 2, "B" = 10)
+os <- list("A" = 1, "B" = 4)
+
+sel <- run_grts_on_BASS(probs = final, 
+                        num_runs = 1, 
+                        stratum_id = strat,
+                        nARUs = nARUs, 
+                        os = os,
+                        seed = 123)
+
+sel_plot <- bind_rows(sel[["sites_base"]],
+                      sel[["sites_over"]])
+
+g + 
+  geom_sf(data = sel_plot, aes(colour = siteuse), size = 5) +
+  scale_colour_viridis_d(name = "Type of\nsites sampled", end = 0.7)
+
+```
+
+Alternatively at this point (and especially with more strata) it might be easier
+to supply a data frame rather than a series of lists.
+
+
+```{r}
+nARUs <- data.frame(n = c(2, 10),
+                    strat = c("A", "B"),
+                    n_os = c(1, 4))
+
+sel <- run_grts_on_BASS(probs = final, 
+                        num_runs = 1, 
+                        stratum_id = strat,
+                        nARUs = nARUs, 
+                        seed = 123)
+
+sel_plot <- bind_rows(sel[["sites_base"]],
+                      sel[["sites_over"]])
+
+g + 
+  geom_sf(data = sel_plot, aes(colour = siteuse), size = 5) +
+  scale_colour_viridis_d(name = "Type of\nsites sampled", end = 0.7)
+
+```
+
 
 ## SSUs
 

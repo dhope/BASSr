@@ -6,11 +6,13 @@
 \usage{
 run_grts_on_BASS(
   probs,
-  num_runs,
   nARUs,
-  os,
+  os = NULL,
+  num_runs = 1,
   hex_id = NULL,
   stratum_id = NULL,
+  mindis = NULL,
+  maxtry = 10,
   remove_hexes = NULL,
   seed = NULL
 )
@@ -19,25 +21,68 @@ run_grts_on_BASS(
 \item{probs}{Data frame. Output of \code{calculate_inclusion_probs()} or
 \code{full_BASS_run()}.}
 
+\item{nARUs}{Numeric, Data frame, Vector, or List. Number of base samples to choose.
+For stratification, a named vector/list of samples per stratum, or a data frame
+with columns \code{n} for samples, \code{n_os} for oversamples and the column matching
+\code{stratum_id}.}
+
+\item{os}{Numeric, Vector, or List. Over sample size (proportional) or named vector/list of
+number of samples per stratum. Ignored if \code{nARUs} is a data frame.}
+
 \item{num_runs}{Numeric. Number of times to draw random samples.}
-
-\item{nARUs}{Numeric vector. Number of samples or named vector of number of
-samples per stratum.}
-
-\item{os}{Numeric vector. Over sample size (proportional) or named vector of
-number of samples per stratum.}
 
 \item{hex_id}{Columns. Identifies hexagon ids (e.g., \code{hex_id} or \code{ET_Index}).}
 
 \item{stratum_id}{Column. Identifies larger area (e.g., \code{StudyAreaID} or
 \code{Province}).}
 
-\item{remove_hexes}{Character Vector. Ids of hexagons to remove.}
+\item{mindis}{Numeric. Minimum distance between sites. Passed to
+\code{spsurvey::grts()}.}
+
+\item{maxtry}{Numeric. Maximum attempts to try to obtain the minimum distance
+between sites. Passed to \code{spsurvey::grts()}}
+
+\item{remove_hexes}{Character Vector. Ids of hexagons to remove prior to
+sampling.}
 
 \item{seed}{Numeric. Random seed to use for random sampling. Seed only
 applies to specific sampling events (does not change seed in the
 environment). \code{NULL} does not set a seed.}
 }
 \description{
-Run grts sampling on BASSr results
+Sample sites based on the cost/benefit probabilities calculated in previous
+steps. Sites can be sampled with or without stratification.
+}
+\examples{
+d <- full_BASS_run(
+  land_hex = psu_hexagons,
+  num_runs = 10,
+  n_samples = 3,
+  costs = psu_costs,
+  hex_id = hex_id)
+
+# Simple selection
+sel <- run_grts_on_BASS(
+  probs = d,
+  nARUs = 5,
+  os = 0.2)
+
+# Stratify
+d <- dplyr::mutate(d, Province = c(rep("ON", 16), rep("MB", 17))) # Add Strata
+
+# With lists...
+sel <- run_grts_on_BASS(
+  probs = d,
+  nARUs = list("ON" = 5, "MB" = 2),
+  stratum_id = Province,
+  os = 0.2)
+
+# With data frame...
+sel <- run_grts_on_BASS(
+  probs = d,
+  nARUs = data.frame(Province = c("ON", "MB"),
+                     n = c(5, 2),
+                     n_os = c(1, 1)),
+  stratum_id = Province)
+
 }

@@ -1,29 +1,83 @@
 #' Run grts sampling on BASSr results
 #'
+#' Sample sites based on the cost/benefit probabilities calculated in previous
+#' steps. Sites can be sampled with or without stratification.
+#'
 #' @param probs Data frame. Output of `calculate_inclusion_probs()` or
 #'   `full_BASS_run()`.
-#' @param nARUs Numeric vector. Number of samples or named vector of number of
-#'   samples per stratum.
-#' @param os Numeric vector. Over sample size (proportional) or named vector of
-#'   number of samples per stratum.
-#' @param remove_hexes Character Vector. Ids of hexagons to remove.
+#' @param nARUs Numeric, Data frame, Vector, or List. Number of base samples to choose.
+#'   For stratification, a named vector/list of samples per stratum, or a data frame
+#'   with columns `n` for samples, `n_os` for oversamples and the column matching
+#'   `stratum_id`.
+#' @param os Numeric, Vector, or List. Over sample size (proportional) or named vector/list of
+#'   number of samples per stratum. Ignored if `nARUs` is a data frame.
+#' @param remove_hexes Character Vector. Ids of hexagons to remove prior to
+#'   sampling.
+#' @param mindis Numeric. Minimum distance between sites. Passed to
+#'   `spsurvey::grts()`.
+#' @param maxtry Numeric. Maximum attempts to try to obtain the minimum distance
+#'   between sites. Passed to `spsurvey::grts()`
 #'
 #' @inheritParams common_docs
 #'
 #' @return
 #' @export
 #'
-run_grts_on_BASS <- function(probs, num_runs, nARUs, os,
-                             hex_id = NULL,
-                             stratum_id = NULL,
+#' @examples
+#' d <- full_BASS_run(
+#'   land_hex = psu_hexagons,
+#'   num_runs = 10,
+#'   n_samples = 3,
+#'   costs = psu_costs,
+#'   hex_id = hex_id)
+#'
+#' # Simple selection
+#' sel <- run_grts_on_BASS(
+#'   probs = d,
+#'   nARUs = 5,
+#'   os = 0.2)
+#'
+#' # Stratify
+#' d <- dplyr::mutate(d, Province = c(rep("ON", 16), rep("MB", 17))) # Add Strata
+#'
+#' # With lists...
+#' sel <- run_grts_on_BASS(
+#'   probs = d,
+#'   nARUs = list("ON" = 5, "MB" = 2),
+#'   stratum_id = Province,
+#'   os = 0.2)
+#'
+#' # With data frame...
+#' sel <- run_grts_on_BASS(
+#'   probs = d,
+#'   nARUs = data.frame(Province = c("ON", "MB"),
+#'                      n = c(5, 2),
+#'                      n_os = c(1, 1)),
+#'   stratum_id = Province)
+#'
+run_grts_on_BASS <- function(probs, nARUs, os = NULL, num_runs = 1,
+                             hex_id = NULL, stratum_id = NULL,
+                             mindis = NULL, maxtry = 10,
                              remove_hexes = NULL, seed = NULL) {
 
-  mindis <-  NULL
-  maxtry <-  10
-
+  # Checks
   check_column(probs, {{ stratum_id }})
+  stratum_id <- rlang::enquo(stratum_id)
+
+  if(!rlang::is_named(os) && length(os) == 1 && (os < 0 || os > 1)) {
+    rlang::abort(
+      "`os` as a single value is a proportion, and must range between 0 and 1",
+      call = NULL)
+  }
+
+  if(is.null(os) && !inherits(nARUs, "data.frame")) {
+    rlang::abort(
+      "`os` can only be NULL if nARUs is a data frame with a column `n_os`",
+      call = NULL)
+  }
 
   # TODO: Check that NOT LIST, HAS geometry
+
   if(!is.null(remove_hexes)) {
     if(rlang::quo_is_null(rlang::enquo(hex_id))) {
       rlang::abort("`hex_id` must be specified to use `remove_hexes`",
@@ -35,55 +89,99 @@ run_grts_on_BASS <- function(probs, num_runs, nARUs, os,
                               !{{ hex_id }} %in% remove_hexes)
   }
 
-  stratum_id <- rlang::enquo(stratum_id)
+  # Check for stratification - Create a list of problems
+  s <- c(!rlang::quo_is_null(stratum_id),
+         inherits(nARUs, "data.frame") | length(nARUs) > 1 | rlang::is_named(nARUs))
 
-  if (rlang::quo_is_null(stratum_id)) {
-    # Not stratified
+  # Not stratified
+  if (all(!s)) {
+
+    if(length(os) > 1) {
+      rlang::abort("`os` must be a single value unless using stratification", call = NULL)
+    }
+
     stratum_name <- NULL
+    n_strata <- rep(nARUs, length(nARUs))
+    n_os <- round(nARUs * os)
+    if(n_os == 0) n_os <- NULL
 
-    Stratdsgn <- rep(nARUs, length(nARUs))
-    n_os <-  round(nARUs*os)
-    if(n_os==0) n_os <- NULL
-
+  #Stratified
   } else {
-    #Stratified
 
+    # Missing strata column name
+    if(rlang::quo_is_null(stratum_id)) {
+      abort_strat("`stratum_id` must be the column containing strata names")
+    }
+
+    # Missing appropriate nARUs object
+    if(!(inherits(nARUs, "data.frame") |
+         length(nARUs) > 1 |
+         rlang::is_named(nARUs))) {
+      abort_strat()
+    }
+
+    # Get strata columns and names
     stratum_name <- rlang::as_label(stratum_id)
-
     strata_vector <- probs %>% # Vector of strata
       dplyr::pull({{ stratum_id }}) %>%
       unique()
 
 
-    ## CHECK THE FOLLOWING....
-    if (all(strata_vector %in% names(nARUs))){
-      Stratdsgn <- nARUs
-      #if(length(os)==1){
-      #  n_os <- lapply(FUN = function(x) x * os, X = nARUs )
-      #  if(n_os==0) n_os <- NULL
-      #} else if ( all(strata_vector %in% names(nARUs)) ){
-      n_os <- os
+    # Get n_strata and n_os depending on inputs
 
-      if(!length(os) %in% c(1, length(nARUs))) {
-        rlang::abort(
-          c("x" = "Not all strata found in `os`, but `os` has length > 1",
-            "*" = paste0("`os` should either be single value or named vector, ",
-                         "one for each stratum.")))
+    # Check data frame
+    if(inherits(nARUs, "data.frame")) {
+
+      # Problem: Miss named or wrong strata
+      if(!all(names(nARUs) %in% c(stratum_name, "n", "n_os")) ||
+         !all(nARUs[[stratum_name]] %in% strata_vector)) {
+        abort_strat()
       }
-    }  else {
-      rlang::abort(
-        c("x" = "Not all strata found in `nARUs`, but `nARUs` has length >1",
-          "*" = paste0("`nARUs` should either be single value or named vector, ",
-                       "one for each stratum.")))
+
+      # Convert from data frame
+      n_os <- as.list(nARUs$n_os) |>
+        stats::setNames(nARUs[[stratum_name]])
+      n_strata <- as.list(nARUs$n) |>
+        stats::setNames(nARUs[[stratum_name]])
+
+    } else {
+      # Check list (convert if vector)
+      nARUs <- as.list(nARUs)
+      if(length(os) > 1) os <- as.list(os)
+
+      # Problem: List not named correctly
+      if(!(rlang::is_named(nARUs) && all(names(nARUs) %in% strata_vector))) {
+        abort_strat()
+      }
+
+      # Problem: List not named correctly (and not length = 1)
+      if(!((rlang::is_named(os) && all(names(os) %in% strata_vector)) ||
+           length(os) == 1)) {
+        abrot_strat("`os` must be a single value, or a vector/list named by strata")
+      }
+
+      n_strata <- nARUs
+
+      if(!rlang::is_named(os) && length(os) == 1) {
+        n_os <- lapply(n_strata, \(x) round(x * os))
+
+        # If all 0, use NULL
+        if(all(vapply(n_os, \(x) x == 0, logical(1)))) n_os <- NULL
+      } else n_os <- os
+    }
+
+    # Problem: Chose stratification, but only one strata
+    if(length(n_strata) == 1 || (rlang::is_named(n_os) && length(n_os) == 1)) {
+      abort_strat("There is only one stratum")
     }
   }
 
-  set_seed(seed, {
+  s <- set_seed(seed, {
     purrr::map(
       1:num_runs,
       ~ spsurvey::grts(sframe = probs,
                        n_over = n_os,
-                       n_base = Stratdsgn,
+                       n_base = n_strata,
                        stratum_var = stratum_name,
                        mindis = mindis,
                        DesignID = "sample",
@@ -91,6 +189,20 @@ run_grts_on_BASS <- function(probs, num_runs, nARUs, os,
                        maxtry = maxtry)
     )
   })
+
+  # If only one run
+  if(length(s) == 1) s <- s[[1]]
+
+  s
+}
+
+abort_strat <- function(msg = NULL) {
+  m <- "Not all requirements met for sampling with stratification"
+  if(is.null(msg)) {
+    msg <- paste0("`nARUs` must be a data frame with appropriate ",
+                  "columns, or vector/list named by strata")
+  }
+  rlang::abort(c(m, "x" = msg), call = NULL)
 }
 
 
