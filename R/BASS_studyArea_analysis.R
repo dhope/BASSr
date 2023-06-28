@@ -212,9 +212,15 @@ abort_strat <- function(msg = NULL) {
 #' @param study_area_results Study area results of BASS
 #' @param nARUs Number of ARUs to deploy
 #'
-#' @return
-#'
+#' @name getresults_BASS-deprecated
+NULL
+
+#' @rdname BASSr-deprecated
+#' @export
 getresults_BASS <- function(grts_output, study_area_results, nARUs) {
+
+  .Deprecated(msg = "This function is depreciated")
+
   fbr_t <- study_area_results %>% transpose()
   landcover <- fbr_t %>% .[["landcover"]]
   studyareas <- fbr_t$study_area %>% do.call("c", .)

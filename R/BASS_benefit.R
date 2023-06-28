@@ -185,10 +185,15 @@ prepare_hab_long <- function(land_hex, stratum_id = NULL) {
 #' @param land_hex Att frame
 #' @param quick run it using CPP quick calc
 #'
-#' @return
+#' @name subsample_grts_and_calc_benefit-deprecated
+NULL
+
+#' @rdname BASSr-deprecated
 #' @export
 subsample_grts_and_calc_benefit <- function(n_samples, num_runs, grts_file, land_hex,
                                             quick = T) {
+
+  .Deprecated(msg = "This function is depreciated")
   runs_to_pull <- sample(1:1000, num_runs)
 
   grts_res <- readr::read_rds(grts_file)[n_samples] %>%

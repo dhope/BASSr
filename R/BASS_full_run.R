@@ -101,14 +101,16 @@ full_BASS_run <- function(land_hex, num_runs, n_samples, costs = NULL,
 #' @param n_samples The number of samples to draw in each sample
 #' @param costs the cost table for each hexagon id
 #'
-#' @inheritParams common_docs
-#'
-#' @return a table with inclusion probabilities
+#' @name noGRTS_BASS_run-deprecated
+NULL
+
+#' @rdname BASSr-deprecated
 #' @export
-#'
 noGRTS_BASS_run <- function(land_hex, samples, num_runs, n_samples, costs,
                             crs = 4326, coords = c("lon", "lat"),
                             quiet = FALSE) {
+
+  .Deprecated(msg = "This function is depreciated")
 
   land_hex <- check_land_hex(land_hex, crs, coords, quiet)
 
