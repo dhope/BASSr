@@ -6,7 +6,7 @@
         "names": {
           "type": "character",
           "attributes": {},
-          "value": ["siteID", "siteuse", "replsite", "lon_WGS84", "lat_WGS84", "stratum", "wgt", "ip", "caty", "hex_id", "province", "LC1", "LC2", "LC3", "LC4", "LC5", "LC6", "x", "run", "num_runs", "n_samples"]
+          "value": ["siteID", "siteuse", "replsite", "lon_WGS84", "lat_WGS84", "stratum", "wgt", "ip", "caty", "hex_id", "province", "water", "LC1", "LC2", "LC3", "LC4", "LC5", "LC6", "x", "run", "num_runs", "n_samples"]
         },
         "row.names": {
           "type": "integer",
@@ -24,7 +24,7 @@
             "names": {
               "type": "character",
               "attributes": {},
-              "value": ["siteID", "siteuse", "replsite", "lon_WGS84", "lat_WGS84", "stratum", "wgt", "ip", "caty", "hex_id", "province", "LC1", "LC2", "LC3", "LC4", "LC5", "LC6", "run", "num_runs", "n_samples"]
+              "value": ["siteID", "siteuse", "replsite", "lon_WGS84", "lat_WGS84", "stratum", "wgt", "ip", "caty", "hex_id", "province", "water", "LC1", "LC2", "LC3", "LC4", "LC5", "LC6", "run", "num_runs", "n_samples"]
             },
             "levels": {
               "type": "character",
@@ -37,7 +37,7 @@
               "value": ["factor"]
             }
           },
-          "value": ["NA", "NA", "NA", "NA", "NA", "NA", "NA", "NA", "NA", "NA", "NA", "NA", "NA", "NA", "NA", "NA", "NA", "NA", "NA", "NA"]
+          "value": ["NA", "NA", "NA", "NA", "NA", "NA", "NA", "NA", "NA", "NA", "NA", "NA", "NA", "NA", "NA", "NA", "NA", "NA", "NA", "NA", "NA"]
         },
         "class": {
           "type": "character",
@@ -100,12 +100,17 @@
               "value": ["glue", "character"]
             }
           },
-          "value": ["SA_0034", "SA_0031", "SA_0016", "SA_0047", "SA_0010", "SA_0019", "SA_0041", "SA_0025", "SA_0018", "SA_0041", "SA_0025", "SA_0018", "SA_0026", "SA_0051", "SA_0038", "SA_0033", "SA_0022", "SA_0011", "SA_0009", "SA_0033", "SA_0051", "SA_0015", "SA_0011", "SA_0046", "SA_0025", "SA_0027", "SA_0047", "SA_0047", "SA_0011", "SA_0018"]
+          "value": ["SA_34", "SA_31", "SA_16", "SA_47", "SA_10", "SA_19", "SA_41", "SA_25", "SA_18", "SA_41", "SA_25", "SA_18", "SA_26", "SA_51", "SA_38", "SA_33", "SA_22", "SA_11", "SA_09", "SA_33", "SA_51", "SA_15", "SA_11", "SA_46", "SA_25", "SA_27", "SA_47", "SA_47", "SA_11", "SA_18"]
         },
         {
           "type": "character",
           "attributes": {},
           "value": ["ON", "ON", "ON", "ON", "ON", "ON", "ON", "ON", "ON", "ON", "ON", "ON", "ON", "ON", "ON", "ON", "ON", "ON", "ON", "ON", "ON", "ON", "ON", "ON", "ON", "ON", "ON", "ON", "ON", "ON"]
+        },
+        {
+          "type": "logical",
+          "attributes": {},
+          "value": [false, false, false, false, false, true, false, false, true, false, false, true, true, true, false, false, false, false, false, false, true, true, false, false, false, false, false, false, false, true]
         },
         {
           "type": "double",

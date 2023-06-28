@@ -22,7 +22,7 @@
 #'   land_hex = psu_hexagons,
 #'   samples = psu_samples,
 #'   hex_id = hex_id,
-#'   non_random_set = c("SA_0009", "SA_0022", "SA_0047", "SA_0052"))
+#'   non_random_set = c("SA_09", "SA_22", "SA_47", "SA_52"))
 #'
 #' # Specify a non-random set
 #'
@@ -30,7 +30,7 @@
 #'  land_hex = psu_hexagons,
 #'  samples = psu_samples,
 #'  hex_id = hex_id,
-#'  non_random_set = c("SA_0009", "SA_0022", "SA_0047", "SA_0052"))
+#'  non_random_set = c("SA_09", "SA_22", "SA_47", "SA_52"))
 #'
 #' # Without GRTS
 #'
