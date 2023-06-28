@@ -8,7 +8,7 @@
 #'
 #' @inheritParams common_docs
 #'
-#' @return
+#' @return (Spatial) Data frame with cleaned land cover column names.
 #' @export
 #'
 #' @examples

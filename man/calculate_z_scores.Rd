@@ -9,6 +9,9 @@ calculate_z_scores(land_hex, hex_id, stratum_id = NULL, quiet = FALSE)
 \arguments{
 \item{quiet}{}
 }
+\value{
+data frame
+}
 \description{
 Calculate z-scores for each hexagon by sum of individual z scores
 }

@@ -16,6 +16,8 @@ Stratum ID (see \code{hex_id} and \code{stratum_id} respectively).}
 
 \item{hex_id}{Columns. Identifies hexagon ids (e.g., \code{hex_id} or \code{ET_Index}).}
 
+\item{omit_flag}{Column identifying hexes to omit (e.g., water hexes).}
+
 \item{costs}{Data frame. Costs for each hexagon in a RawCost format.}
 
 \item{crs}{Numeric, character, or sf/sfc. Coordinate reference system. Must
@@ -27,6 +29,8 @@ coordinates (default \code{c("lon", "lat")}).}
 \item{seed}{Numeric. Random seed to use for random sampling. Seed only
 applies to specific sampling events (does not change seed in the
 environment). \code{NULL} does not set a seed.}
+
+\item{quiet}{Logical. Whether to suppress progress messages.}
 }
 \description{
 Common arguments and documentation for various functions

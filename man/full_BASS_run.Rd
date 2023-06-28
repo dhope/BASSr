@@ -39,6 +39,8 @@ Stratum ID (see \code{hex_id} and \code{stratum_id} respectively).}
 \item{stratum_id}{Column. Identifies larger area (e.g., \code{StudyAreaID} or
 \code{Province}).}
 
+\item{omit_flag}{Column identifying hexes to omit (e.g., water hexes).}
+
 \item{non_ran_set}{Non random set that is added to the hypothetical sample
 set in benefit calculation.}
 
@@ -57,6 +59,8 @@ coordinates (default \code{c("lon", "lat")}).}
 \item{seed}{Numeric. Random seed to use for random sampling. Seed only
 applies to specific sampling events (does not change seed in the
 environment). \code{NULL} does not set a seed.}
+
+\item{quiet}{Logical. Whether to suppress progress messages.}
 
 \item{return_all}{return each piece of BASS implementation}
 }
@@ -77,10 +81,13 @@ d <- full_BASS_run(
   costs = psu_costs,
   hex_id = hex_id)
 
+# Omit water hexes
+
 d <- full_BASS_run(
   land_hex = psu_hexagons,
   num_runs = 10,
-  n_samples = 0,
+  n_samples = 3,
   costs = psu_costs,
-  hex_id = hex_id)
+  hex_id = hex_id,
+  omit_flag = water)
 }

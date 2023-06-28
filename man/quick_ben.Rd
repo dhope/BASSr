@@ -14,8 +14,7 @@ quick_ben(
 )
 }
 \arguments{
-\item{d}{Hexagon data.frame - Needs to include Land Cover types in format
-LC_}
+\item{d}{Hex data frame - Needs land cover types in columns labelled \code{LC}}
 
 \item{samples}{Hypothetical sample set}
 
@@ -25,8 +24,11 @@ LC_}
 
 \item{print}{print details}
 
-\item{land_cover_weights}{a data frame with lc specifying land cover and
-'weights' specifying weight.}
+\item{land_cover_weights}{a data frame with \code{lc} specifying land cover and
+\code{weights} specifying weight.}
+}
+\value{
+data frame with benefits per hex
 }
 \description{
 Quick Benefits

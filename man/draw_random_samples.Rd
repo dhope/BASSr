@@ -38,6 +38,8 @@ coordinates (default \code{c("lon", "lat")}).}
 \item{seed}{Numeric. Random seed to use for random sampling. Seed only
 applies to specific sampling events (does not change seed in the
 environment). \code{NULL} does not set a seed.}
+
+\item{quiet}{Logical. Whether to suppress progress messages.}
 }
 \value{
 Samples as spatial data frame.

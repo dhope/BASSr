@@ -17,13 +17,34 @@ calculate_benefit(
 )
 }
 \arguments{
+\item{land_hex}{(Spatial) Data frame. Land Cover data by hexagon. If
+non-spatial, will be converted to spatial sf data frame using the \code{crs} and
+\code{coords} arguments. Requires columns identifying the Hex ID as well as the
+Stratum ID (see \code{hex_id} and \code{stratum_id} respectively).}
+
 \item{samples}{(Spatial) Data frame. Results from \code{draw_random_samples()}.}
+
+\item{hex_id}{Columns. Identifies hexagon ids (e.g., \code{hex_id} or \code{ET_Index}).}
+
+\item{stratum_id}{Column. Identifies larger area (e.g., \code{StudyAreaID} or
+\code{Province}).}
 
 \item{non_random_set}{Set of hexagons to include as a non randomly selected
 set}
 
 \item{land_cover_weights}{Data table with 'lc' and 'weights' column. Or could
 be NULL to have all equal.}
+
+\item{crs}{Numeric, character, or sf/sfc. Coordinate reference system. Must
+be valid input to \code{sf::st_crs()}.}
+
+\item{coords}{Character vector. Names of the columns containing X and Y
+coordinates (default \code{c("lon", "lat")}).}
+
+\item{quiet}{Logical. Whether to suppress progress messages.}
+}
+\value{
+Spatial data frame with benefits per hex
 }
 \description{
 Calculate the benefit of a hexagon from  grts results.
@@ -36,7 +57,7 @@ calculate_benefit(
   land_hex = psu_hexagons,
   samples = psu_samples,
   hex_id = hex_id,
-  non_random_set = c("SA_0009", "SA_0022", "SA_0047", "SA_0052"))
+  non_random_set = c("SA_09", "SA_22", "SA_47", "SA_52"))
 
 # Specify a non-random set
 
@@ -44,7 +65,7 @@ calculate_benefit(
  land_hex = psu_hexagons,
  samples = psu_samples,
  hex_id = hex_id,
- non_random_set = c("SA_0009", "SA_0022", "SA_0047", "SA_0052"))
+ non_random_set = c("SA_09", "SA_22", "SA_47", "SA_52"))
 
 # Without GRTS
 

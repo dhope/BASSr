@@ -11,7 +11,9 @@
 #' @param land_cover_weights Data table with 'lc' and 'weights' column. Or could
 #'   be NULL to have all equal.
 #'
-#' @return
+#' @inheritParams common_docs
+#'
+#' @return Spatial data frame with benefits per hex
 #' @export
 #'
 #' @examples
@@ -130,9 +132,10 @@ calculate_benefit <- function(land_hex, samples,
 #' Land cover attributes (columns starting with `LC`) are summarized by total
 #' and proportion of area.
 #'
-#' @inheritParams common_docs
+#' @param land_hex Spatial hex grid with Land cover attributes
+#' @param stratum_id Column with strata labelled
 #'
-#' @return Sumary of land cover types by area
+#' @return Summary of land cover types by area
 #'
 #' @noRd
 calculate_land_cover_summary <- function(land_hex, stratum_id){
@@ -153,7 +156,8 @@ calculate_land_cover_summary <- function(land_hex, stratum_id){
 #' Land cover attributes (columns starting with `LC`) are summarized by total
 #' and proportion of area.
 #'
-#' @inheritParams common_docs
+#' @param land_hex Spatial hex grid with Land cover attributes
+#' @param stratum_id Column with strata labelled
 #'
 #' @return Long version with summarized area
 #'
@@ -213,17 +217,16 @@ subsample_grts_and_calc_benefit <- function(n_samples, num_runs, grts_file, land
 
 #' Quick Benefits
 #'
-#' @param d Hexagon data.frame - Needs to include Land Cover types in format
-#'   LC_
+#' @param d Hex data frame - Needs land cover types in columns labelled `LC`
 #' @param samples Hypothetical sample set
 #' @param land_cover_summary Land cover summary for larger area
 #' @param print print details
-#' @param land_cover_weights a data frame with lc specifying land cover and
-#'   'weights' specifying weight.
+#' @param land_cover_weights a data frame with `lc` specifying land cover and
+#'   `weights` specifying weight.
 #'
 #' @inheritParams common_docs
 #'
-#' @return
+#' @return data frame with benefits per hex
 #' @export
 quick_ben <- function(d, samples, land_cover_summary, hex_id, print,
                       land_cover_weights = NULL) {

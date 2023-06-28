@@ -49,6 +49,10 @@ sampling.}
 applies to specific sampling events (does not change seed in the
 environment). \code{NULL} does not set a seed.}
 }
+\value{
+If \code{num_runs} is 1, a single \code{spsurvey} object, otherwise a list of
+\code{spsurvey} objects.
+}
 \description{
 Sample sites based on the cost/benefit probabilities calculated in previous
 steps. Sites can be sampled with or without stratification.

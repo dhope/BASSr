@@ -12,6 +12,11 @@ clean_land_cover(land_raw, pattern = "CLC15_", append = "", quiet = FALSE)
 \item{pattern}{Character. Pattern to match and replace with 'LC'}
 
 \item{append}{Character. Text to append to end of land cover code}
+
+\item{quiet}{Logical. Whether to suppress progress messages.}
+}
+\value{
+(Spatial) Data frame with cleaned land cover column names.
 }
 \description{
 This is a general function to clean land cover columns.

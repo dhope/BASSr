@@ -38,6 +38,9 @@ estimate_cost_study_area(
 
 \item{vars}{}
 }
+\value{
+data frame
+}
 \description{
 Cost model estimate
 }

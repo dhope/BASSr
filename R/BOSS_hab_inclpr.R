@@ -53,7 +53,7 @@ calculate_BOSS_hab_inlc_pr <- function(land_hex,
 #' @param stratum_id
 #' @param quiet
 #'
-#' @return
+#' @return data frame
 #'
 #' @examples
 calculate_z_scores <-  function(land_hex,

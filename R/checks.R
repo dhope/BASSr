@@ -75,8 +75,8 @@ check_land_cover <- function(land_hex) {
 #'
 #' Checks for polygons and converts to points if necessary.
 #'
-#' @param land_hex
-#' @param quiet
+#' @param land_hex Spatial hex grid with Land cover attributes
+#' @param quiet Logical. Whether to suppress progress messages.
 #'
 #' @noRd
 check_points <- function(land_hex, quiet) {

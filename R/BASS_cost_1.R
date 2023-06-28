@@ -64,7 +64,7 @@ cost_vars <- list(
 #' @param AirportType Column with nearest airport type
 #' @param vars
 #'
-#' @return
+#' @return data frame
 #' @export
 estimate_cost_study_area <- function(narus, StudyAreas, pr, sr, wr = 0,
                                      dist_base_sa, dist_airport_sa,
@@ -257,7 +257,7 @@ getroaddensity <- function(hexes, sa, pr, sr, wr, r, idcol, ...) {
 #' @param ... You can include multisession with the furrr package. Needs to include Multicor=T & Cores = int
 #'
 #'
-#' @return
+#' @return data frame
 #' @export
 #'
 #' @examples

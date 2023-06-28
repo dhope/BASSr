@@ -20,7 +20,8 @@
 #'
 #' @inheritParams common_docs
 #'
-#' @return
+#' @return If `num_runs` is 1, a single `spsurvey` object, otherwise a list of
+#'   `spsurvey` objects.
 #' @export
 #'
 #' @examples

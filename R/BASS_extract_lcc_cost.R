@@ -258,7 +258,6 @@ extract_habitat_cost <- function(number_iterations,
 #' @param writeout Logical - write output
 #' @param outpath  Location of output
 #'
-#' @return
 #'
 #' @name genraster-deprecated
 NULL

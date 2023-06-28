@@ -18,6 +18,7 @@
 #' @param seed Numeric. Random seed to use for random sampling. Seed only
 #'   applies to specific sampling events (does not change seed in the
 #'   environment). `NULL` does not set a seed.
+#' @param quiet Logical. Whether to suppress progress messages.
 #'
 #' @details
 #' Use `@inheritParams common_docs` to include the above in any function

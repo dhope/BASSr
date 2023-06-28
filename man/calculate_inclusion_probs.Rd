@@ -24,12 +24,11 @@ calculate_inclusion_probs(
 \item{stratum_id}{Column containing larger area id (e.g., Province,
 StudyAreaID). Default StudyAreaID.}
 
+\item{omit_flag}{Column identifying hexes to omit (e.g., water hexes).}
+
 \item{benefit_weight}{Numeric. Weight assigned to benefit in the selection
 probabilities. 0.5 is equal weighting of cost and benefits. 1.0 is zero
 weighting to cost. Default 0.5.}
-
-\item{omit}{Column identifying hexes to omit (e.g., water hexes). Default
-INLAKE.}
 }
 \value{
 A data frame with full inclusion probabilities for each raster.
@@ -47,5 +46,13 @@ inc <- calculate_inclusion_probs(
   benefits = b,
   costs = psu_costs,
   hex_id = hex_id)
+
+# Omit water hexes (identified by column `water`)
+
+inc <- calculate_inclusion_probs(
+  benefits = b,
+  costs = psu_costs,
+  hex_id = hex_id,
+  omit_flag = water)
 
 }
