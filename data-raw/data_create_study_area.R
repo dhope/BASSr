@@ -1,15 +1,18 @@
-# TODO: Update to use new create_study_area()
 
-withr::with_seed(1234, {
-  nr <-  NLMR::nlm_randomcluster(
-    ncol = 300,
-    nrow = 300,
-    p = 0.4,
-    ai = c(0.05, 0.1, 0.15, 0.25, 0.25, 0.5),
-    rescale = FALSE)
-})
+# Time consuming, only rerun if really needed
+if(FALSE) {
+  withr::with_seed(1234, {
+    nr <-  NLMR::nlm_randomcluster(
+      ncol = 300,
+      nrow = 300,
+      p = 0.4,
+      ai = c(0.05, 0.1, 0.15, 0.25, 0.25, 0.5),
+      rescale = FALSE)
+  })
+  raster::crs(nr) <- 3161
+  usethis::use_data(nr, overwrite = TRUE)
+}
 
-raster::crs(nr) <- 3161
 
 # nr_classified <- landscapetools::util_classify(nr, weighting = rep(1/6, 6))
 # landscapetools::show_landscape(nr_classified)
@@ -23,10 +26,10 @@ stars_df <- nr %>%
   sf::st_as_sf()
 
 psu_hexagons <- create_study_area(
-  nr, study_area_size = 50, study_unit_size = .5, units = "m", output = 'large') |>
+  stars_df, hexagon_size = 50, units = "m", HexagonID_label = "hex_id", HexagonID_prefix = "SA") |>
   sf::st_filter(bbx, .predicate = sf::st_covered_by) %>%
-  dplyr::mutate(province = "ON") %>%
-  dplyr::rename(hex_id = StudyAreaID)
+  dplyr::mutate(province = "ON",
+                water = withr::with_seed(1234, sample(c(TRUE, FALSE), dplyr::n(), replace = TRUE)))
 
 ssu_points <- purrr::map_df(
   1:nrow(psu_hexagons),
@@ -45,10 +48,11 @@ psu_hexagons <- sf::st_join(psu_hexagons, stars_df) %>%
                      values_fill = list(Area = units::set_units(0, "m^2"))) %>%
   dplyr::mutate(province = "ON") %>%
   dplyr::left_join(psu_hexagons, ., by = c("hex_id", "province"))
+
 usethis::use_data(psu_hexagons, overwrite = TRUE)
 
 ssu_land_cover <- sf::st_buffer(ssu_points, 2.5) %>%
-  st_join(stars_df) %>%
+  sf::st_join(stars_df) %>%
   dplyr::mutate(Area = sf::st_area(.)) |>
   sf::st_drop_geometry() |>
   dplyr::group_by(hex_id, ssuID, clumps) |>
@@ -68,7 +72,7 @@ withr::with_seed(1234, {
     dplyr::rowwise() %>%
     dplyr::mutate(area = LC1 + LC2 + LC3 + LC4 + LC5 + LC6) %>%
     dplyr::ungroup() %>%
-    dplyr::select(hex_id, province, area) %>%
+    dplyr::select(hex_id, province, water, area) %>%
     dplyr::mutate(
       pr = runif(n = dplyr::n(), min = 0, max = 0.9), #' primary road buffer proportion of study area
       sr = runif(n = dplyr::n(), min = 0, max = 0.9-pr), #' secondary road proportion of study area
