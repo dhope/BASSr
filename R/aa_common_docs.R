@@ -9,6 +9,7 @@
 #' @param stratum_id Column. Identifies larger area (e.g., `StudyAreaID` or
 #'   `Province`).
 #' @param hex_id Columns. Identifies hexagon ids (e.g., `hex_id` or `ET_Index`).
+#' @param omit_flag Column identifying hexes to omit (e.g., water hexes).
 #' @param costs Data frame. Costs for each hexagon in a RawCost format.
 #' @param crs Numeric, character, or sf/sfc. Coordinate reference system. Must
 #'   be valid input to `sf::st_crs()`.

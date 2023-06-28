@@ -5,8 +5,6 @@
 #' @param benefits Spatial Data frame. Benefits associated with each hexagon
 #'   (output of `calculate_benefits()`)
 #' @param hex_id Column containing hexagon IDs.
-#' @param omit Column identifying hexes to omit (e.g., water hexes). Default
-#'   INLAKE.
 #' @param stratum_id Column containing larger area id (e.g., Province,
 #'   StudyAreaID). Default StudyAreaID.
 #' @param benefit_weight Numeric. Weight assigned to benefit in the selection
@@ -29,6 +27,14 @@
 #'   benefits = b,
 #'   costs = psu_costs,
 #'   hex_id = hex_id)
+#'
+#' # Omit water hexes (identified by column `water`)
+#'
+#' inc <- calculate_inclusion_probs(
+#'   benefits = b,
+#'   costs = psu_costs,
+#'   hex_id = hex_id,
+#'   omit_flag = water)
 #'
 calculate_inclusion_probs <- function(benefits, costs,
                                       hex_id, stratum_id = NULL,

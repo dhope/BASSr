@@ -26,12 +26,15 @@
 #'   costs = psu_costs,
 #'   hex_id = hex_id)
 #'
+#' # Omit water hexes
+#'
 #' d <- full_BASS_run(
 #'   land_hex = psu_hexagons,
 #'   num_runs = 10,
-#'   n_samples = 0,
+#'   n_samples = 3,
 #'   costs = psu_costs,
-#'   hex_id = hex_id)
+#'   hex_id = hex_id,
+#'   omit_flag = water)
 
 full_BASS_run <- function(land_hex, num_runs, n_samples, costs = NULL,
                           hex_id, stratum_id = NULL, omit_flag = NULL,
@@ -70,6 +73,7 @@ full_BASS_run <- function(land_hex, num_runs, n_samples, costs = NULL,
     r <- calculate_inclusion_probs(
       benefits = benefits, costs = costs,
       hex_id = {{ hex_id }}, stratum_id = {{ stratum_id }},
+      omit_flag = {{ omit_flag }},
       benefit_weight = benefit_weight)
     type <- "inclusion_probs"
   } else {
