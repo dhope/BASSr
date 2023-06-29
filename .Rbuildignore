@@ -12,4 +12,20 @@
 ^JUNK
 ^LICENSE\.md$
 ^\.gitignore$
+^\.github$
+
 ^CODE_DESIGN.md$
+^README.Rmd$
+^RELEASE.R$
+^data-raw$
+
+
+# Temp omit for checking
+# ^R/Add_points.R$
+# ^R/BASS_cost_1.R$
+# ^R/BASS_extract_lcc_cost.R$
+# ^R/BOSS_hab_inclpr.R$
+# ^R/downweight.R$
+# ^R/Full_Run_w_SampleSelect.R$
+# ^R/InternalSSU_gen.R$
+# ^R/SSU_selection_methods.R$

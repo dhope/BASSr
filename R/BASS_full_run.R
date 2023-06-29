@@ -32,7 +32,7 @@
 
 full_BASS_run <- function(land_hex, num_runs, n_samples, costs = NULL,
                           hex_id, stratum_id = NULL, omit_flag = NULL,
-                          non_ran_set = NULL,
+                          non_random_set = NULL,
                           benefit_weight = 0.5, land_cover_weights = NULL,
                           return_grts = FALSE,
                           crs = 4326, coords = c("lon", "lat"),
@@ -56,7 +56,7 @@ full_BASS_run <- function(land_hex, num_runs, n_samples, costs = NULL,
   # Benefits
   benefits <- calculate_benefit(
     land_hex = land_hex, samples = grts_output,
-    non_random_set = non_ran_set,
+    non_random_set = non_random_set,
     hex_id = {{ hex_id }},
     stratum_id = {{ stratum_id }},
     land_cover_weights = land_cover_weights
@@ -82,7 +82,7 @@ full_BASS_run <- function(land_hex, num_runs, n_samples, costs = NULL,
 
 
   # GRTS
-  if(return_grts) r <- setNames(list(r, grts_output), c(type, "grts_output"))
+  if(return_grts) r <- stats::setNames(list(r, grts_output), c(type, "grts_output"))
 
   r
 }

@@ -1,5 +1,5 @@
 
-# Time consuming, only rerun if really needed
+# Time consuming, only re-run if really needed
 if(FALSE) {
   withr::with_seed(1234, {
     nr <-  NLMR::nlm_randomcluster(
@@ -10,9 +10,10 @@ if(FALSE) {
       rescale = FALSE)
   })
   raster::crs(nr) <- 3161
-  usethis::use_data(nr, overwrite = TRUE)
+  saveRDS(nr, "data-raw/nr.rds")
 }
 
+nr <- readRDS("data-raw/nr.rds")
 
 # nr_classified <- landscapetools::util_classify(nr, weighting = rep(1/6, 6))
 # landscapetools::show_landscape(nr_classified)

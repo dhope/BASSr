@@ -147,3 +147,4 @@
 #'   \item{province}{Province code for that hex}
 #' }
 #' @source Data generated in data-raw/data_create_study_area.R
+"ssu_land_cover"

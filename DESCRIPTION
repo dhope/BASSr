@@ -19,8 +19,10 @@ Imports:
     glue,
     methods,
     Rcpp,
-    magrittr
+    magrittr,
+    stringr (>= 1.5.0)
 Suggests:
+    ggplot2,
     knitr,
     rmarkdown,
     testthat (>= 3.0.0),

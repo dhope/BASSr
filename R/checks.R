@@ -166,7 +166,7 @@ check_costs <- function(costs, hex_id, omit_flag) {
     }
   }
 
-  costs
+  sf::st_drop_geometry(costs)
 }
 
 #' Check if `col` is in `data` (tidyeval style)

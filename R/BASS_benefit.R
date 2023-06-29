@@ -254,7 +254,7 @@ quick_ben <- function(d, samples, land_cover_summary, hex_id, print,
   }
   total <- land_cover_summary  |>
     dplyr::select("lc", "area")  |>
-    tidyr::pivot_wider(names_from = lc, values_from = "area")
+    tidyr::pivot_wider(names_from = "lc", values_from = "area")
 
   total <- total[names(hexes)]
 
@@ -264,12 +264,12 @@ quick_ben <- function(d, samples, land_cover_summary, hex_id, print,
              "This will not calculate accurate benefit values."), call = NULL)
   }
 
-  samp <-  dplyr::select(samples, matches("LC\\d"))
+  samp <-  dplyr::select(samples, dplyr::matches("LC\\d"))
 
   if (!all(names(hexes) %in% names(samp))) {
     nm <- names(hexes)[!names(hexes) %in% names(samp)]
     extraN <- dplyr::select(hexes, dplyr::all_of(.env$nm))  |>
-      dplyr::mutate(across(.funs = ~ {.x * 0}))
+      dplyr::mutate(dplyr::across(.cols = dplyr::everything(), .funs = ~ .x * 0))
     samp <- dplyr::bind_cols(samp, extraN)
   }
   samp <- samp[names(hexes)]
@@ -290,10 +290,10 @@ quick_ben <- function(d, samples, land_cover_summary, hex_id, print,
   }
 
   if (all(round(rowSums(samp), 0) == 100) | all(round(rowSums(samp), 0) == 1)) {
-
-    rlang::warn(c("!" = "Values across LC columns in samples sum to 100 or 1, ",
-                 "i" =  "Check samples to be sure you have not input inputed percentages into your values.",
-                 "x" = "Using percentages will not calculate accurate benefit values."), call = NULL)
+    rlang::warn(
+      c("!" = "Values across LC columns in samples sum to 100 or 1, ",
+        "i" = "Check samples to be sure you have not input inputed percentages into your values.",
+        "x" = "Using percentages will not calculate accurate benefit values."), call = NULL)
   }
 
   if (all(names(hexes) != names(total))) {

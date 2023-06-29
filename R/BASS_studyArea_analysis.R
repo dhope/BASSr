@@ -159,7 +159,7 @@ run_grts_on_BASS <- function(probs, nARUs, os = NULL, num_runs = 1,
       # Problem: List not named correctly (and not length = 1)
       if(!((rlang::is_named(os) && all(names(os) %in% strata_vector)) ||
            length(os) == 1)) {
-        abrot_strat("`os` must be a single value, or a vector/list named by strata")
+        abort_strat("`os` must be a single value, or a vector/list named by strata")
       }
 
       n_strata <- nARUs
