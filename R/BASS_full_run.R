@@ -1,18 +1,12 @@
 #' A full BASS run
 #'
-#' @param num_runs The number of times to draw random samples from hexagons
-#' @param n_samples The number of samples to draw in each sample
-#' @param return_all return each piece of BASS implementation
-#' @param non_ran_set Non random set that is added to the hypothetical sample
-#'   set in benefit calculation.
-#' @param benefit_weight The weight assigned to benefit in the selection
-#'   probabilities.0.5 is equal weighting of cost and benefits. 1.0 is zero
-#'   weighting to cost.
-#' @param land_cover_weights data frame with lc and weights
+#' @param return_grts Logical. Return the `spsurvey` object.
 #'
 #' @inheritParams common_docs
 #'
-#' @return a table with inclusion probabilities
+#' @return Data frame of inclusion probabilities. Or, if `return_grts = TRUE` a
+#'   list including the data frame of inclusion probabilities as well as the
+#'   `spsurvey` grts sampling object.
 #' @export
 #'
 #' @examples

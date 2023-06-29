@@ -21,17 +21,18 @@ run_grts_on_BASS(
 \item{probs}{Data frame. Output of \code{calculate_inclusion_probs()} or
 \code{full_BASS_run()}.}
 
-\item{nARUs}{Numeric, Data frame, Vector, or List. Number of base samples to choose.
-For stratification, a named vector/list of samples per stratum, or a data frame
-with columns \code{n} for samples, \code{n_os} for oversamples and the column matching
-\code{stratum_id}.}
+\item{nARUs}{Numeric, Data frame, Vector, or List. Number of base samples to
+choose. For stratification, a named vector/list of samples per stratum, or
+a data frame with columns \code{n} for samples, \code{n_os} for oversamples and the
+column matching \code{stratum_id}.}
 
-\item{os}{Numeric, Vector, or List. Over sample size (proportional) or named vector/list of
-number of samples per stratum. Ignored if \code{nARUs} is a data frame.}
+\item{os}{Numeric, Vector, or List. Over sample size (proportional) or named
+vector/list of number of samples per stratum. Ignored if \code{nARUs} is a data
+frame.}
 
 \item{num_runs}{Numeric. Number of times to draw random samples.}
 
-\item{hex_id}{Columns. Identifies hexagon ids (e.g., \code{hex_id} or \code{ET_Index}).}
+\item{hex_id}{Column. Identifies hexagon ids (e.g., \code{hex_id} or \code{ET_Index}).}
 
 \item{stratum_id}{Column. Identifies larger area (e.g., \code{StudyAreaID} or
 \code{Province}).}

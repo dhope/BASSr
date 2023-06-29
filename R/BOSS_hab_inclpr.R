@@ -4,9 +4,8 @@
 #' Based on Van Wilgenburg et al. 2020
 #' https://doi.org/10.1371/journal.pone.0234494
 #'
-#' @param land_hex
-#' @param hex_id
-#' @param stratum_id
+#'
+#' @inheritParams common_docs
 #'
 #' @return
 #'
@@ -48,10 +47,7 @@ calculate_BOSS_hab_inlc_pr <- function(land_hex,
 
 #' Calculate z-scores for each hexagon by sum of individual z scores
 #'
-#' @param land_hex
-#' @param hex_id
-#' @param stratum_id
-#' @param quiet
+#' @inheritParams common_docs
 #'
 #' @return data frame
 #'

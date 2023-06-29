@@ -15,14 +15,14 @@ calculate_inclusion_probs(
 }
 \arguments{
 \item{benefits}{Spatial Data frame. Benefits associated with each hexagon
-(output of \code{calculate_benefits()})}
+(output of \code{calculate_benefits()}).}
 
 \item{costs}{Data frame. Costs for each hexagon in a RawCost format.}
 
-\item{hex_id}{Column containing hexagon IDs.}
+\item{hex_id}{Column. Identifies hexagon ids (e.g., \code{hex_id} or \code{ET_Index}).}
 
-\item{stratum_id}{Column containing larger area id (e.g., Province,
-StudyAreaID). Default StudyAreaID.}
+\item{stratum_id}{Column. Identifies larger area (e.g., \code{StudyAreaID} or
+\code{Province}).}
 
 \item{omit_flag}{Column identifying hexes to omit (e.g., water hexes).}
 
@@ -31,10 +31,10 @@ probabilities. 0.5 is equal weighting of cost and benefits. 1.0 is zero
 weighting to cost. Default 0.5.}
 }
 \value{
-A data frame with full inclusion probabilities for each raster.
+A data frame with full inclusion probabilities for each hex.
 }
 \description{
-Calculate the cost benefits and inclusion probabilities
+Calculate the cost-benefits and inclusion probabilities.
 }
 \examples{
 

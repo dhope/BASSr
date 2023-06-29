@@ -5,12 +5,13 @@
 #'
 #' @param probs Data frame. Output of `calculate_inclusion_probs()` or
 #'   `full_BASS_run()`.
-#' @param nARUs Numeric, Data frame, Vector, or List. Number of base samples to choose.
-#'   For stratification, a named vector/list of samples per stratum, or a data frame
-#'   with columns `n` for samples, `n_os` for oversamples and the column matching
-#'   `stratum_id`.
-#' @param os Numeric, Vector, or List. Over sample size (proportional) or named vector/list of
-#'   number of samples per stratum. Ignored if `nARUs` is a data frame.
+#' @param nARUs Numeric, Data frame, Vector, or List. Number of base samples to
+#'   choose. For stratification, a named vector/list of samples per stratum, or
+#'   a data frame with columns `n` for samples, `n_os` for oversamples and the
+#'   column matching `stratum_id`.
+#' @param os Numeric, Vector, or List. Over sample size (proportional) or named
+#'   vector/list of number of samples per stratum. Ignored if `nARUs` is a data
+#'   frame.
 #' @param remove_hexes Character Vector. Ids of hexagons to remove prior to
 #'   sampling.
 #' @param mindis Numeric. Minimum distance between sites. Passed to
@@ -197,6 +198,18 @@ run_grts_on_BASS <- function(probs, nARUs, os = NULL, num_runs = 1,
   s
 }
 
+
+
+#' Abort during stratification
+#'
+#' Wrapper around `rlang::abort()` for consistent messaging when stratification
+#' arguments are not correct.
+#'
+#' @param msg Alternative message if required (otherwise returns defaul message
+#'   regarding the `nARUs` parameter)
+#'
+#' @return
+#' @noRd
 abort_strat <- function(msg = NULL) {
   m <- "Not all requirements met for sampling with stratification"
   if(is.null(msg)) {

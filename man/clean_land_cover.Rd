@@ -22,8 +22,6 @@ clean_land_cover(land_raw, pattern = "CLC15_", append = "", quiet = FALSE)
 This is a general function to clean land cover columns.
 }
 \examples{
-
 psu_hex_clean <- clean_land_cover(psu_hex_dirty, pattern = "CLC0013_")
-
 
 }

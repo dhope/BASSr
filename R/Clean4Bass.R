@@ -12,9 +12,7 @@
 #' @export
 #'
 #' @examples
-#'
 #' psu_hex_clean <- clean_land_cover(psu_hex_dirty, pattern = "CLC0013_")
-#'
 #'
 clean_land_cover <- function(land_raw, pattern = "CLC15_", append = "",
                              quiet = FALSE) {
@@ -48,6 +46,19 @@ clean_land_cover <- function(land_raw, pattern = "CLC15_", append = "",
     )
 }
 
+#' Renaming function
+#'
+#' Removes pattern then makes sure numerics are padded with 0.
+#'
+#' @param nms Character vector. Names to be renamed
+#' @param pattern Character. Pattern to remove
+#' @param append Character. Pattern to append
+#'
+#' @examples
+#' lc_rename(c("CLCL1", "CLCL99", "CLCL3"), "CLCL", "_ON")
+#'
+#'
+#' @noRd
 lc_rename <- function(nms, pattern, append = "") {
   nms %>%
     stringr::str_remove(pattern) %>%

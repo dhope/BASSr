@@ -6,10 +6,6 @@
 #' Calculate the benefit of a hexagon from  grts results.
 #'
 #' @param samples (Spatial) Data frame. Results from `draw_random_samples()`.
-#' @param non_random_set Set of hexagons to include as a non randomly selected
-#'   set
-#' @param land_cover_weights Data table with 'lc' and 'weights' column. Or could
-#'   be NULL to have all equal.
 #'
 #' @inheritParams common_docs
 #'
@@ -217,9 +213,11 @@ subsample_grts_and_calc_benefit <- function(n_samples, num_runs, grts_file, land
 
 #' Quick Benefits
 #'
+#' Prepare data for calculating benefits quickly using C++ function, `allhexes`.
+#'
 #' @param d Hex data frame - Needs land cover types in columns labelled `LC`
 #' @param samples Hypothetical sample set
-#' @param land_cover_summary Land cover summary for larger area
+#' @param land_cover_summary Land cover summary
 #' @param print print details
 #' @param land_cover_weights a data frame with `lc` specifying land cover and
 #'   `weights` specifying weight.
@@ -227,7 +225,8 @@ subsample_grts_and_calc_benefit <- function(n_samples, num_runs, grts_file, land
 #' @inheritParams common_docs
 #'
 #' @return data frame with benefits per hex
-#' @export
+#' @noRd
+
 quick_ben <- function(d, samples, land_cover_summary, hex_id, print,
                       land_cover_weights = NULL) {
 

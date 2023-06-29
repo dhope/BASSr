@@ -1,3 +1,12 @@
+#' Check landcover column names
+#'
+#' Catches problems and tries to guide user, otherwise simply removes `pattern`
+#' from column names.
+#'
+#' @param cols Character vector. Column names to check.
+#' @param pattern Character. Pattern to search for and remove from column names.
+#'
+#' @noRd
 check_lc_names <- function(cols, pattern) {
 
   # Make sure matches
@@ -29,6 +38,20 @@ check_lc_names <- function(cols, pattern) {
   }
 }
 
+#' Check land hex data set
+#'
+#' - If not spatial, converts to sf using crs and coords
+#' - Checks that GEOMETRY are points not polygons (and converts)
+#' - Checks that landcover columns have been properly cleaned and formatted
+#'
+#' @param land_hex (Spatial) data frame of landcover hexes
+#' @param crs Numeric. For converting to spatial (higher level functions
+#'   generally assume GPS)
+#' @param coords Numeric vector. X/Y coordinates (higher level functions
+#'   generally assume lon/lat)
+#' @param quiet Logical. Whether to suppress progress/FYI messages.
+#'
+#' @noRd
 check_land_hex <- function(land_hex, crs = NULL, coords = NULL, quiet) {
 
   # If not sf, convert
@@ -61,6 +84,11 @@ check_land_hex <- function(land_hex, crs = NULL, coords = NULL, quiet) {
   land_hex
 }
 
+#' Check that land cover column names are correctly formatted
+#'
+#' @param land_hex (Spatial) data frame. Hex grid with land cover.
+#'
+#' @noRd
 check_land_cover <- function(land_hex) {
   if(!any(grepl("^LC\\d",names(land_hex)))) {
     rlang::abort(c("Land cover columns not formatted correctly",
@@ -75,8 +103,8 @@ check_land_cover <- function(land_hex) {
 #'
 #' Checks for polygons and converts to points if necessary.
 #'
-#' @param land_hex Spatial hex grid with Land cover attributes
-#' @param quiet Logical. Whether to suppress progress messages.
+#' @param land_hex Spatial data frame. Hex grid with land cover.
+#' @param quiet Logical. Whether to suppress progress/FYI) messages.
 #'
 #' @noRd
 check_points <- function(land_hex, quiet) {
@@ -96,6 +124,17 @@ check_points <- function(land_hex, quiet) {
   land_hex
 }
 
+#' Check costs data frame
+#'
+#' - Checks for appropriate columns (RawCosts, or uses NEARDIST instead)
+#' - Sets costs to `NA` where omitted.
+#'
+#' @param costs (Spatial) Data frame. Contains information on sampling costs per
+#'   hex
+#' @param hex_id Column. Hex id column
+#' @param omit_flag Column. Column of TRUE/FALSEs identifying hexes which should
+#'   be omitted from cost calculations.
+#' @noRd
 check_costs <- function(costs, hex_id, omit_flag) {
 
   if(is.null(costs)) rlang::abort("`costs` cannot be NULL", call = NULL)
@@ -151,6 +190,13 @@ check_column <- function(data, col) {
   }
 }
 
+#' Check if `col` is in `data` (text style)
+#'
+#' Must be non-NULL.
+#'
+#' @examples
+#' check_column_text(mtcars, "mpg")
+#' @noRd
 check_column_text <- function(data, col) {
   if(!col %in% names(data)) {
     rlang::abort(glue::glue(
@@ -159,6 +205,11 @@ check_column_text <- function(data, col) {
   }
 }
 
+#' Ensure CRS is valid
+#'
+#' @param crs Any object to test
+#'
+#' @noRd
 check_crs <- function(crs) {
   if(!is_crs(crs)) {
     rlang::abort(

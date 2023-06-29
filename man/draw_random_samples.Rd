@@ -24,10 +24,10 @@ Stratum ID (see \code{hex_id} and \code{stratum_id} respectively).}
 
 \item{num_runs}{Numeric. Number of times to draw random samples.}
 
-\item{n_samples}{Numeric. Number of samples to draw from each run.}
+\item{n_samples}{Numeric. Number of samples to draw in each run.}
 
-\item{use_grts}{Logical. Whether to use GRTS or just sample randomly without
-spatial dispersion.}
+\item{use_grts}{Logical. Whether to use \code{spsurvey::grts()} or just sample
+randomly without spatial dispersion.}
 
 \item{crs}{Numeric, character, or sf/sfc. Coordinate reference system. Must
 be valid input to \code{sf::st_crs()}.}
@@ -42,8 +42,13 @@ environment). \code{NULL} does not set a seed.}
 \item{quiet}{Logical. Whether to suppress progress messages.}
 }
 \value{
-Samples as spatial data frame.
+Spatial data frame of samples
 }
 \description{
 Draw random sample
+}
+\examples{
+
+draw_random_samples(psu_hexagons, num_runs = 1, n_samples = 10)
+
 }

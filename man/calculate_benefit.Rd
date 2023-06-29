@@ -24,16 +24,17 @@ Stratum ID (see \code{hex_id} and \code{stratum_id} respectively).}
 
 \item{samples}{(Spatial) Data frame. Results from \code{draw_random_samples()}.}
 
-\item{hex_id}{Columns. Identifies hexagon ids (e.g., \code{hex_id} or \code{ET_Index}).}
+\item{hex_id}{Column. Identifies hexagon ids (e.g., \code{hex_id} or \code{ET_Index}).}
 
 \item{stratum_id}{Column. Identifies larger area (e.g., \code{StudyAreaID} or
 \code{Province}).}
 
-\item{non_random_set}{Set of hexagons to include as a non randomly selected
-set}
+\item{non_random_set}{Character vector. \code{hex_id}s of hexagons to include as a
+non randomly selected set.}
 
-\item{land_cover_weights}{Data table with 'lc' and 'weights' column. Or could
-be NULL to have all equal.}
+\item{land_cover_weights}{Data frame. Proportional weights
+(\code{weights} column) for specific types of landcover (\code{lc} column). \code{lc}
+should correspond to the same landcover column names as the hex data.}
 
 \item{crs}{Numeric, character, or sf/sfc. Coordinate reference system. Must
 be valid input to \code{sf::st_crs()}.}

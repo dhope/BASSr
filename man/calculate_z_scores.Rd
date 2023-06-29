@@ -7,7 +7,17 @@
 calculate_z_scores(land_hex, hex_id, stratum_id = NULL, quiet = FALSE)
 }
 \arguments{
-\item{quiet}{}
+\item{land_hex}{(Spatial) Data frame. Land Cover data by hexagon. If
+non-spatial, will be converted to spatial sf data frame using the \code{crs} and
+\code{coords} arguments. Requires columns identifying the Hex ID as well as the
+Stratum ID (see \code{hex_id} and \code{stratum_id} respectively).}
+
+\item{hex_id}{Column. Identifies hexagon ids (e.g., \code{hex_id} or \code{ET_Index}).}
+
+\item{stratum_id}{Column. Identifies larger area (e.g., \code{StudyAreaID} or
+\code{Province}).}
+
+\item{quiet}{Logical. Whether to suppress progress messages.}
 }
 \value{
 data frame

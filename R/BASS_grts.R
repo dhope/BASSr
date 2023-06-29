@@ -5,14 +5,17 @@
 
 #' Draw random sample
 #'
-#' @param n_samples Numeric. Number of samples to draw from each run.
-#' @param use_grts Logical. Whether to use GRTS or just sample randomly without
-#'   spatial dispersion.
+#' @param use_grts Logical. Whether to use `spsurvey::grts()` or just sample
+#'   randomly without spatial dispersion.
 #'
 #' @inheritParams common_docs
 #'
-#' @return Samples as spatial data frame.
+#' @return Spatial data frame of samples
 #' @export
+#'
+#' @examples
+#'
+#' draw_random_samples(psu_hexagons, num_runs = 1, n_samples = 10)
 #'
 draw_random_samples <- function(land_hex, num_runs, n_samples,
                                 use_grts = TRUE,
