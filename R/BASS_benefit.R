@@ -52,8 +52,10 @@ calculate_benefit <- function(land_hex, samples,
                               crs = 4326, coords = c("lon", "lat"),
                               quiet = FALSE) {
 
+  # CHECKS
   # TODO: ADD CHECKS
   land_hex <- check_land_hex(land_hex, crs, coords, quiet = quiet)
+  land_hex <- dplyr::select(land_hex, -dplyr::any_of(c("area", "area_total"))) # Omit pre-existing columns
 
   # Prep data
   samples <- sf::st_drop_geometry(samples)
