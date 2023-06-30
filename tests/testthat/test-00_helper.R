@@ -53,7 +53,7 @@ test_that("create_study_area()", {
   l <- sf::st_sfc(sf::st_polygon(list(cbind(c(0,3,3,0,0),c(0,0,3,3,0)))))
 
   # TODO: Create test
-#  create_study_area(l, study_area_size = 10, study_unit_size = 1, units = "m")
+  #  create_study_area(l, study_area_size = 10, study_unit_size = 1, units = "m")
 
 
 })

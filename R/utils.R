@@ -2,7 +2,7 @@
 
 #' Add coordinates of an sf object to itself
 #'
-#' @param sf
+#' @param sf Spatial data frame
 #' @noRd
 add_coords <- function(sf) {
   # Set attributes as constant to avoid sf warnings
@@ -15,6 +15,7 @@ add_coords <- function(sf) {
     dplyr::as_tibble() %>%
     dplyr::bind_cols(sf, .)
 }
+
 
 #' Check whether value is valid CRS
 #'
