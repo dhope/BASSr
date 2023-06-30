@@ -14,10 +14,6 @@
 #'   frame.
 #' @param remove_hexes Character Vector. Ids of hexagons to remove prior to
 #'   sampling.
-#' @param mindis Numeric. Minimum distance between sites. Passed to
-#'   `spsurvey::grts()`.
-#' @param maxtry Numeric. Maximum attempts to try to obtain the minimum distance
-#'   between sites. Passed to `spsurvey::grts()`
 #'
 #' @inheritParams common_docs
 #'
@@ -63,7 +59,12 @@ run_grts_on_BASS <- function(probs, nARUs, os = NULL, num_runs = 1,
                              remove_hexes = NULL, seed = NULL) {
 
   # Checks
+  check_column(probs, {{ hex_id }})
   check_column(probs, {{ stratum_id }})
+  check_probs(probs)
+  check_int(num_runs, c(1, Inf))
+  check_int(seed, c(0, Inf))
+
   stratum_id <- rlang::enquo(stratum_id)
 
   if(!rlang::is_named(os) && length(os) == 1 && (os < 0 || os > 1)) {
@@ -78,8 +79,8 @@ run_grts_on_BASS <- function(probs, nARUs, os = NULL, num_runs = 1,
       call = NULL)
   }
 
-  # TODO: Check that NOT LIST, HAS geometry
 
+  # Prepare samples
   if(!is.null(remove_hexes)) {
     if(rlang::quo_is_null(rlang::enquo(hex_id))) {
       rlang::abort("`hex_id` must be specified to use `remove_hexes`",

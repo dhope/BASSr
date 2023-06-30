@@ -41,9 +41,14 @@ calculate_inclusion_probs <- function(benefits, costs,
   check_column(costs, {{ omit_flag }})
   check_column(costs, {{ stratum_id }})
   check_column(benefits, {{ hex_id }})
-  # TODO: add checks
+  costs <- check_costs(costs, {{ omit_flag }})
+  check_benefits(benefits)
 
-  costs <- check_costs(costs, {{ hex_id }}, {{ omit_flag }})
+  if(benefit_weight < 0 || benefit_weight > 1) {
+    rlang::abort(
+      "`benefit_weight` is a proportional weight ranging from 0 to 1",
+      call = NULL)
+  }
 
   # Add benefits
   costs <- dplyr::right_join(benefits, costs,

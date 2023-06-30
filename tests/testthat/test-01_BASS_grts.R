@@ -1,16 +1,20 @@
 test_that("draw_random_samples() - no GRTS", {
-  pp <- palmerpenguins::penguins |>
-    dplyr::mutate(across(.cols = dplyr::everything(), .fns = as.character))
-  names(pp) <- glue::glue("LC{1:ncol(pp)}")
-
   expect_equal(
     draw_random_samples(
-      land_hex = pp, num_runs = 1, n_samples = 10, use_grts = FALSE, seed = 15),
+      land_hex = psu_hexagons,
+      num_runs = 1,
+      n_samples = 10,
+      use_grts = FALSE,
+      quiet = TRUE,
+      seed = 15),
 
     withr::with_seed(seed = 15, {
-      dplyr::slice_sample(pp, n= 10) |>
-        dplyr::mutate(run = 1)
-    })
+      psu_hexagons |>
+        dplyr::mutate(run = 1) |>
+        check_land_hex(crs = 4325, coords = c("lon", "lat"), quiet = TRUE) |>
+        dplyr::slice_sample(n = 10)
+    }),
+    ignore_attr = TRUE
   )
 })
 

@@ -3,7 +3,7 @@
 #' Catches problems and tries to guide user, otherwise simply removes `pattern`
 #' from column names.
 #'
-#' @param cols Character vector. Column names to check.
+#' @param cols Character vector. Matched column names to check.
 #' @param pattern Character. Pattern to search for and remove from column names.
 #'
 #' @noRd
@@ -40,6 +40,7 @@ check_lc_names <- function(cols, pattern) {
 
 #' Check land hex data set
 #'
+#' - Check for required columns
 #' - If not spatial, converts to sf using crs and coords
 #' - Checks that GEOMETRY are points not polygons (and converts)
 #' - Checks that landcover columns have been properly cleaned and formatted
@@ -49,10 +50,13 @@ check_lc_names <- function(cols, pattern) {
 #'   generally assume GPS)
 #' @param coords Numeric vector. X/Y coordinates (higher level functions
 #'   generally assume lon/lat)
+#' @param hex_id Column. Hex id column
+#' @param stratum_id Column. Stratum column
 #' @param quiet Logical. Whether to suppress progress/FYI messages.
 #'
 #' @noRd
-check_land_hex <- function(land_hex, crs = NULL, coords = NULL, quiet) {
+check_land_hex <- function(land_hex, crs = NULL, coords = NULL, quiet = FALSE) {
+
 
   # If not sf, convert
   if (!inherits(land_hex, "sf")) {
@@ -84,6 +88,45 @@ check_land_hex <- function(land_hex, crs = NULL, coords = NULL, quiet) {
   land_hex
 }
 
+#' Check samples data set
+#'
+#' - Check for required columns
+#' - If spatial, removes geometry
+#' - Checks that subset of `land_hex`
+#'
+#' @param samples Output of `draw_random_samples()`
+#' @param hex_id Column. Hex id column
+#' @param stratum_id Column. Stratum column
+#' @param land_hex (Spatial) data frame of land cover hexes
+#'
+#' @noRd
+check_samples <- function(samples, land_hex, hex_id, stratum_id) {
+
+  samples <- sf::st_drop_geometry(samples)
+
+  s <- dplyr::select(samples, {{ hex_id }}, {{ stratum_id }}, dplyr::starts_with("LC"))
+  s <- try(dplyr::anti_join(s, land_hex, by = names(s)), silent = TRUE)
+
+  if(inherits(s, "try-error") || nrow(s) > 1) {
+    rlang::abort(
+      c("`samples` are not a subset of `land_hex`",
+        "!" = "`samples` should come from `draw_random_samples()` using the same `land_hex` as here."),
+      call = NULL)
+  }
+
+  samples
+}
+
+check_probs <- function(probs) {
+
+  if(!inherits(probs, "sf") || !"inclpr" %in% names(probs)) {
+    rlang::abort(
+      c("`probs` must be output of `calculate_inclusion_probs()`",
+        "*" = "a spatial data frame with a 'inclpr' column"), call = NULL)
+  }
+
+}
+
 #' Check that land cover column names are correctly formatted
 #'
 #' @param land_hex (Spatial) data frame. Hex grid with land cover.
@@ -107,7 +150,7 @@ check_land_cover <- function(land_hex) {
 #' @param quiet Logical. Whether to suppress progress/FYI) messages.
 #'
 #' @noRd
-check_points <- function(land_hex, quiet) {
+check_points <- function(land_hex, quiet = FALSE) {
 
   if (all(sf::st_is(land_hex, "POLYGON"))) {
     if(!quiet) {
@@ -124,6 +167,60 @@ check_points <- function(land_hex, quiet) {
   land_hex
 }
 
+#' Check that non random set contains valid hex ids
+#'
+#' - Can be NULL
+#' - Should be hex_ids from `land_hex`
+#'
+#' @param non_random_set Hex ids to compare
+#' @param land_cover Data frame with hex ids
+#' @param hex_id Column. Hex ids
+#'
+#' @noRd
+check_non_random_set <- function(non_random_set, hex_ids) {
+  if(!all(non_random_set %in% hex_ids)) {
+    rlang::abort(
+      c("`non_random_set` must contain hex ids found in `land_hex`",
+        "!" = "Some are not present in `land_hex`"), call = NULL)
+  }
+}
+
+#' Check that land cover weights are valid
+#'
+#' - Can be NULL
+#' - Check that data frame with correct columns
+#' - Warn if some land covers in the data frame do not exist in the `land_hex`
+#'   data.
+#'
+#' @param land_cover_weights Object to check (should be data frame)
+#' @param land_hex Data frame of hexs with land cover
+#'
+#' @noRd
+check_land_cover_weights <- function(land_cover_weights, land_hex) {
+  if(!is.null(land_cover_weights)) {
+    if(!inherits(land_cover_weights, "data.frame") ||
+       !all(c("lc", "weights") %in% names(land_cover_weights))) {
+      rlang::abort(
+        "`land_cover_weights` must be a data frame with columns `lc` and `weights`",
+        call = NULL)
+    }
+
+    if(!all(land_cover_weights$lc %in% stringr::str_subset(names(land_hex), "^LC"))) {
+      rlang::warn(
+        "Some land covers in `land_cover_weights` do not exist in `land_hex`",
+        call = NULL)
+    }
+  }
+}
+
+check_benefits <- function(benefits) {
+  if(!inherits(benefits, "sf") || !"benefit" %in% names(benefits)) {
+    rlang::abort(
+      c("`benefits` must be output of `calculate_benefit()`",
+        "*" = "a spatial data frame with a 'benefit' column"), call = NULL)
+  }
+}
+
 #' Check costs data frame
 #'
 #' - Checks for appropriate columns (RawCosts, or uses NEARDIST instead)
@@ -131,21 +228,12 @@ check_points <- function(land_hex, quiet) {
 #'
 #' @param costs (Spatial) Data frame. Contains information on sampling costs per
 #'   hex
-#' @param hex_id Column. Hex id column
 #' @param omit_flag Column. Column of TRUE/FALSEs identifying hexes which should
 #'   be omitted from cost calculations.
 #' @noRd
-check_costs <- function(costs, hex_id, omit_flag) {
+check_costs <- function(costs, omit_flag) {
 
   if(is.null(costs)) rlang::abort("`costs` cannot be NULL", call = NULL)
-
-  # Make RawCosts NA, on omit column
-  if(!rlang::quo_is_null(rlang::enquo(omit_flag))) {
-    costs <- dplyr::mutate(costs,
-                           RawCost = dplyr::if_else({{ omit_flag }},
-                                                    NA_real_,
-                                                    .data$RawCost))
-  }
 
   if (!"RawCost" %in% names(costs)) {
     if("NEAR_DIST" %in% names(costs)) {
@@ -166,6 +254,14 @@ check_costs <- function(costs, hex_id, omit_flag) {
     }
   }
 
+  # Make RawCosts NA, on omit column
+  if(!rlang::quo_is_null(rlang::enquo(omit_flag))) {
+    costs <- dplyr::mutate(costs,
+                           RawCost = dplyr::if_else({{ omit_flag }},
+                                                    NA_real_,
+                                                    .data$RawCost))
+  }
+
   sf::st_drop_geometry(costs)
 }
 
@@ -177,10 +273,11 @@ check_costs <- function(costs, hex_id, omit_flag) {
 #' check_column(mtcars, mpg)
 #' @noRd
 check_column <- function(data, col) {
-  col <- rlang::enquo(col)
 
-  if(!rlang::quo_is_null(col)) {
-    nm <- rlang::as_label({{ col }})
+  .col <- rlang::enquo(col)
+
+  if(!rlang::quo_is_null(.col)) {
+    nm <- rlang::as_label(.col)
 
     if(!nm %in% names(data)) {
       rlang::abort(glue::glue(
@@ -218,3 +315,17 @@ check_crs <- function(crs) {
   }
 }
 
+check_int <- function(int, range) {
+
+  if(missing(int) || (!is.null(int) && (round(int) != int || !(int >= range[1] && int <= range[2])))) {
+    rlang::abort(glue::glue(
+      "{deparse(substitute(int))} must be an integer between ",
+      "{range[1]} and {range[2]}"), call = NULL)
+  }
+}
+
+check_char <- function(char) {
+  if(!is.character(char)) {
+    rlang::abort(glue::glue("{deparse(substitute(int))} must be text"))
+  }
+}

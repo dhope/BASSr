@@ -23,6 +23,8 @@ clean_land_cover <- function(land_raw, pattern = "CLC15_", append = "",
       "`land_raw` must be a (spatial) data frame containing land cover data to be cleaned",
       call = NULL)
   }
+  check_char(pattern)
+  check_char(append)
 
   pattern <- glue::glue("^{pattern}")
   cols <- stringr::str_subset(names(land_raw), pattern)

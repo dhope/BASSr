@@ -132,7 +132,7 @@ test_that("calculate_benefit()", {
       land_hex = psu_hexagons,
       samples = psu_samples,
       hex_id = hex_id,
-      non_random_set = c("SA_09", "SA_22", "SA_47", "SA_52"),
+      non_random_set = c("SA_09", "SA_22", "SA_47"),
       quiet = TRUE)
   })
 

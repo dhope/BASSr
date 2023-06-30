@@ -23,7 +23,11 @@ draw_random_samples <- function(land_hex, num_runs, n_samples,
                                 seed = NULL, quiet = FALSE, ...) {
   args <- list(...)
 
-  # TODO: CHECKS
+  # Checks
+  land_hex <- check_land_hex(land_hex, crs, coords, quiet)
+  check_int(num_runs, range = c(1, Inf))
+  check_int(n_samples, range = c(1, Inf))
+  check_int(seed, range = c(0, Inf))
 
   if (isTRUE(use_grts)) {
 
@@ -74,9 +78,6 @@ draw_random_samples <- function(land_hex, num_runs, n_samples,
   }
 
   if (isFALSE(use_grts)) {
-
-    #TODO: add checks
-
     set_seed(seed, {
       random_sample <- purrr::map_df(
         1:num_runs,

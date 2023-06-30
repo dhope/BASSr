@@ -38,10 +38,27 @@ full_BASS_run <- function(land_hex, num_runs, n_samples, costs = NULL,
                           crs = 4326, coords = c("lon", "lat"),
                           seed = NULL, quiet = FALSE) {
 
-  # Input checks
-  land_hex <- check_land_hex(land_hex, crs, coords, quiet)
+  # Checks *also* occur inside
+  # - draw_random_samples
+  # - calculate_benefit
+  # - calculate_inclusion_probs
+  # But this way, they fail early
   check_column(land_hex, {{ hex_id }})
   check_column(land_hex, {{ stratum_id }})
+  land_hex <- check_land_hex(land_hex, crs, coords, quiet)
+  check_int(num_runs, range = c(1, Inf))
+  check_int(n_samples, range = c(1, Inf))
+  check_int(seed, range = c(0, Inf))
+
+  check_non_random_set(non_random_set, dplyr::pull(land_hex, {{ hex_id }}))
+  check_land_cover_weights(land_cover_weights, land_hex)
+
+  if (!is.null(costs)) {
+    check_column(costs, {{ hex_id }})
+    check_column(costs, {{ omit_flag }})
+    check_column(costs, {{ stratum_id }})
+    costs <- check_costs(costs, {{ omit_flag }})
+  }
 
   if (n_samples == 0) grts_output <- NULL
 

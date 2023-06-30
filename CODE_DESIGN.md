@@ -18,3 +18,5 @@ making collaboration and future modifications easier.
 ## tidyeval
 - Use {{ }} where tidyeval variable used directly
 - Use `rlang::as_label(rlang::enquo())` to get name
+  - For unclear reasons, the `check_column()` function calls have to be in the 
+    main function and cannot be moved into a sub `check_XXX()` function

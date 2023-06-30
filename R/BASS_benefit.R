@@ -20,7 +20,7 @@
 #'   land_hex = psu_hexagons,
 #'   samples = psu_samples,
 #'   hex_id = hex_id,
-#'   non_random_set = c("SA_09", "SA_22", "SA_47", "SA_52"))
+#'   non_random_set = c("SA_09", "SA_22", "SA_47"))
 #'
 #' # Specify a non-random set
 #'
@@ -28,7 +28,7 @@
 #'  land_hex = psu_hexagons,
 #'  samples = psu_samples,
 #'  hex_id = hex_id,
-#'  non_random_set = c("SA_09", "SA_22", "SA_47", "SA_52"))
+#'  non_random_set = c("SA_09", "SA_22", "SA_47"))
 #'
 #' # Without GRTS
 #'
@@ -52,13 +52,18 @@ calculate_benefit <- function(land_hex, samples,
                               crs = 4326, coords = c("lon", "lat"),
                               quiet = FALSE) {
 
-  # CHECKS
-  # TODO: ADD CHECKS
+  # Checks
+  check_column(land_hex, {{ hex_id }})
+  check_column(land_hex, {{ stratum_id }})
   land_hex <- check_land_hex(land_hex, crs, coords, quiet = quiet)
   land_hex <- dplyr::select(land_hex, -dplyr::any_of(c("area", "area_total"))) # Omit pre-existing columns
 
-  # Prep data
-  samples <- sf::st_drop_geometry(samples)
+  check_column(samples, {{ hex_id }})
+  check_column(samples, {{ stratum_id }})
+  samples <- check_samples(samples, land_hex, {{ hex_id }}, {{ stratum_id }})
+  check_non_random_set(non_random_set, dplyr::pull(land_hex, {{ hex_id }}))
+  check_land_cover_weights(land_cover_weights, land_hex)
+
 
   land_long <- prepare_hab_long(land_hex, {{ stratum_id }})
 
@@ -69,8 +74,6 @@ calculate_benefit <- function(land_hex, samples,
       dplyr::summarize(dplyr::across(dplyr::matches("LC\\d"), sum))
   }
   if (!is.null(non_random_set)) {
-
-    # TODO: CHECKS
 
     if (is.vector(non_random_set)) {
 
