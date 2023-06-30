@@ -20,7 +20,9 @@
 draw_random_samples <- function(land_hex, num_runs, n_samples,
                                 use_grts = TRUE,
                                 crs = 4326, coords = c("lon", "lat"),
-                                seed = NULL, quiet = FALSE, ...) {
+                                mindis = NULL, maxtry = 10,
+                                seed = NULL, quiet = FALSE,
+                                ...) {
   args <- list(...)
 
   # Checks
@@ -33,8 +35,6 @@ draw_random_samples <- function(land_hex, num_runs, n_samples,
 
     land_hex <- check_land_hex(land_hex, crs, coords, quiet = quiet)
 
-    mindis <-  NULL
-    maxtry <-  10
     DesignID <-  "Sample"
     list2env(args, envir = environment())
     # if(length(N)==1){

@@ -34,7 +34,7 @@ full_BASS_run <- function(land_hex, num_runs, n_samples, costs = NULL,
                           hex_id, stratum_id = NULL, omit_flag = NULL,
                           non_random_set = NULL,
                           benefit_weight = 0.5, land_cover_weights = NULL,
-                          return_grts = FALSE,
+                          return_grts = FALSE, mindis = NULL, maxtry = 10,
                           crs = 4326, coords = c("lon", "lat"),
                           seed = NULL, quiet = FALSE) {
 
@@ -66,8 +66,8 @@ full_BASS_run <- function(land_hex, num_runs, n_samples, costs = NULL,
     grts_output <- draw_random_samples(
       land_hex = land_hex,
       num_runs = num_runs, n_samples = n_samples,
-      seed = seed,
-      quiet = quiet)
+      mindis = mindis, maxtry = maxtry,
+      seed = seed, quiet = quiet)
   }
 
   # Benefits

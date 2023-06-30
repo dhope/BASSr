@@ -16,6 +16,8 @@ full_BASS_run(
   benefit_weight = 0.5,
   land_cover_weights = NULL,
   return_grts = FALSE,
+  mindis = NULL,
+  maxtry = 10,
   crs = 4326,
   coords = c("lon", "lat"),
   seed = NULL,
@@ -53,6 +55,12 @@ weighting to cost. Default 0.5.}
 should correspond to the same landcover column names as the hex data.}
 
 \item{return_grts}{Logical. Return the \code{spsurvey} object.}
+
+\item{mindis}{Numeric. Minimum distance between sites. Passed to
+\code{spsurvey::grts()}.}
+
+\item{maxtry}{Numeric. Maximum attempts to try to obtain the minimum distance
+between sites. Passed to \code{spsurvey::grts()}}
 
 \item{crs}{Numeric, character, or sf/sfc. Coordinate reference system. Must
 be valid input to \code{sf::st_crs()}.}

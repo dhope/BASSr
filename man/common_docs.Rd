@@ -39,6 +39,12 @@ weighting to cost. Default 0.5.}
 (\code{weights} column) for specific types of landcover (\code{lc} column). \code{lc}
 should correspond to the same landcover column names as the hex data.}
 
+\item{mindis}{Numeric. Minimum distance between sites. Passed to
+\code{spsurvey::grts()}.}
+
+\item{maxtry}{Numeric. Maximum attempts to try to obtain the minimum distance
+between sites. Passed to \code{spsurvey::grts()}}
+
 \item{seed}{Numeric. Random seed to use for random sampling. Seed only
 applies to specific sampling events (does not change seed in the
 environment). \code{NULL} does not set a seed.}
