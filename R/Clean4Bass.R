@@ -43,9 +43,9 @@ clean_land_cover <- function(land_raw, pattern = "CLC15_", append = "",
 
   dplyr::rename_with(
     land_raw,
-    .fn = lc_rename, pattern = pattern, append = append,
+    ~lc_rename(.x, pattern = pattern, append = append),
     .cols = dplyr::matches(pattern)
-    )
+  )
 }
 
 #' Renaming function
