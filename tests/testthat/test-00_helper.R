@@ -52,8 +52,16 @@ test_that("create_study_area()", {
 
   l <- sf::st_sfc(sf::st_polygon(list(cbind(c(0,3,3,0,0),c(0,0,3,3,0)))))
 
-  # TODO: Create test
-  #  create_study_area(l, study_area_size = 10, study_unit_size = 1, units = "m")
+  expect_silent(
+    sa <- create_study_area(
+      l, hexagon_size = 50, units = "m2",
+      HexagonID_label = "hex_id", HexagonID_prefix = "SA")
+  )
 
+  expect_s3_class(sa, "sf")
+  expect_named(sa, c("x", "hex_id"))
+  expect_equal(sa$hex_id, paste0("SA_", 1:3))
+
+  expect_true(all(round(sf::st_area(sa)) == 50))
 
 })
