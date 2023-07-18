@@ -103,7 +103,7 @@ calculate_benefit <- function(land_hex, samples,
     }
 
     random_sample_summary_widenest <- random_sample_summary_widenest %>%
-      dplyr::group_by(run) %>%
+      dplyr::group_by(.data$run) %>%
       dplyr::summarize_at(dplyr::vars(dplyr::matches("LC\\d")), sum) %>%
       dplyr::mutate(dplyr::across(dplyr::matches("LC\\d"),
                                   ~tidyr::replace_na(as.numeric(.x), 0)))

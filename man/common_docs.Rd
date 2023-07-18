@@ -41,6 +41,8 @@ should correspond to the same landcover column names as the hex data.}
 
 \item{return_grts}{Logical. Return the \code{spsurvey} object(s).}
 
+\item{...}{Extra named arguments passed on to \code{spsurvey::grts()}.}
+
 \item{seed}{Numeric. Random seed to use for random sampling. Seed only
 applies to specific sampling events (does not change seed in the
 environment). \code{NULL} does not set a seed.}

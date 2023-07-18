@@ -1,6 +1,5 @@
 #' A full BASS run
 #'
-#' @param ... Extra named arguments passed on to `spsurvey::grts()`.
 #'
 #' @inheritParams common_docs
 #' @inheritSection common_docs Extra arguments

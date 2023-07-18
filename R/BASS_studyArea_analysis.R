@@ -14,7 +14,6 @@
 #'   frame.
 #' @param remove_hexes Character Vector. Ids of hexagons to remove prior to
 #'   sampling.
-#' @param ... Extra named arguments passed on to `spsurvey::grts()`.
 #'
 #' @inheritParams common_docs
 #' @inheritSection common_docs Extra arguments
@@ -212,7 +211,6 @@ run_grts_on_BASS <- function(probs, nARUs, os = NULL, num_runs = 1,
 #' @param msg Alternative message if required (otherwise returns defaul message
 #'   regarding the `nARUs` parameter)
 #'
-#' @return
 #' @noRd
 abort_strat <- function(msg = NULL) {
   m <- "Not all requirements met for sampling with stratification"

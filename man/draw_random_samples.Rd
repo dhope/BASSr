@@ -43,6 +43,8 @@ applies to specific sampling events (does not change seed in the
 environment). \code{NULL} does not set a seed.}
 
 \item{quiet}{Logical. Whether to suppress progress messages.}
+
+\item{...}{Extra named arguments passed on to \code{spsurvey::grts()}.}
 }
 \value{
 Spatial data frame of samples

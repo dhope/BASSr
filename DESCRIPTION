@@ -12,6 +12,7 @@ Depends:
   R (>= 4.0),
 Imports:
     dplyr (>= 1.0),
+    purrr (>= 1.0.1),
     tidyr (>= 1.0.0),
     rlang (>= 0.4.0),
     spsurvey (>= 5.0),

@@ -25,6 +25,7 @@
 #'   (`weights` column) for specific types of landcover (`lc` column). `lc`
 #'   should correspond to the same landcover column names as the hex data.
 #' @param return_grts Logical. Return the `spsurvey` object(s).
+#' @param ... Extra named arguments passed on to `spsurvey::grts()`.
 #' @param seed Numeric. Random seed to use for random sampling. Seed only
 #'   applies to specific sampling events (does not change seed in the
 #'   environment). `NULL` does not set a seed.
