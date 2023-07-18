@@ -150,23 +150,25 @@ NULL
 
 #' @rdname BASSr-deprecated
 #' @export
-noGRTS_BASS_run <- function(land_hex, samples, num_runs, n_samples, costs,
-                            crs = 4326, coords = c("lon", "lat"),
-                            quiet = FALSE) {
+noGRTS_BASS_run <- function(
+    # land_hex, samples, num_runs, n_samples, costs,
+    #                         crs = 4326, coords = c("lon", "lat"),
+    #                         quiet = FALSE
+  ) {
 
-  .Deprecated(msg = "This function is depreciated")
-
-  land_hex <- check_land_hex(land_hex, crs, coords, quiet)
-
-  benefits <- calculate_benefit(samples = samples,
-                                land_hex = land_hex,
-                                output = "mean_benefit")
-
-  pointswith_inclusion <- calculate_inclusion_probs(
-    costs = costs, benefits = benefits)
-
-  # QUESTION: No actual sampling done here...
-  dplyr::mutate(pointswith_inclusion,
-                num_runs = .env$num_runs,
-                n_samples = .env$n_samples)
+  .Deprecated(msg = "This function is deprecated")
+#
+#   land_hex <- check_land_hex(land_hex, crs, coords, quiet)
+#
+#   benefits <- calculate_benefit(samples = samples,
+#                                 land_hex = land_hex,
+#                                 output = "mean_benefit")
+#
+#   pointswith_inclusion <- calculate_inclusion_probs(
+#     costs = costs, benefits = benefits)
+#
+#   # QUESTION: No actual sampling done here...
+#   dplyr::mutate(pointswith_inclusion,
+#                 num_runs = .env$num_runs,
+#                 n_samples = .env$n_samples)
 }

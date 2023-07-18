@@ -195,22 +195,23 @@ NULL
 
 #' @rdname BASSr-deprecated
 #' @export
-subsample_grts_and_calc_benefit <- function(n_samples, num_runs, grts_file, land_hex,
-                                            quick = T) {
+subsample_grts_and_calc_benefit <- function(#n_samples, num_runs, grts_file, land_hex,
+                                            #quick = T
+  ) {
 
-  .Deprecated(msg = "This function is depreciated")
-  runs_to_pull <- sample(1:1000, num_runs)
-
-  grts_res <- readr::read_rds(grts_file)[n_samples] %>%
-    tidyr::pivot_longer(
-      cols = dplyr::matches("LC\\d"),
-      names_to = "lc",
-      values_to = "area"
-    ) %>%
-    dplyr::filter(.data$run %in% .env$runs_to_pull)
-
-  calculate_benefit(grts_res = grts_res, land_hex = land_hex,
-                    output = "all", quick = quick)
+  .Deprecated(msg = "This function is deprecated")
+  # runs_to_pull <- sample(1:1000, num_runs)
+  #
+  # grts_res <- readr::read_rds(grts_file)[n_samples] %>%
+  #   tidyr::pivot_longer(
+  #     cols = dplyr::matches("LC\\d"),
+  #     names_to = "lc",
+  #     values_to = "area"
+  #   ) %>%
+  #   dplyr::filter(.data$run %in% .env$runs_to_pull)
+  #
+  # calculate_benefit(grts_res = grts_res, land_hex = land_hex,
+  #                   output = "all", quick = quick)
 }
 
 

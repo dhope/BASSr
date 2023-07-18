@@ -8,27 +8,7 @@
 \usage{
 clean_forBass(...)
 
-run_full_BASS_w_selection(
-  study_areas_hab_cost,
-  sample_units_w_hab,
-  Number_of_Study_areas,
-  Number_of_sample_units,
-  Size_of_HSS,
-  Number_of_HSS,
-  Weight_of_benefit,
-  LandCoverType,
-  RemovedLayers_,
-  Area_of_interest,
-  RandomSeed,
-  calculate_benefits = list(SA = F, SU = F),
-  only_calculate_benefits = list(SA = F, SU = F),
-  benefit_dfs = list(SA = NULL, SU = NULL),
-  returnALL = F,
-  oversample = 0,
-  weighted_benefits_df = list(SA = NULL, SU = NULL),
-  non_ran = list(SA = NULL, SU = NULL),
-  Stratum = Province
-)
+run_full_BASS_w_selection()
 }
 \arguments{
 \item{...}{Original function arguments}

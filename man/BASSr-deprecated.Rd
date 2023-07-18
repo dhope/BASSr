@@ -10,56 +10,15 @@
 \alias{getresults_BASS}
 \title{BASSr deprecated functions}
 \usage{
-subsample_grts_and_calc_benefit(
-  n_samples,
-  num_runs,
-  grts_file,
-  land_hex,
-  quick = T
-)
+subsample_grts_and_calc_benefit()
 
-extract_habitat_cost(
-  number_iterations,
-  n_samples_per_iter,
-  sample_hexes,
-  study_area_hexes,
-  id,
-  id_col,
-  hab_rast_location,
-  shape_file_list,
-  return_all_,
-  nARUs = 30,
-  hexid_col = SampleUnitID,
-  calc_cost = F,
-  calc_hab = F,
-  write_hexes = F,
-  load_hexes = T,
-  rds.loc = "output",
-  sa.rast.loc = "output",
-  quick = T
-)
+extract_habitat_cost()
 
-genraster(
-  id_col,
-  studyareas,
-  id,
-  hab_rast_location,
-  writeout = T,
-  outpath = "output"
-)
+genraster()
 
-noGRTS_BASS_run(
-  land_hex,
-  samples,
-  num_runs,
-  n_samples,
-  costs,
-  crs = 4326,
-  coords = c("lon", "lat"),
-  quiet = FALSE
-)
+noGRTS_BASS_run()
 
-getresults_BASS(grts_output, study_area_results, nARUs)
+getresults_BASS()
 }
 \description{
 \strong{Deprecated} These functions are no longer useful.
