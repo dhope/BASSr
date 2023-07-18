@@ -24,10 +24,7 @@
 #' @param land_cover_weights Data frame. Proportional weights
 #'   (`weights` column) for specific types of landcover (`lc` column). `lc`
 #'   should correspond to the same landcover column names as the hex data.
-#' @param mindis Numeric. Minimum distance between sites. Passed to
-#'   `spsurvey::grts()`.
-#' @param maxtry Numeric. Maximum attempts to try to obtain the minimum distance
-#'   between sites. Passed to `spsurvey::grts()`
+#' @param return_grts Logical. Return the `spsurvey` object(s).
 #' @param seed Numeric. Random seed to use for random sampling. Seed only
 #'   applies to specific sampling events (does not change seed in the
 #'   environment). `NULL` does not set a seed.
@@ -36,6 +33,13 @@
 #' @details
 #' Use `@inheritParams common_docs` to include the above in any function
 #' documentation with a matching argument (will only include matching args)
+#'
+#' # Extra arguments
+#'
+#' Extra named arguments for `spsurvey::grts()` can also be passed on via `...`.
+#' In particular, note that the default values for `mindis` (minimum distance
+#' between sites) is `NULL`, and `maxtry` (maximum attempts to try to obtain the
+#' minimum distance between sites) is 10.
 #'
 #' @keywords internal
 #' @name common_docs

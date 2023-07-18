@@ -1,12 +1,15 @@
 #' A full BASS run
 #'
-#' @param return_grts Logical. Return the `spsurvey` object.
+#' @param ... Extra named arguments passed on to `spsurvey::grts()`.
 #'
 #' @inheritParams common_docs
+#' @inheritSection common_docs Extra arguments
 #'
 #' @return Data frame of inclusion probabilities. Or, if `return_grts = TRUE` a
 #'   list including the data frame of inclusion probabilities as well as the
 #'   `spsurvey` grts sampling object.
+#'
+#'
 #' @export
 #'
 #' @examples
@@ -29,14 +32,41 @@
 #'   costs = psu_costs,
 #'   hex_id = hex_id,
 #'   omit_flag = water)
+#'
+#' # Keep grts objects
+#'
+#' d <- full_BASS_run(
+#'   land_hex = psu_hexagons,
+#'   num_runs = 10,
+#'   n_samples = 3,
+#'   costs = psu_costs,
+#'   hex_id = hex_id,
+#'   return_grts = TRUE)
+#'
+#' names(d)
+#' d[["inclusion_probs"]]
+#' d[["grts_output"]][[1]]
+#'
+#' # Change spsurvey::grts() arguments
+#'
+#' d <- full_BASS_run(
+#'   land_hex = psu_hexagons,
+#'   num_runs = 10,
+#'   n_samples = 3,
+#'   costs = psu_costs,
+#'   hex_id = hex_id,
+#'   mindis = 10, maxtry = 10)
+#'
+#' d
 
 full_BASS_run <- function(land_hex, num_runs, n_samples, costs = NULL,
                           hex_id, stratum_id = NULL, omit_flag = NULL,
                           non_random_set = NULL,
                           benefit_weight = 0.5, land_cover_weights = NULL,
-                          return_grts = FALSE, mindis = NULL, maxtry = 10,
+                          return_grts = FALSE,
                           crs = 4326, coords = c("lon", "lat"),
-                          seed = NULL, quiet = FALSE) {
+                          seed = NULL, quiet = FALSE,
+                          ...) {
 
   # Checks *also* occur inside
   # - draw_random_samples
@@ -60,19 +90,22 @@ full_BASS_run <- function(land_hex, num_runs, n_samples, costs = NULL,
     costs <- check_costs(costs, {{ omit_flag }})
   }
 
-  if (n_samples == 0) grts_output <- NULL
+  grts_output <- draw_random_samples(
+    land_hex = land_hex,
+    num_runs = num_runs, n_samples = n_samples,
+    return_grts = return_grts,
+    seed = seed, quiet = quiet, ...)
 
-  if (n_samples != 0) {
-    grts_output <- draw_random_samples(
-      land_hex = land_hex,
-      num_runs = num_runs, n_samples = n_samples,
-      mindis = mindis, maxtry = maxtry,
-      seed = seed, quiet = quiet)
+  if(!inherits(grts_output, "data.frame")) {
+    grts_df <- grts_output$samples
+    grts_output <- grts_output$grts_output
+  } else {
+    grts_df <- grts_output
   }
 
   # Benefits
   benefits <- calculate_benefit(
-    land_hex = land_hex, samples = grts_output,
+    land_hex = land_hex, samples = grts_df,
     non_random_set = non_random_set,
     hex_id = {{ hex_id }},
     stratum_id = {{ stratum_id }},
@@ -99,7 +132,8 @@ full_BASS_run <- function(land_hex, num_runs, n_samples, costs = NULL,
 
 
   # GRTS
-  if(return_grts) r <- stats::setNames(list(r, grts_output), c(type, "grts_output"))
+  if(return_grts) r <- stats::setNames(list(r, grts_output),
+                                       c(type, "grts_output"))
 
   r
 }

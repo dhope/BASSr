@@ -16,12 +16,11 @@ full_BASS_run(
   benefit_weight = 0.5,
   land_cover_weights = NULL,
   return_grts = FALSE,
-  mindis = NULL,
-  maxtry = 10,
   crs = 4326,
   coords = c("lon", "lat"),
   seed = NULL,
-  quiet = FALSE
+  quiet = FALSE,
+  ...
 )
 }
 \arguments{
@@ -54,13 +53,7 @@ weighting to cost. Default 0.5.}
 (\code{weights} column) for specific types of landcover (\code{lc} column). \code{lc}
 should correspond to the same landcover column names as the hex data.}
 
-\item{return_grts}{Logical. Return the \code{spsurvey} object.}
-
-\item{mindis}{Numeric. Minimum distance between sites. Passed to
-\code{spsurvey::grts()}.}
-
-\item{maxtry}{Numeric. Maximum attempts to try to obtain the minimum distance
-between sites. Passed to \code{spsurvey::grts()}}
+\item{return_grts}{Logical. Return the \code{spsurvey} object(s).}
 
 \item{crs}{Numeric, character, or sf/sfc. Coordinate reference system. Must
 be valid input to \code{sf::st_crs()}.}
@@ -73,6 +66,8 @@ applies to specific sampling events (does not change seed in the
 environment). \code{NULL} does not set a seed.}
 
 \item{quiet}{Logical. Whether to suppress progress messages.}
+
+\item{...}{Extra named arguments passed on to \code{spsurvey::grts()}.}
 }
 \value{
 Data frame of inclusion probabilities. Or, if \code{return_grts = TRUE} a
@@ -82,6 +77,13 @@ list including the data frame of inclusion probabilities as well as the
 \description{
 A full BASS run
 }
+\section{Extra arguments}{
+Extra named arguments for \code{spsurvey::grts()} can also be passed on via \code{...}.
+In particular, note that the default values for \code{mindis} (minimum distance
+between sites) is \code{NULL}, and \code{maxtry} (maximum attempts to try to obtain the
+minimum distance between sites) is 10.
+}
+
 \examples{
 
 # With example data psu_hexagons and psu_costs...
@@ -102,4 +104,30 @@ d <- full_BASS_run(
   costs = psu_costs,
   hex_id = hex_id,
   omit_flag = water)
+
+# Keep grts objects
+
+d <- full_BASS_run(
+  land_hex = psu_hexagons,
+  num_runs = 10,
+  n_samples = 3,
+  costs = psu_costs,
+  hex_id = hex_id,
+  return_grts = TRUE)
+
+names(d)
+d[["inclusion_probs"]]
+d[["grts_output"]][[1]]
+
+# Change spsurvey::grts() arguments
+
+d <- full_BASS_run(
+  land_hex = psu_hexagons,
+  num_runs = 10,
+  n_samples = 3,
+  costs = psu_costs,
+  hex_id = hex_id,
+  mindis = 10, maxtry = 10)
+
+d
 }

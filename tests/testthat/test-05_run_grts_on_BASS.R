@@ -200,7 +200,7 @@ test_that("run_grts_on_BASS() remove_hexes", {
   )
 })
 
-test_that("run_grts_on_BASS() mindis and maxtry", {
+test_that("run_grts_on_BASS() Pass ... to spsurvey::grts()", {
 
   d <- full_BASS_run(land_hex = psu_hexagons,
                      num_runs = 10,
@@ -219,7 +219,7 @@ test_that("run_grts_on_BASS() mindis and maxtry", {
       maxtry = 1,
       seed = 1234)
   ) |>
-    # spsurvey ~5.4 uses cat() for messages, later uses message()
+    # spsurvey <5.5.0 uses cat() for messages, later uses message()
     suppressMessages() |>
     capture.output() |>
     invisible()

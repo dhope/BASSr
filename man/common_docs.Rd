@@ -39,11 +39,7 @@ weighting to cost. Default 0.5.}
 (\code{weights} column) for specific types of landcover (\code{lc} column). \code{lc}
 should correspond to the same landcover column names as the hex data.}
 
-\item{mindis}{Numeric. Minimum distance between sites. Passed to
-\code{spsurvey::grts()}.}
-
-\item{maxtry}{Numeric. Maximum attempts to try to obtain the minimum distance
-between sites. Passed to \code{spsurvey::grts()}}
+\item{return_grts}{Logical. Return the \code{spsurvey} object(s).}
 
 \item{seed}{Numeric. Random seed to use for random sampling. Seed only
 applies to specific sampling events (does not change seed in the
@@ -58,4 +54,11 @@ Common arguments and documentation for various functions
 Use \verb{@inheritParams common_docs} to include the above in any function
 documentation with a matching argument (will only include matching args)
 }
+\section{Extra arguments}{
+Extra named arguments for \code{spsurvey::grts()} can also be passed on via \code{...}.
+In particular, note that the default values for \code{mindis} (minimum distance
+between sites) is \code{NULL}, and \code{maxtry} (maximum attempts to try to obtain the
+minimum distance between sites) is 10.
+}
+
 \keyword{internal}

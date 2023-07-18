@@ -20,10 +20,9 @@
 draw_random_samples <- function(land_hex, num_runs, n_samples,
                                 use_grts = TRUE,
                                 crs = 4326, coords = c("lon", "lat"),
-                                mindis = NULL, maxtry = 10,
+                                return_grts = FALSE,
                                 seed = NULL, quiet = FALSE,
                                 ...) {
-  args <- list(...)
 
   # Checks
   land_hex <- check_land_hex(land_hex, crs, coords, quiet)
@@ -35,33 +34,14 @@ draw_random_samples <- function(land_hex, num_runs, n_samples,
 
     land_hex <- check_land_hex(land_hex, crs, coords, quiet = quiet)
 
-    DesignID <-  "Sample"
-    list2env(args, envir = environment())
-    # if(length(N)==1){
-    #   Stratdsgn <- rep(N, length(arus))
-    #   n_os <-  round(N*os)
-    #   names(Stratdsgn) <- arus
-    #   if(n_os==0) n_os <- NULL
-    # } else if ( all(arus %in% names(N)) ){
-    #   Stratdsgn <- N
-    #   if(length(os)==1){
-    #     if(n_os==0){ n_os <- NULL
-    #     } else  n_os <- lapply(FUN = function(x) x * os, X = N )
-    #   } else if ( all(arus %in% names(N)) ){
-    #     n_os <- os
-    #   } else{simpleError("OS should either be single value or list with all strata ID. Not all Strata found in OS and OS has length >1")}
-    # }
-
     set_seed(seed, {
       grts_output <- purrr::map(
         1:num_runs,
-        ~ spsurvey::grts(sframe = land_hex,
-                         # n_over = n_os,
-                         n_base = n_samples,
-                         # stratum_var = paste0(strat_),
-                         mindis = mindis,
-                         DesignID = "sample",
-                         maxtry = maxtry)
+        # Must be \(x) to use ... (otherwise ... overwritten)
+        \(x) spsurvey::grts(sframe = land_hex,
+                            n_base = n_samples,
+                            DesignID = "sample",
+                            ...)
       )
     })
 
@@ -84,6 +64,11 @@ draw_random_samples <- function(land_hex, num_runs, n_samples,
         ~{dplyr::slice_sample(land_hex, n = n_samples) |>
             dplyr::mutate(run = .x)})
     })
+
+  } else if (return_grts) {
+    if(num_runs == 1) grts_output <- grts_output[[1]]
+    random_sample <- list("samples" = random_sample,
+                          "grts_output" = grts_output)
   }
 
   random_sample

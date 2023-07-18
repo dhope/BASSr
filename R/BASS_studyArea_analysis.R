@@ -14,8 +14,11 @@
 #'   frame.
 #' @param remove_hexes Character Vector. Ids of hexagons to remove prior to
 #'   sampling.
+#' @param ... Extra named arguments passed on to `spsurvey::grts()`.
 #'
 #' @inheritParams common_docs
+#' @inheritSection common_docs Extra arguments
+#'
 #'
 #' @return If `num_runs` is 1, a single `spsurvey` object, otherwise a list of
 #'   `spsurvey` objects.
@@ -55,8 +58,8 @@
 #'
 run_grts_on_BASS <- function(probs, nARUs, os = NULL, num_runs = 1,
                              hex_id = NULL, stratum_id = NULL,
-                             mindis = NULL, maxtry = 10,
-                             remove_hexes = NULL, seed = NULL) {
+                             remove_hexes = NULL, seed = NULL,
+                             ...) {
 
   # Checks
   check_column(probs, {{ hex_id }})
@@ -182,14 +185,14 @@ run_grts_on_BASS <- function(probs, nARUs, os = NULL, num_runs = 1,
   s <- set_seed(seed, {
     purrr::map(
       1:num_runs,
-      ~ spsurvey::grts(sframe = probs,
-                       n_over = n_os,
-                       n_base = n_strata,
-                       stratum_var = stratum_name,
-                       mindis = mindis,
-                       DesignID = "sample",
-                       aux_var = "inclpr",
-                       maxtry = maxtry)
+      # Must be \(x) to use ... (otherwise ... overwritten)
+      \(x) spsurvey::grts(sframe = probs,
+                          n_over = n_os,
+                          n_base = n_strata,
+                          stratum_var = stratum_name,
+                          DesignID = "sample",
+                          aux_var = "inclpr",
+                          ...)
     )
   })
 

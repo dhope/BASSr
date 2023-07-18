@@ -11,10 +11,9 @@ run_grts_on_BASS(
   num_runs = 1,
   hex_id = NULL,
   stratum_id = NULL,
-  mindis = NULL,
-  maxtry = 10,
   remove_hexes = NULL,
-  seed = NULL
+  seed = NULL,
+  ...
 )
 }
 \arguments{
@@ -37,18 +36,14 @@ frame.}
 \item{stratum_id}{Column. Identifies larger area (e.g., \code{StudyAreaID} or
 \code{Province}).}
 
-\item{mindis}{Numeric. Minimum distance between sites. Passed to
-\code{spsurvey::grts()}.}
-
-\item{maxtry}{Numeric. Maximum attempts to try to obtain the minimum distance
-between sites. Passed to \code{spsurvey::grts()}}
-
 \item{remove_hexes}{Character Vector. Ids of hexagons to remove prior to
 sampling.}
 
 \item{seed}{Numeric. Random seed to use for random sampling. Seed only
 applies to specific sampling events (does not change seed in the
 environment). \code{NULL} does not set a seed.}
+
+\item{...}{Extra named arguments passed on to \code{spsurvey::grts()}.}
 }
 \value{
 If \code{num_runs} is 1, a single \code{spsurvey} object, otherwise a list of
@@ -58,6 +53,13 @@ If \code{num_runs} is 1, a single \code{spsurvey} object, otherwise a list of
 Sample sites based on the cost/benefit probabilities calculated in previous
 steps. Sites can be sampled with or without stratification.
 }
+\section{Extra arguments}{
+Extra named arguments for \code{spsurvey::grts()} can also be passed on via \code{...}.
+In particular, note that the default values for \code{mindis} (minimum distance
+between sites) is \code{NULL}, and \code{maxtry} (maximum attempts to try to obtain the
+minimum distance between sites) is 10.
+}
+
 \examples{
 d <- full_BASS_run(
   land_hex = psu_hexagons,

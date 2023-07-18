@@ -11,8 +11,7 @@ draw_random_samples(
   use_grts = TRUE,
   crs = 4326,
   coords = c("lon", "lat"),
-  mindis = NULL,
-  maxtry = 10,
+  return_grts = FALSE,
   seed = NULL,
   quiet = FALSE,
   ...
@@ -37,11 +36,7 @@ be valid input to \code{sf::st_crs()}.}
 \item{coords}{Character vector. Names of the columns containing X and Y
 coordinates (default \code{c("lon", "lat")}).}
 
-\item{mindis}{Numeric. Minimum distance between sites. Passed to
-\code{spsurvey::grts()}.}
-
-\item{maxtry}{Numeric. Maximum attempts to try to obtain the minimum distance
-between sites. Passed to \code{spsurvey::grts()}}
+\item{return_grts}{Logical. Return the \code{spsurvey} object(s).}
 
 \item{seed}{Numeric. Random seed to use for random sampling. Seed only
 applies to specific sampling events (does not change seed in the

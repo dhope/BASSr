@@ -75,3 +75,62 @@ test_that("full_BASS_run()", {
   expect_snapshot_value(f2, style = "json2", tolerance = 0.0004)
 })
 
+test_that("full_BASS_run() - Pass ... to spsurvey::grts()", {
+
+  n_runs <- 10
+  n_samples <- 3
+
+  expect_no_error(
+    f <- full_BASS_run(num_runs = n_runs, n_samples = n_samples,
+                       land_hex = psu_hexagons,
+                       hex_id = hex_id, return_grts = TRUE,
+                       stratum_id = province,
+                       costs = psu_costs,
+                       mindis = 1000,
+                       seed = 1234, quiet = TRUE)
+  ) |>
+    # spsurvey <5.5.0 uses cat() for messages, later uses message()
+    suppressMessages() |>
+    capture.output() |>
+    invisible()
+
+  expect_equal(warn_df$Warning,
+               "Minimum distance between sites not attained after 10 attempts.")
+  expect_equal(f[["grts_output"]][[1]]$design$mindis$None, 1000)
+})
+
+test_that("full_BASS_run() - return grts", {
+
+  n_runs <- 10
+  n_samples <- 3
+
+  expect_silent({
+    f <- full_BASS_run(num_runs = n_runs, n_samples = n_samples,
+                       land_hex = psu_hexagons,
+                       hex_id = hex_id, return_grts = TRUE,
+                       stratum_id = province,
+                       costs = psu_costs,
+                       seed = 1234, quiet = TRUE)
+  })
+
+  expect_named(f, c("inclusion_probs", "grts_output"))
+  expect_s3_class(f[["grts_output"]][[1]], "sp_design")
+  expect_s3_class(f[["inclusion_probs"]], "data.frame")
+
+
+  n_runs <- 1
+  n_samples <- 3
+
+  expect_silent({
+    f <- full_BASS_run(num_runs = n_runs, n_samples = n_samples,
+                       land_hex = psu_hexagons,
+                       hex_id = hex_id, return_grts = TRUE,
+                       stratum_id = province,
+                       costs = psu_costs,
+                       seed = 1234, quiet = TRUE)
+  })
+
+  expect_named(f, c("inclusion_probs", "grts_output"))
+  expect_s3_class(f[["grts_output"]], "sp_design")  # No list if only one
+  expect_s3_class(f[["inclusion_probs"]], "data.frame")
+})
