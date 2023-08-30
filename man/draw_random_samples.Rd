@@ -5,27 +5,55 @@
 \title{Draw random sample}
 \usage{
 draw_random_samples(
-  att_sf,
+  land_hex,
   num_runs,
   n_samples,
   use_grts = TRUE,
+  crs = 4326,
+  coords = c("lon", "lat"),
+  return_grts = FALSE,
+  seed = NULL,
   quiet = FALSE,
   ...
 )
 }
 \arguments{
-\item{att_sf}{Spatial Data frame. sf attributes table.}
+\item{land_hex}{(Spatial) Data frame. Land Cover data by hexagon. If
+non-spatial, will be converted to spatial sf data frame using the \code{crs} and
+\code{coords} arguments. Requires columns identifying the Hex ID as well as the
+Stratum ID (see \code{hex_id} and \code{stratum_id} respectively).}
 
 \item{num_runs}{Numeric. Number of times to draw random samples.}
 
-\item{n_samples}{Numeric. Number of samples to draw from each run.}
+\item{n_samples}{Numeric. Number of samples to draw in each run.}
 
-\item{use_grts}{Logical. Whether to use GRTS or just sample randomly without
-spatial dispersion.}
+\item{use_grts}{Logical. Whether to use \code{spsurvey::grts()} or just sample
+randomly without spatial dispersion.}
+
+\item{crs}{Numeric, character, or sf/sfc. Coordinate reference system. Must
+be valid input to \code{sf::st_crs()}.}
+
+\item{coords}{Character vector. Names of the columns containing X and Y
+coordinates (default \code{c("lon", "lat")}).}
+
+\item{return_grts}{Logical. Return the \code{spsurvey} object(s).}
+
+\item{seed}{Numeric. Random seed to use for random sampling. Seed only
+applies to specific sampling events (does not change seed in the
+environment). \code{NULL} does not set a seed.}
+
+\item{quiet}{Logical. Whether to suppress progress messages.}
+
+\item{...}{Extra named arguments passed on to \code{spsurvey::grts()}.}
 }
 \value{
-Samples as spatial data frame.
+Spatial data frame of samples
 }
 \description{
 Draw random sample
+}
+\examples{
+
+draw_random_samples(psu_hexagons, num_runs = 1, n_samples = 10)
+
 }

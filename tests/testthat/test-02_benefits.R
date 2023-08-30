@@ -5,27 +5,27 @@ test_that("prepare_hab_long()", {
 
   # Dimensions and categories
   lc <- stringr::str_subset(names(psu_hexagons), "LC")
-  expect_true(all(c("hex_id", "province", "lc", "ha", "ha_total",
+  expect_true(all(c("hex_id", "province", "lc", "area", "area_total",
                     "total_phab") %in% names(h)))
   expect_equal(nrow(h),
                dplyr::n_distinct(psu_hexagons$hex_id) * length(lc))
   expect_true(all(unique(h$lc) == lc))
   expect_true(all(h$hex_id %in% psu_hexagons$hex_id))
-  expect_equal(dplyr::n_distinct(h$ha_total),
+  expect_equal(dplyr::n_distinct(h$area_total),
                dplyr::n_distinct(h$lc))
 
-  # total_phab and ha_total unique to lc
+  # total_phab and area_total unique to lc
   expect_true(all(as.numeric(h$total_phab) >= 0 | as.numeric(h$total_phab) <= 1))
-  expect_equal(unique(h$ha_total[h$lc == "LC1"]),
-               sum(h$ha[h$lc == "LC1"]))
+  expect_equal(unique(h$area_total[h$lc == "LC1"]),
+               sum(h$area[h$lc == "LC1"]))
   expect_equal(unique(h$total_phab[h$lc == "LC1"]),
-               unique(h$ha_total[h$lc == "LC1"]) / sum(unique(h$ha_total)))
+               unique(h$area_total[h$lc == "LC1"]) / sum(unique(h$area_total)))
 
   # Pass through variables
-  expect_equal(dplyr::select(h, "hex_id","province", "lc", "ha"),
+  expect_equal(dplyr::select(h, "hex_id","province", "lc", "area"),
                tidyr::pivot_longer(psu_hexagons, cols = dplyr::matches("LC"),
-                                   values_to = "ha", names_to = "lc") %>%
-                 dplyr::select("hex_id", "province", "lc", "ha") %>%
+                                   values_to = "area", names_to = "lc") %>%
+                 dplyr::select("hex_id", "province", "lc", "area") %>%
                  sf::st_drop_geometry())
 
 
@@ -35,7 +35,6 @@ test_that("prepare_hab_long()", {
 })
 
 test_that("allhexes()", {
-  withr::local_seed(1234)
 
   h <- dplyr::select(psu_hexagons, dplyr::starts_with("LC")) %>%
     sf::st_drop_geometry() %>%
@@ -44,12 +43,14 @@ test_that("allhexes()", {
   t <- as.vector(colSums(h))
 
   # Dummy sampling data
-  s <- psu_hexagons %>%
-    check_att_sf(quiet = TRUE) %>%
-    sf::st_drop_geometry() %>%
-    dplyr::slice_sample(n = 10) %>%
-    dplyr::select(dplyr::starts_with("LC")) %>%
-    as.matrix()
+  withr::with_seed(1234, {
+    s <- psu_hexagons %>%
+      check_land_hex(quiet = TRUE) %>%
+      sf::st_drop_geometry() %>%
+      dplyr::slice_sample(n = 10) %>%
+      dplyr::select(dplyr::starts_with("LC")) %>%
+      as.matrix()
+  })
 
   w <- rep(1, length(t))
 
@@ -67,11 +68,11 @@ test_that("allhexes()", {
 
 test_that("quick_ben()", {
 
-  lc_sum <- check_att_sf(psu_hexagons, quiet = TRUE) %>%
+  lc_sum <- check_land_hex(psu_hexagons, quiet = TRUE) %>%
     prepare_hab_long() %>%
-    dplyr::select("lc", "ha_total") %>%
+    dplyr::select("lc", "area_total") %>%
     dplyr::distinct() %>%
-    dplyr::rename(ha = ha_total)
+    dplyr::rename("area" = "area_total")
 
   samples <- psu_samples %>%
     dplyr::group_by(run) %>%
@@ -116,12 +117,9 @@ test_that("quick_ben()", {
 test_that("calculate_benefit()", {
 
   expect_silent({
-    withr::with_seed(1234, {
-      b1 <- calculate_benefit(samples = psu_samples,
-                              att_sf = psu_hexagons,
-                              hex_id = hex_id,
-                              quiet = TRUE)
-    })
+    b1 <- calculate_benefit(samples = psu_samples,
+                            land_hex = psu_hexagons,
+                            hex_id = hex_id, quiet = TRUE)
   })
 
   expect_s3_class(b1, "sf")
@@ -130,14 +128,12 @@ test_that("calculate_benefit()", {
 
   # non_random_set
   expect_silent({
-    withr::with_seed(1234, {
-      b2 <- calculate_benefit(
-        att_sf = psu_hexagons,
-        samples = psu_samples,
-        hex_id = hex_id,
-        non_random_set = c("SA_0009", "SA_0022", "SA_0047", "SA_0052"),
-        quiet = TRUE)
-    })
+    b2 <- calculate_benefit(
+      land_hex = psu_hexagons,
+      samples = psu_samples,
+      hex_id = hex_id,
+      non_random_set = c("SA_09", "SA_22", "SA_47"),
+      quiet = TRUE)
   })
 
   expect_true(all(b1$hex_id == b2$hex_id))
@@ -151,22 +147,19 @@ test_that("calculate_benefit()", {
 
 test_that("calculate_benefit() without GRTS", {
 
-  withr::with_seed(1234, {
-    g <- draw_random_samples(
-      att_sf = psu_hexagons,
-      num_runs = 3,
-      n_samples = 10,
-      use_grts = FALSE,
-      quiet = TRUE)
-  })
+  g <- draw_random_samples(
+    land_hex = psu_hexagons,
+    num_runs = 3,
+    n_samples = 10,
+    use_grts = FALSE,
+    seed = 1234,
+    quiet = TRUE)
 
   expect_silent({
-    withr::with_seed(1234, {
-      b <- calculate_benefit(att_sf = psu_hexagons,
-                             samples = g,
-                             hex_id = hex_id,
-                             quiet = TRUE)
-    })
+    b <- calculate_benefit(land_hex = psu_hexagons,
+                           samples = g,
+                           hex_id = hex_id,
+                           quiet = TRUE)
   })
 
   expect_s3_class(b, "sf")

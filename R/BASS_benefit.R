@@ -6,12 +6,10 @@
 #' Calculate the benefit of a hexagon from  grts results.
 #'
 #' @param samples (Spatial) Data frame. Results from `draw_random_samples()`.
-#' @param non_random_set Set of hexagons to include as a non randomly selected
-#'   set
-#' @param land_cover_weights Data table with 'lc' and 'weights' column. Or could
-#'   be NULL to have all equal.
 #'
-#' @return
+#' @inheritParams common_docs
+#'
+#' @return Spatial data frame with benefits per hex
 #' @export
 #'
 #' @examples
@@ -19,47 +17,55 @@
 #' # Using example data psu_hexagons and psu_samples
 #'
 #' calculate_benefit(
-#'   att_sf = psu_hexagons,
+#'   land_hex = psu_hexagons,
 #'   samples = psu_samples,
 #'   hex_id = hex_id,
-#'   non_random_set = c("SA_0009", "SA_0022", "SA_0047", "SA_0052"))
+#'   non_random_set = c("SA_09", "SA_22", "SA_47"))
 #'
 #' # Specify a non-random set
 #'
 #' calculate_benefit(
-#'  att_sf = psu_hexagons,
+#'  land_hex = psu_hexagons,
 #'  samples = psu_samples,
 #'  hex_id = hex_id,
-#'  non_random_set = c("SA_0009", "SA_0022", "SA_0047", "SA_0052"))
+#'  non_random_set = c("SA_09", "SA_22", "SA_47"))
 #'
 #' # Without GRTS
 #'
 #' non_grts_samples <- draw_random_samples(
-#'   att_sf = psu_hexagons,
+#'   land_hex = psu_hexagons,
 #'   num_runs = 3,
 #'   n_samples = 10,
 #'   use_grts = FALSE)
 #'
 #' calculate_benefit(
-#'  att_sf = psu_hexagons,
+#'  land_hex = psu_hexagons,
 #'  samples = non_grts_samples,
 #'  hex_id = hex_id)
 #'
 #'
 #'
-calculate_benefit <- function(att_sf, samples,
+calculate_benefit <- function(land_hex, samples,
                               hex_id, stratum_id = NULL,
                               non_random_set = NULL,
                               land_cover_weights = NULL,
+                              crs = 4326, coords = c("lon", "lat"),
                               quiet = FALSE) {
 
-  # ADD CHECKS
-  att_sf <- check_att_sf(att_sf, quiet = quiet)
+  # Checks
+  check_column(land_hex, {{ hex_id }})
+  check_column(land_hex, {{ stratum_id }})
+  land_hex <- check_land_hex(land_hex, crs, coords, quiet = quiet)
+  land_hex <- dplyr::select(land_hex, -dplyr::any_of(c("area", "area_total"))) # Omit pre-existing columns
 
-  # Prep data
-  samples <- sf::st_drop_geometry(samples)
+  check_column(samples, {{ hex_id }})
+  check_column(samples, {{ stratum_id }})
+  samples <- check_samples(samples, land_hex, {{ hex_id }}, {{ stratum_id }})
+  check_non_random_set(non_random_set, dplyr::pull(land_hex, {{ hex_id }}))
+  check_land_cover_weights(land_cover_weights, land_hex)
 
-  att_long <- prepare_hab_long(att_sf, {{ stratum_id }})
+
+  land_long <- prepare_hab_long(land_hex, {{ stratum_id }})
 
   if (is.null(non_random_set)) {
     random_sample_summary_widenest <-
@@ -69,14 +75,12 @@ calculate_benefit <- function(att_sf, samples,
   }
   if (!is.null(non_random_set)) {
 
-    # CHECKS
-
     if (is.vector(non_random_set)) {
 
-      extra <- att_long %>%
+      extra <- land_long %>%
         dplyr::mutate({{ hex_id }} := as.character({{ hex_id }})) %>%
         tidyr::pivot_wider(id_cols = {{ hex_id }},
-                           names_from = "lc", values_from = "ha") %>%
+                           names_from = "lc", values_from = "area") %>%
         dplyr::filter({{ hex_id }} %in% .env$non_random_set) %>%
         tidyr::expand_grid(run = 1:dplyr::n_distinct(samples$run))
 
@@ -99,28 +103,28 @@ calculate_benefit <- function(att_sf, samples,
     }
 
     random_sample_summary_widenest <- random_sample_summary_widenest %>%
-      dplyr::group_by(run) %>%
+      dplyr::group_by(.data$run) %>%
       dplyr::summarize_at(dplyr::vars(dplyr::matches("LC\\d")), sum) %>%
       dplyr::mutate(dplyr::across(dplyr::matches("LC\\d"),
                                   ~tidyr::replace_na(as.numeric(.x), 0)))
   }
 
-  hexes <- att_long %>%
-    dplyr::select({{ hex_id }}, "lc", "ha") %>%
+  hexes <- land_long %>%
+    dplyr::select({{ hex_id }}, "lc", "area") %>%
     dplyr::mutate({{ hex_id }} := as.character({{ hex_id }})) %>%
-    tidyr::pivot_wider(names_from = "lc", values_from = "ha")
+    tidyr::pivot_wider(names_from = "lc", values_from = "area")
 
-  total <- att_long %>%
-    dplyr::select("lc", "ha_total") %>%
+  total <- land_long %>%
+    dplyr::select("lc", "area_total") %>%
     dplyr::distinct() %>%
-    dplyr::rename("ha" = "ha_total")
+    dplyr::rename("area" = "area_total")
 
   quick_ben(
     d = hexes,
     samples = random_sample_summary_widenest,
     land_cover_summary = total, land_cover_weights = land_cover_weights,
     hex_id = {{ hex_id }}, print = FALSE) %>%
-    dplyr::left_join(dplyr::select(att_sf, {{ hex_id }}), .,
+    dplyr::left_join(dplyr::select(land_hex, {{ hex_id }}), .,
                       by = rlang::as_label(rlang::enquo(hex_id)))
 }
 
@@ -129,18 +133,19 @@ calculate_benefit <- function(att_sf, samples,
 #' Land cover attributes (columns starting with `LC`) are summarized by total
 #' and proportion of area.
 #'
-#' @inheritParams common_docs
+#' @param land_hex Spatial hex grid with Land cover attributes
+#' @param stratum_id Column with strata labelled
 #'
-#' @return Sumary of land cover types by area
+#' @return Summary of land cover types by area
 #'
 #' @noRd
-calculate_land_cover_summary <- function(att_sf, stratum_id){
-   att_sf %>%
+calculate_land_cover_summary <- function(land_hex, stratum_id){
+   land_hex %>%
     dplyr::group_by({{ stratum_id }}) %>%
     dplyr::summarize(dplyr::across(dplyr::matches("^LC\\d+$"), sum)) %>%
     tidyr::pivot_longer(cols = dplyr::matches("^LC\\d+$"),
-                        names_to = "lc", values_to = "ha_total") %>%
-    dplyr::mutate(total_phab = .data$ha_total / sum(.data$ha_total,
+                        names_to = "lc", values_to = "area_total") %>%
+    dplyr::mutate(total_phab = .data$area_total / sum(.data$area_total,
                                                     na.rm = TRUE)) %>%
     dplyr::ungroup() %>%
     sf::st_drop_geometry()
@@ -152,26 +157,26 @@ calculate_land_cover_summary <- function(att_sf, stratum_id){
 #' Land cover attributes (columns starting with `LC`) are summarized by total
 #' and proportion of area.
 #'
-#' @inheritParams common_docs
+#' @param land_hex Spatial hex grid with Land cover attributes
+#' @param stratum_id Column with strata labelled
 #'
 #' @return Long version with summarized area
 #'
 #' @noRd
 
-prepare_hab_long <- function(att_sf, stratum_id = NULL) {
-  # sa_a <- sum(att$area)
+prepare_hab_long <- function(land_hex, stratum_id = NULL) {
 
-  att_sf <- sf::st_drop_geometry(att_sf)
+  land_hex <- sf::st_drop_geometry(land_hex)
 
-  land_cover_summary <- calculate_land_cover_summary(att_sf, {{stratum_id}})
+  land_cover_summary <- calculate_land_cover_summary(land_hex, {{stratum_id}})
 
   by <- c("lc", rlang::as_label(rlang::enquo(stratum_id)))
   by <- by[by != "NULL"] # omit NULL turned to label
 
   tidyr::pivot_longer(
-    att_sf,
+    land_hex,
     cols = dplyr::matches("^LC\\d+$"),
-    names_to = "lc", values_to = "ha"
+    names_to = "lc", values_to = "area"
   ) %>%
     dplyr::left_join(land_cover_summary, by = by)
 
@@ -182,25 +187,31 @@ prepare_hab_long <- function(att_sf, stratum_id = NULL) {
 #' @param n_samples Number of Samples
 #' @param num_runs Number of iterations
 #' @param grts_file grts file to run
-#' @param att Att frame
+#' @param land_hex Att frame
 #' @param quick run it using CPP quick calc
 #'
-#' @return
+#' @name subsample_grts_and_calc_benefit-deprecated
+NULL
+
+#' @rdname BASSr-deprecated
 #' @export
-subsample_grts_and_calc_benefit <- function(n_samples, num_runs, grts_file, att_sf,
-                                            quick = T) {
-  runs_to_pull <- sample(1:1000, num_runs)
+subsample_grts_and_calc_benefit <- function(#n_samples, num_runs, grts_file, land_hex,
+                                            #quick = T
+  ) {
 
-  grts_res <- readr::read_rds(grts_file)[n_samples] %>%
-    tidyr::pivot_longer(
-      cols = dplyr::matches("LC\\d"),
-      names_to = "lc",
-      values_to = "ha"
-    ) %>%
-    dplyr::filter(.data$run %in% .env$runs_to_pull)
-
-  calculate_benefit(grts_res = grts_res, att_sf = att_sf,
-                    output = "all", quick = quick)
+  .Deprecated(msg = "This function is deprecated")
+  # runs_to_pull <- sample(1:1000, num_runs)
+  #
+  # grts_res <- readr::read_rds(grts_file)[n_samples] %>%
+  #   tidyr::pivot_longer(
+  #     cols = dplyr::matches("LC\\d"),
+  #     names_to = "lc",
+  #     values_to = "area"
+  #   ) %>%
+  #   dplyr::filter(.data$run %in% .env$runs_to_pull)
+  #
+  # calculate_benefit(grts_res = grts_res, land_hex = land_hex,
+  #                   output = "all", quick = quick)
 }
 
 
@@ -208,18 +219,20 @@ subsample_grts_and_calc_benefit <- function(n_samples, num_runs, grts_file, att_
 
 #' Quick Benefits
 #'
-#' @param d Hexagon data.frame - Needs to include Land Cover types in format
-#'   LC_
+#' Prepare data for calculating benefits quickly using C++ function, `allhexes`.
+#'
+#' @param d Hex data frame - Needs land cover types in columns labelled `LC`
 #' @param samples Hypothetical sample set
-#' @param land_cover_summary Land cover summary for larger area
+#' @param land_cover_summary Land cover summary
 #' @param print print details
-#' @param land_cover_weights a data frame with lc specifying land cover and
-#'   'weights' specifying weight.
+#' @param land_cover_weights a data frame with `lc` specifying land cover and
+#'   `weights` specifying weight.
 #'
 #' @inheritParams common_docs
 #'
-#' @return
-#' @export
+#' @return data frame with benefits per hex
+#' @noRd
+
 quick_ben <- function(d, samples, land_cover_summary, hex_id, print,
                       land_cover_weights = NULL) {
 
@@ -246,8 +259,8 @@ quick_ben <- function(d, samples, land_cover_summary, hex_id, print,
              "Your land cover summary had too many rows."), call = NULL)
   }
   total <- land_cover_summary  |>
-    dplyr::select(lc, ha)  |>
-    tidyr::pivot_wider(names_from = lc, values_from = ha)
+    dplyr::select("lc", "area")  |>
+    tidyr::pivot_wider(names_from = "lc", values_from = "area")
 
   total <- total[names(hexes)]
 
@@ -257,12 +270,12 @@ quick_ben <- function(d, samples, land_cover_summary, hex_id, print,
              "This will not calculate accurate benefit values."), call = NULL)
   }
 
-  samp <-  dplyr::select(samples, matches("LC\\d"))
+  samp <-  dplyr::select(samples, dplyr::matches("LC\\d"))
 
   if (!all(names(hexes) %in% names(samp))) {
     nm <- names(hexes)[!names(hexes) %in% names(samp)]
     extraN <- dplyr::select(hexes, dplyr::all_of(.env$nm))  |>
-      dplyr::mutate(across(.funs = ~ {.x * 0}))
+      dplyr::mutate(dplyr::across(.cols = dplyr::everything(), .funs = ~ .x * 0))
     samp <- dplyr::bind_cols(samp, extraN)
   }
   samp <- samp[names(hexes)]
@@ -283,10 +296,10 @@ quick_ben <- function(d, samples, land_cover_summary, hex_id, print,
   }
 
   if (all(round(rowSums(samp), 0) == 100) | all(round(rowSums(samp), 0) == 1)) {
-
-    rlang::warn(c("!" = "Values across LC columns in samples sum to 100 or 1, ",
-                 "i" =  "Check samples to be sure you have not input inputed percentages into your values.",
-                 "x" = "Using percentages will not calculate accurate benefit values."), call = NULL)
+    rlang::warn(
+      c("!" = "Values across LC columns in samples sum to 100 or 1, ",
+        "i" = "Check samples to be sure you have not input inputed percentages into your values.",
+        "x" = "Using percentages will not calculate accurate benefit values."), call = NULL)
   }
 
   if (all(names(hexes) != names(total))) {

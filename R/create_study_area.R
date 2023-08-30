@@ -8,7 +8,7 @@
 #' Allowed inputs are hectres ('ha'), metres squared ('m2'), metres or kilometres ('m', or 'km')
 #' as the diameter of each hexagon
 #'
-#' @param landscape larger area to create hexagonal grid over.must be sf object
+#' @param landscape larger area to create hexagonal grid over. Must be sf object
 #' @param hexagon_size size of hexagon in area or diameter in units (see variable units for options)
 #' @param units Units of hexagonal units in area or diameter (valid values include 'm2', 'ha', 'km2','km', 'm')
 #' @param HexagonID_label Name of column for hexigon id

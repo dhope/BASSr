@@ -1,19 +1,14 @@
 #' A full BASS run
 #'
-#' @param num_runs The number of times to draw random samples from hexagons
-#' @param n_samples The number of samples to draw in each sample
-#' @param return_all return each piece of BASS implementation
-#' @param seed random seed to use for random grts samples
-#' @param non_ran_set Non random set that is added to the hypothetical sample
-#'   set in benefit calculation.
-#' @param benefit_weight The weight assigned to benefit in the selection
-#'   probabilities.0.5 is equal weighting of cost and benefits. 1.0 is zero
-#'   weighting to cost.
-#' @param land_cover_weights data frame with lc and weights
 #'
 #' @inheritParams common_docs
+#' @inheritSection common_docs Extra arguments
 #'
-#' @return a table with inclusion probabilities
+#' @return Data frame of inclusion probabilities. Or, if `return_grts = TRUE` a
+#'   list including the data frame of inclusion probabilities as well as the
+#'   `spsurvey` grts sampling object.
+#'
+#'
 #' @export
 #'
 #' @examples
@@ -21,46 +16,96 @@
 #' # With example data psu_hexagons and psu_costs...
 #'
 #' d <- full_BASS_run(
-#'   att_sf = psu_hexagons,
+#'   land_hex = psu_hexagons,
 #'   num_runs = 10,
 #'   n_samples = 3,
 #'   costs = psu_costs,
 #'   hex_id = hex_id)
 #'
+#' # Omit water hexes
+#'
 #' d <- full_BASS_run(
-#'   att_sf = psu_hexagons,
+#'   land_hex = psu_hexagons,
 #'   num_runs = 10,
-#'   n_samples = 0,
+#'   n_samples = 3,
 #'   costs = psu_costs,
-#'   hex_id = hex_id)
+#'   hex_id = hex_id,
+#'   omit_flag = water)
+#'
+#' # Keep grts objects
+#'
+#' d <- full_BASS_run(
+#'   land_hex = psu_hexagons,
+#'   num_runs = 10,
+#'   n_samples = 3,
+#'   costs = psu_costs,
+#'   hex_id = hex_id,
+#'   return_grts = TRUE)
+#'
+#' names(d)
+#' d[["inclusion_probs"]]
+#' d[["grts_output"]][[1]]
+#'
+#' # Change spsurvey::grts() arguments
+#'
+#' d <- full_BASS_run(
+#'   land_hex = psu_hexagons,
+#'   num_runs = 10,
+#'   n_samples = 3,
+#'   costs = psu_costs,
+#'   hex_id = hex_id,
+#'   mindis = 10, maxtry = 10)
+#'
+#' d
 
-full_BASS_run <- function(att_sf, num_runs, n_samples, costs = NULL,
+full_BASS_run <- function(land_hex, num_runs, n_samples, costs = NULL,
                           hex_id, stratum_id = NULL, omit_flag = NULL,
-                          non_ran_set = NULL,
+                          non_random_set = NULL,
                           benefit_weight = 0.5, land_cover_weights = NULL,
-                          return_grts = FALSE, seed = as.integer(Sys.time()),
-                          quiet = FALSE) {
+                          return_grts = FALSE,
+                          crs = 4326, coords = c("lon", "lat"),
+                          seed = NULL, quiet = FALSE,
+                          ...) {
 
-  # Input checks
-  check_column(att_sf, {{ hex_id }})
-  check_column(att_sf, {{ stratum_id }})
-  att_sf <- check_att_sf(att_sf, quiet = quiet)
+  # Checks *also* occur inside
+  # - draw_random_samples
+  # - calculate_benefit
+  # - calculate_inclusion_probs
+  # But this way, they fail early
+  check_column(land_hex, {{ hex_id }})
+  check_column(land_hex, {{ stratum_id }})
+  land_hex <- check_land_hex(land_hex, crs, coords, quiet)
+  check_int(num_runs, range = c(1, Inf))
+  check_int(n_samples, range = c(1, Inf))
+  check_int(seed, range = c(0, Inf))
 
-  set.seed(seed)
+  check_non_random_set(non_random_set, dplyr::pull(land_hex, {{ hex_id }}))
+  check_land_cover_weights(land_cover_weights, land_hex)
 
-  if (n_samples == 0) grts_output <- NULL
+  if (!is.null(costs)) {
+    check_column(costs, {{ hex_id }})
+    check_column(costs, {{ omit_flag }})
+    check_column(costs, {{ stratum_id }})
+    costs <- check_costs(costs, {{ omit_flag }})
+  }
 
-  if (n_samples != 0) {
-    grts_output <- draw_random_samples(
-      att_sf = att_sf,
-      num_runs = num_runs, n_samples = n_samples,
-      quiet = quiet)
+  grts_output <- draw_random_samples(
+    land_hex = land_hex,
+    num_runs = num_runs, n_samples = n_samples,
+    return_grts = return_grts,
+    seed = seed, quiet = quiet, ...)
+
+  if(!inherits(grts_output, "data.frame")) {
+    grts_df <- grts_output$samples
+    grts_output <- grts_output$grts_output
+  } else {
+    grts_df <- grts_output
   }
 
   # Benefits
   benefits <- calculate_benefit(
-    att_sf = att_sf, samples = grts_output,
-    non_random_set = non_ran_set,
+    land_hex = land_hex, samples = grts_df,
+    non_random_set = non_random_set,
     hex_id = {{ hex_id }},
     stratum_id = {{ stratum_id }},
     land_cover_weights = land_cover_weights
@@ -71,6 +116,7 @@ full_BASS_run <- function(att_sf, num_runs, n_samples, costs = NULL,
     r <- calculate_inclusion_probs(
       benefits = benefits, costs = costs,
       hex_id = {{ hex_id }}, stratum_id = {{ stratum_id }},
+      omit_flag = {{ omit_flag }},
       benefit_weight = benefit_weight)
     type <- "inclusion_probs"
   } else {
@@ -85,7 +131,8 @@ full_BASS_run <- function(att_sf, num_runs, n_samples, costs = NULL,
 
 
   # GRTS
-  if(return_grts) r <- setNames(list(r, grts_output), c(type, "grts_output"))
+  if(return_grts) r <- stats::setNames(list(r, grts_output),
+                                       c(type, "grts_output"))
 
   r
 }
@@ -97,26 +144,31 @@ full_BASS_run <- function(att_sf, num_runs, n_samples, costs = NULL,
 #' @param num_runs The number of times to draw random samples from hexagons
 #' @param n_samples The number of samples to draw in each sample
 #' @param costs the cost table for each hexagon id
-#' @param seed random seed to use for random grts samples
 #'
-#' @inheritParams common_docs
-#'
-#' @return a table with inclusion probabilities
+#' @name noGRTS_BASS_run-deprecated
+NULL
+
+#' @rdname BASSr-deprecated
 #' @export
-#'
-noGRTS_BASS_run <- function(att_sf, samples, num_runs, n_samples, costs,
-                            seed = as.integer(Sys.time())) {
+noGRTS_BASS_run <- function(
+    # land_hex, samples, num_runs, n_samples, costs,
+    #                         crs = 4326, coords = c("lon", "lat"),
+    #                         quiet = FALSE
+  ) {
 
-  set.seed(seed)
-
-  benefits <- calculate_benefit(samples = samples,
-                                att_sf = att_sf,
-                                output = "mean_benefit")
-
-  pointswith_inclusion <- calculate_inclusion_probs(
-    costs = costs, benefits = benefits)
-
-  dplyr::mutate(pointswith_inclusion,
-                num_runs = .env$num_runs,
-                n_samples = .env$n_samples)
+  .Deprecated(msg = "This function is deprecated")
+#
+#   land_hex <- check_land_hex(land_hex, crs, coords, quiet)
+#
+#   benefits <- calculate_benefit(samples = samples,
+#                                 land_hex = land_hex,
+#                                 output = "mean_benefit")
+#
+#   pointswith_inclusion <- calculate_inclusion_probs(
+#     costs = costs, benefits = benefits)
+#
+#   # QUESTION: No actual sampling done here...
+#   dplyr::mutate(pointswith_inclusion,
+#                 num_runs = .env$num_runs,
+#                 n_samples = .env$n_samples)
 }

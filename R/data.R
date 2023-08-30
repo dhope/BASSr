@@ -71,3 +71,80 @@
 #' }
 #' @source BASSr analysis for N. Ontario
 "StudyArea_hexes"
+
+#' Dummy hex data to be cleaned
+#' @format A spatial data frame with 33 features and 9 fields
+#' \describe{
+#'   \item{hex_id}{ID of the hex}
+#'   \item{province}{Province code for that hex}
+#'   \item{water}{Whether that hex is in water or not}
+#'   \item{CLC...}{Land cover columns}
+#'   \item{x}{Geometry}
+#' }
+#' @source Data generated in data-raw/data_create_study_area.R
+"psu_hex_dirty"
+
+#' Dummy hex data
+#' @format A spatial data frame with 33 features and 9 fields
+#' \describe{
+#'   \item{hex_id}{ID of the hex}
+#'   \item{province}{Province code for that hex}
+#'   \item{water}{Whether that hex is in water or not}
+#'   \item{LC...}{Land cover columns}
+#'   \item{x}{Geometry}
+#' }
+#' @source Data generated in data-raw/data_create_study_area.R
+"psu_hexagons"
+
+#' Dummy costs data
+#' @format A data frame with 33 rows and 27 columns
+#' \describe{
+#'   \item{hex_id}{ID of the hex}
+#'   \item{province}{Province code for that hex}
+#'   \item{water}{Whether that hex is in water or not}
+#'   \item{area}{Area of the hex in m2}
+#'   \item{pr-total_heli_cost}{Specific costs for each hex (see ?`estimate_cost_study_area`)}
+#'   \item{narus}{Number of ARUs to be deployed}
+#'   \item{RawCost}{Total raw cost of sampling this hex}
+#' }
+#' @source Data generated in data-raw/data_create_study_area.R
+"psu_costs"
+
+#' Dummy sampled hexes
+#' @format A spatial data frame with 30 features and 21 fields
+#' \describe{
+#'   \item{siteID-caty}{Sampling output (see `spsurvey::grts()`)}
+#'   \item{hex_id}{ID of the hex}
+#'   \item{province}{Province code for that hex}
+#'   \item{water}{Whether that hex is in water or not}
+#'   \item{LC...}{Land cover columns}
+#'   \item{x}{Geometry}
+#'   \item{run}{Run number}
+#'   \item{num_runs}{Total number of runs performed}
+#'   \item{n_samples}{Total number of samples drawn in a run}
+#' }
+#' @source Data generated in data-raw/data_create_study_area.R
+"psu_samples"
+
+#' Dummy SSU points
+#' @format A spatial data frame with 3003 features and 3 fields
+#' \describe{
+#'   \item{geometry}{Geometry}
+#'   \item{hex_id}{ID of the hex}
+#'   \item{ssuID}{ID of subsampling unit (hex)}
+#'   \item{province}{Province code for that hex}
+#' }
+#' @source Data generated in data-raw/data_create_study_area.R
+"ssu_points"
+
+#' Dummy SSU land cover
+#' @format A data frame with 3003 rows and 10 columns
+#' \describe{
+#'   \item{hex_id}{ID of the hex}
+#'   \item{ssuID}{ID of subsampling unit (hex)}
+#'   \item{HexArea}{Area of the SSU hex}
+#'   \item{LC...}{Land cover columns}
+#'   \item{province}{Province code for that hex}
+#' }
+#' @source Data generated in data-raw/data_create_study_area.R
+"ssu_land_cover"

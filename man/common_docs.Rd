@@ -6,14 +6,48 @@
 \arguments{
 \item{num_runs}{Numeric. Number of times to draw random samples.}
 
-\item{att_sf}{Spatial Data frame. sf attributes table.}
+\item{n_samples}{Numeric. Number of samples to draw in each run.}
+
+\item{land_hex}{(Spatial) Data frame. Land Cover data by hexagon. If
+non-spatial, will be converted to spatial sf data frame using the \code{crs} and
+\code{coords} arguments. Requires columns identifying the Hex ID as well as the
+Stratum ID (see \code{hex_id} and \code{stratum_id} respectively).}
 
 \item{stratum_id}{Column. Identifies larger area (e.g., \code{StudyAreaID} or
-\code{Province})}
+\code{Province}).}
 
-\item{hex_id}{Columns. Identifies hexagon ids (e.g., \code{hex_id} or \code{ET_Index})}
+\item{hex_id}{Column. Identifies hexagon ids (e.g., \code{hex_id} or \code{ET_Index}).}
+
+\item{omit_flag}{Column identifying hexes to omit (e.g., water hexes).}
 
 \item{costs}{Data frame. Costs for each hexagon in a RawCost format.}
+
+\item{crs}{Numeric, character, or sf/sfc. Coordinate reference system. Must
+be valid input to \code{sf::st_crs()}.}
+
+\item{coords}{Character vector. Names of the columns containing X and Y
+coordinates (default \code{c("lon", "lat")}).}
+
+\item{non_random_set}{Character vector. \code{hex_id}s of hexagons to include as a
+non randomly selected set.}
+
+\item{benefit_weight}{Numeric. Weight assigned to benefit in the selection
+probabilities. 0.5 is equal weighting of cost and benefits. 1.0 is zero
+weighting to cost. Default 0.5.}
+
+\item{land_cover_weights}{Data frame. Proportional weights
+(\code{weights} column) for specific types of landcover (\code{lc} column). \code{lc}
+should correspond to the same landcover column names as the hex data.}
+
+\item{return_grts}{Logical. Return the \code{spsurvey} object(s).}
+
+\item{...}{Extra named arguments passed on to \code{spsurvey::grts()}.}
+
+\item{seed}{Numeric. Random seed to use for random sampling. Seed only
+applies to specific sampling events (does not change seed in the
+environment). \code{NULL} does not set a seed.}
+
+\item{quiet}{Logical. Whether to suppress progress messages.}
 }
 \description{
 Common arguments and documentation for various functions
@@ -22,4 +56,11 @@ Common arguments and documentation for various functions
 Use \verb{@inheritParams common_docs} to include the above in any function
 documentation with a matching argument (will only include matching args)
 }
+\section{Extra arguments}{
+Extra named arguments for \code{spsurvey::grts()} can also be passed on via \code{...}.
+In particular, note that the default values for \code{mindis} (minimum distance
+between sites) is \code{NULL}, and \code{maxtry} (maximum attempts to try to obtain the
+minimum distance between sites) is 10.
+}
+
 \keyword{internal}

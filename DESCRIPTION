@@ -12,6 +12,7 @@ Depends:
   R (>= 4.0),
 Imports:
     dplyr (>= 1.0),
+    purrr (>= 1.0.1),
     tidyr (>= 1.0.0),
     rlang (>= 0.4.0),
     spsurvey (>= 5.0),
@@ -19,8 +20,10 @@ Imports:
     glue,
     methods,
     Rcpp,
-    magrittr
+    magrittr,
+    stringr (>= 1.5.0)
 Suggests:
+    ggplot2,
     knitr,
     rmarkdown,
     testthat (>= 3.0.0),

@@ -1,5 +1,5 @@
 ---
-title: "Getting Started"
+title: "Getting Started - Some real data"
 output: rmarkdown::html_vignette
 vignette: >
   %\VignetteIndexEntry{Getting Started}
@@ -33,28 +33,38 @@ library(dplyr)
 
 **Clean up hex data**
 ```{r}
-psu_hex <- clean_land_cover(psu_hex_dirty,  pattern = "CLC0013_") %>%
-  units::drop_units() # for plotting, get rid of m^2
-
-ggplot(data = psu_hex, aes(fill = LC01)) +
-  geom_sf() +
-  scale_fill_viridis_c()
+ont_hex <- clean_land_cover(StudyArea_hexes$landcover,  pattern = "LC")
 ```
 
+Where are we looking?
+```{r}
+ggplot() +
+  geom_sf(data = ontario) +
+  geom_sf(data = ont_hex)
+```
+
+What does this land scape look like specifically? (Thinking about LC01)
+```{r}
+ggplot() +
+  geom_sf(data = ont_hex, aes(fill = LC01)) +
+  scale_fill_viridis_c()
+
+```
 
 ### Basic Run
 ```{r}
-d <- full_BASS_run(land_hex = psu_hex, 
+d <- full_BASS_run(land_hex = ont_hex, 
                    num_runs = 10,
                    n_samples = 3,
-                   hex_id = hex_id)
+                   hex_id = SampleUnitID)
 
 ggplot(data = d, aes(colour = benefit)) +
-  geom_sf() +
+  geom_sf(size = 2) +
   labs(colour = "Benefit") +
   scale_colour_viridis_c()
 
-d_hex <- left_join(psu_hex, st_drop_geometry(d), by = "hex_id")
+# For pretty plotting
+d_hex <- left_join(ont_hex, st_drop_geometry(d), by = "SampleUnitID")
 
 ggplot(data = d_hex, aes(fill = benefit)) +
   geom_sf() +
@@ -65,13 +75,16 @@ ggplot(data = d_hex, aes(fill = benefit)) +
 ### Including Costs
 
 ```{r}
-d <- full_BASS_run(land_hex = psu_hex, 
+costs <- StudyArea_hexes$cost
+
+d <- full_BASS_run(land_hex = ont_hex, 
                    num_runs = 10,
                    n_samples = 3,
-                   costs = psu_costs,
-                   hex_id = hex_id)
+                   costs = costs,
+                   hex_id = SampleUnitID,
+                   seed = 1234)
 
-d_hex <- left_join(psu_hex, st_drop_geometry(d), by = "hex_id")
+d_hex <- left_join(ont_hex, st_drop_geometry(d), by = "SampleUnitID")
 
 ggplot(data = d_hex, aes(fill = inclpr)) +
   geom_sf() +
@@ -79,20 +92,43 @@ ggplot(data = d_hex, aes(fill = inclpr)) +
   scale_fill_viridis_c()
 ```
 
-What if the costs of that highly beneficial points was much higher?
+Perhaps we should omit sites in water. These are identified in the `costs` data
+by `TRUE`/`FALSE`s in the column `INLAKE` and can be omitted by using the
+`omit_flag` argument.
 
 ```{r}
-which.max(d$benefit)
-high_cost <- psu_costs
-high_cost$RawCost[26] <- high_cost$RawCost[26] * 100
+d <- full_BASS_run(land_hex = ont_hex, 
+                   num_runs = 10,
+                   n_samples = 3,
+                   costs = costs,
+                   hex_id = SampleUnitID,
+                   omit_flag = INLAKE,
+                   seed = 1234)
 
-d <- full_BASS_run(land_hex = psu_hex, 
+d_hex <- left_join(ont_hex, st_drop_geometry(d), by = "SampleUnitID")
+
+ggplot(data = d_hex, aes(fill = inclpr)) +
+  geom_sf() +
+  labs(fill = "Inclusion\nProbability") +
+  scale_fill_viridis_c()
+```
+
+The grey hexes have been omitted.
+
+What if the costs of that highly beneficial point was much higher?
+
+```{r}
+which.max(d$inclpr)
+high_cost <- costs
+high_cost$RawCost[559] <- high_cost$RawCost[559] * 100
+
+d <- full_BASS_run(land_hex = ont_hex, 
                    num_runs = 10,
                    n_samples = 3,
                    costs = high_cost,
-                   hex_id = hex_id)
+                   hex_id = SampleUnitID)
 
-d_hex <- left_join(psu_hex, st_drop_geometry(d), by = "hex_id")
+d_hex <- left_join(ont_hex, st_drop_geometry(d), by = "SampleUnitID")
 
 ggplot(data = d_hex, aes(fill = inclpr)) +
   geom_sf() +
@@ -101,19 +137,20 @@ ggplot(data = d_hex, aes(fill = inclpr)) +
 
 ```
 
-Still high inclusion probability, but other points become relatively 'better'.
+Not a great option any more.
 
 ### Runs by 'hand'
 
 ```{r}
-psu_hex <- clean_land_cover(psu_hex_dirty, pattern = "CLC0013_")
-samples <- draw_random_samples(psu_hex, num_runs = 10, n_samples = 3)
-benefit <- calculate_benefit(psu_hex, samples, hex_id = hex_id)
+on_hex <- clean_land_cover(StudyArea_hexes$landcover,  pattern = "LC")
+samples <- draw_random_samples(on_hex, num_runs = 10, n_samples = 3,
+                               seed = 1234)
+benefit <- calculate_benefit(on_hex, samples, hex_id = SampleUnitID)
 inc_prob <- calculate_inclusion_probs(benefit, 
-                                      costs = psu_costs, 
-                                      hex_id = hex_id)
+                                      costs = costs, 
+                                      hex_id = SampleUnitID)
 
-d_hex <- left_join(psu_hex, st_drop_geometry(inc_prob), by = "hex_id")
+d_hex <- left_join(on_hex, st_drop_geometry(inc_prob), by = "SampleUnitID")
 
 ggplot(data = d_hex, aes(fill = inclpr)) +
   geom_sf() +
@@ -124,11 +161,11 @@ ggplot(data = d_hex, aes(fill = inclpr)) +
 Alternative pipe
 
 ```{r}
-final <- psu_hex_dirty %>%
-  clean_land_cover(pattern = "CLC0013_") %>%
+ont_hex <- clean_land_cover(StudyArea_hexes$landcover, pattern = "LC")
+final <- ont_hex |>
   draw_random_samples(num_runs = 10, n_samples = 3) %>%
-  calculate_benefit(psu_hex, samples = ., hex_id = hex_id) %>%
-  calculate_inclusion_probs(costs = psu_costs, hex_id = hex_id)
+  calculate_benefit(ont_hex, samples = ., hex_id = SampleUnitID) %>%
+  calculate_inclusion_probs(costs = costs, hex_id = SampleUnitID)
 ```
 
 
@@ -151,7 +188,7 @@ sites selected.
 
 ```{r}
 g <- ggplot() + 
-  geom_sf(data = psu_hex, fill = "white") +
+  geom_sf(data = ont_hex, fill = "white") +
   geom_sf(data = final, colour = "grey70")
 
 g
@@ -174,13 +211,13 @@ g +
 
 First let's create a dummy stratification and add it to our hexes for plotting
 ```{r}
-final <- mutate(final, strat = c(rep("A", 15), rep("B", 18)))
-psu_hex_strat <- select(final, "hex_id", "strat") |> 
+final <- mutate(final, strat = c(rep("A", 300), rep("B", 703)))
+ont_hex_strat <- select(final, "SampleUnitID", "strat") |> 
   st_drop_geometry() |>
-  left_join(psu_hex, y = _, by = "hex_id")
+  left_join(ont_hex, y = _, by = "SampleUnitID")
 
 g <- ggplot() + 
-  geom_sf(data = psu_hex_strat, aes(fill = strat), alpha = 0.4) +
+  geom_sf(data = ont_hex_strat, aes(fill = strat), alpha = 0.4) +
   geom_sf(data = final, colour = "grey70")
 g
 ```
@@ -191,7 +228,7 @@ Let's assume we don't really care about habitat A, so we don't want to sample
 that one very much.
 
 ```{r}
-nARUs <- list("A" = 2, "B" = 10)
+nARUs <- list("A" = 2, "B" = 50)
 
 sel <- run_grts_on_BASS(probs = final, 
                         num_runs = 1, 
@@ -216,7 +253,7 @@ over samples in A, which makes sense:
 If we wanted an over sample for A, we could define specific over sample amounts instead.
 
 ```{r}
-nARUs <- list("A" = 2, "B" = 10)
+nARUs <- list("A" = 2, "B" = 50)
 os <- list("A" = 1, "B" = 4)
 
 sel <- run_grts_on_BASS(probs = final, 
@@ -240,7 +277,7 @@ to supply a data frame rather than a series of lists.
 
 
 ```{r}
-nARUs <- data.frame(n = c(2, 10),
+nARUs <- data.frame(n = c(2, 50),
                     strat = c("A", "B"),
                     n_os = c(1, 4))
 

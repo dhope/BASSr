@@ -5,69 +5,129 @@
 \title{A full BASS run}
 \usage{
 full_BASS_run(
-  att_sf,
+  land_hex,
   num_runs,
   n_samples,
   costs = NULL,
   hex_id,
   stratum_id = NULL,
   omit_flag = NULL,
-  non_ran_set = NULL,
+  non_random_set = NULL,
   benefit_weight = 0.5,
   land_cover_weights = NULL,
   return_grts = FALSE,
-  seed = as.integer(Sys.time()),
-  quiet = FALSE
+  crs = 4326,
+  coords = c("lon", "lat"),
+  seed = NULL,
+  quiet = FALSE,
+  ...
 )
 }
 \arguments{
-\item{att_sf}{Spatial Data frame. sf attributes table.}
+\item{land_hex}{(Spatial) Data frame. Land Cover data by hexagon. If
+non-spatial, will be converted to spatial sf data frame using the \code{crs} and
+\code{coords} arguments. Requires columns identifying the Hex ID as well as the
+Stratum ID (see \code{hex_id} and \code{stratum_id} respectively).}
 
-\item{num_runs}{The number of times to draw random samples from hexagons}
+\item{num_runs}{Numeric. Number of times to draw random samples.}
 
-\item{n_samples}{The number of samples to draw in each sample}
+\item{n_samples}{Numeric. Number of samples to draw in each run.}
 
 \item{costs}{Data frame. Costs for each hexagon in a RawCost format.}
 
-\item{hex_id}{Columns. Identifies hexagon ids (e.g., \code{hex_id} or \code{ET_Index})}
+\item{hex_id}{Column. Identifies hexagon ids (e.g., \code{hex_id} or \code{ET_Index}).}
 
 \item{stratum_id}{Column. Identifies larger area (e.g., \code{StudyAreaID} or
-\code{Province})}
+\code{Province}).}
 
-\item{non_ran_set}{Non random set that is added to the hypothetical sample
-set in benefit calculation.}
+\item{omit_flag}{Column identifying hexes to omit (e.g., water hexes).}
 
-\item{benefit_weight}{The weight assigned to benefit in the selection
-probabilities.0.5 is equal weighting of cost and benefits. 1.0 is zero
-weighting to cost.}
+\item{non_random_set}{Character vector. \code{hex_id}s of hexagons to include as a
+non randomly selected set.}
 
-\item{land_cover_weights}{data frame with lc and weights}
+\item{benefit_weight}{Numeric. Weight assigned to benefit in the selection
+probabilities. 0.5 is equal weighting of cost and benefits. 1.0 is zero
+weighting to cost. Default 0.5.}
 
-\item{seed}{random seed to use for random grts samples}
+\item{land_cover_weights}{Data frame. Proportional weights
+(\code{weights} column) for specific types of landcover (\code{lc} column). \code{lc}
+should correspond to the same landcover column names as the hex data.}
 
-\item{return_all}{return each piece of BASS implementation}
+\item{return_grts}{Logical. Return the \code{spsurvey} object(s).}
+
+\item{crs}{Numeric, character, or sf/sfc. Coordinate reference system. Must
+be valid input to \code{sf::st_crs()}.}
+
+\item{coords}{Character vector. Names of the columns containing X and Y
+coordinates (default \code{c("lon", "lat")}).}
+
+\item{seed}{Numeric. Random seed to use for random sampling. Seed only
+applies to specific sampling events (does not change seed in the
+environment). \code{NULL} does not set a seed.}
+
+\item{quiet}{Logical. Whether to suppress progress messages.}
+
+\item{...}{Extra named arguments passed on to \code{spsurvey::grts()}.}
 }
 \value{
-a table with inclusion probabilities
+Data frame of inclusion probabilities. Or, if \code{return_grts = TRUE} a
+list including the data frame of inclusion probabilities as well as the
+\code{spsurvey} grts sampling object.
 }
 \description{
 A full BASS run
 }
+\section{Extra arguments}{
+Extra named arguments for \code{spsurvey::grts()} can also be passed on via \code{...}.
+In particular, note that the default values for \code{mindis} (minimum distance
+between sites) is \code{NULL}, and \code{maxtry} (maximum attempts to try to obtain the
+minimum distance between sites) is 10.
+}
+
 \examples{
 
 # With example data psu_hexagons and psu_costs...
 
 d <- full_BASS_run(
-  att_sf = psu_hexagons,
+  land_hex = psu_hexagons,
   num_runs = 10,
   n_samples = 3,
   costs = psu_costs,
   hex_id = hex_id)
 
+# Omit water hexes
+
 d <- full_BASS_run(
-  att_sf = psu_hexagons,
+  land_hex = psu_hexagons,
   num_runs = 10,
-  n_samples = 0,
+  n_samples = 3,
   costs = psu_costs,
-  hex_id = hex_id)
+  hex_id = hex_id,
+  omit_flag = water)
+
+# Keep grts objects
+
+d <- full_BASS_run(
+  land_hex = psu_hexagons,
+  num_runs = 10,
+  n_samples = 3,
+  costs = psu_costs,
+  hex_id = hex_id,
+  return_grts = TRUE)
+
+names(d)
+d[["inclusion_probs"]]
+d[["grts_output"]][[1]]
+
+# Change spsurvey::grts() arguments
+
+d <- full_BASS_run(
+  land_hex = psu_hexagons,
+  num_runs = 10,
+  n_samples = 3,
+  costs = psu_costs,
+  hex_id = hex_id,
+  mindis = 10, maxtry = 10)
+
+d
 }

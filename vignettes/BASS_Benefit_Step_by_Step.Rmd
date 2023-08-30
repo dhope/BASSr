@@ -293,7 +293,7 @@ To examine the importance of the focal sample unit, we first draw 1 random, spat
 
 ```{r, fig.cap = "Figure 5. Plot of focal sample unit (red) and the hypothetical sample set (grey) within the study area (all hexagons)."}
 sample_hexes <- BASSr::draw_random_samples(
-  att_sf = StudyArea_hexes$landcover,
+  land_hex = StudyArea_hexes$landcover,
   num_runs = 1, n_samples = 10
 )
 if (packageVersion("spsurvey") < 5) {
@@ -514,14 +514,14 @@ $$\bar\beta_{j} =  \frac{\sum_{j = 1}^{j = N}\beta_{Hj}}{N} $$
 # att.long <- BASSr::prepare_hab_long(as_tibble(landcover_ha))
 # set.seed(1234)
 sample_hexes200 <- BASSr::draw_random_samples( # att_cleaned = as_tibble(landcover_ha),
-  att_sf = StudyArea_hexes$landcover, use_grts = F,
+  land_hex = StudyArea_hexes$landcover, use_grts = F,
   num_runs = 200, n_samples = 10
 )
 multi_ex <- BASSr::calculate_benefit(
   samples = sample_hexes200, #|>
   # mutate_at(.vars = vars(contains("LC")),.funs = ~(.*hexsize)) ,
   hex_id = SampleUnitID,
-  att_sf = StudyArea_hexes$landcover
+  land_hex = StudyArea_hexes$landcover
 ) |>
   # exampleHex%>% #as_tibble %>%
   # mutate_at(.vars = vars(contains("LC")),.funs = ~(.*hexsize)) ) |>
@@ -613,14 +613,14 @@ I calculated benefit for each sample unit as the focal sample unit using 200 ran
 benefits2 <- BASSr::calculate_benefit(
   samples = sample_hexes200, #|>
   hex_id = SampleUnitID,
-  att_sf = StudyArea_hexes$landcover
+  land_hex = StudyArea_hexes$landcover
 )
 
 sample_hexes100 <- sample_hexes200[sample_hexes200$run <= 100, ]
 benefits1 <- calculate_benefit(
   samples = sample_hexes100, #|>
   hex_id = SampleUnitID,
-  att_sf = StudyArea_hexes$landcover
+  land_hex = StudyArea_hexes$landcover
 )
 
 ggplot(benefits2, aes(benefit)) +
@@ -648,14 +648,14 @@ Lets have a look it what a larger sample set size will look like. I next calcula
 ```{r 200iterations-2, fig.cap="Figure 10. Distribution of mean benefit distribution across all sample units. Calculation of benefit completed using 200 randomly drawn hypothetical sample sets of 20 sample units each (grey distribution).This is compared with the distribution of 200 sample sets of 10 sample units each (black distribution). The mean benefit for the example hexagon with sample sets of 20 sample units is shown in the dotted line."}
 set.seed(1234)
 sample_hexes3 <- BASSr::draw_random_samples(
-  att_sf = StudyArea_hexes$landcover, use_grts = F,
+  land_hex = StudyArea_hexes$landcover, use_grts = F,
   num_runs = 200, n_samples = 20
 )
 
 benefits3 <- calculate_benefit(
   samples = sample_hexes3, #|>
   hex_id = SampleUnitID,
-  att_sf = StudyArea_hexes$landcover
+  land_hex = StudyArea_hexes$landcover
 )
 
 ggplot(benefits3, aes(benefit)) +

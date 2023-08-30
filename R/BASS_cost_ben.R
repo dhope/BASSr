@@ -1,27 +1,20 @@
 #' BASS cost benefit calculation
 #'
-#' Calculate the cost benefits and inclusion probabilities
+#' Calculate the cost-benefits and inclusion probabilities.
 #'
-#' @param benefits Spatial Data frame. Benefits associated with each hexagon (
-#'   output of `calculate_benefits()`)
-#' @param hex_id Column containing hexagon IDs.
-#' @param omit Column identifying hexes to omit (e.g., water hexes). Default
-#'   INLAKE.
-#' @param stratum_id Column containing larger area id (e.g., Province,
-#'   StudyAreaID). Default StudyAreaID.
-#' @param benefit_weight Numeric. Weight assigned to benefit in the selection
-#'   probabilities. 0.5 is equal weighting of cost and benefits. 1.0 is zero
-#'   weighting to cost. Default 0.5.
+#' @param benefits Spatial Data frame. Benefits associated with each hexagon
+#'   (output of `calculate_benefits()`).
+
 #'
 #' @inheritParams common_docs
 #'
-#' @return A data frame with full inclusion probabilities for each raster.
+#' @return A data frame with full inclusion probabilities for each hex.
 #'
 #' @export
 #'
 #' @examples
 #'
-#' b <- calculate_benefit(att_sf = psu_hexagons,
+#' b <- calculate_benefit(land_hex = psu_hexagons,
 #'                        samples = psu_samples,
 #'                        hex_id = hex_id)
 #'
@@ -29,6 +22,14 @@
 #'   benefits = b,
 #'   costs = psu_costs,
 #'   hex_id = hex_id)
+#'
+#' # Omit water hexes (identified by column `water`)
+#'
+#' inc <- calculate_inclusion_probs(
+#'   benefits = b,
+#'   costs = psu_costs,
+#'   hex_id = hex_id,
+#'   omit_flag = water)
 #'
 calculate_inclusion_probs <- function(benefits, costs,
                                       hex_id, stratum_id = NULL,
@@ -40,8 +41,14 @@ calculate_inclusion_probs <- function(benefits, costs,
   check_column(costs, {{ omit_flag }})
   check_column(costs, {{ stratum_id }})
   check_column(benefits, {{ hex_id }})
+  costs <- check_costs(costs, {{ omit_flag }})
+  check_benefits(benefits)
 
-  costs <- check_costs(costs, {{ hex_id }}, {{ omit_flag }})
+  if(benefit_weight < 0 || benefit_weight > 1) {
+    rlang::abort(
+      "`benefit_weight` is a proportional weight ranging from 0 to 1",
+      call = NULL)
+  }
 
   # Add benefits
   costs <- dplyr::right_join(benefits, costs,

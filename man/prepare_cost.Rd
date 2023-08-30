@@ -44,6 +44,9 @@ prepare_cost(
 
 \item{...}{You can include multisession with the furrr package. Needs to include Multicor=T & Cores = int}
 }
+\value{
+data frame
+}
 \description{
 Propare hexagons for cost calculations
 }

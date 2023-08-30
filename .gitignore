@@ -47,3 +47,6 @@ output/*
 JUNK
 
 inst/doc
+
+# intermediate data files
+data-raw/nr.rds

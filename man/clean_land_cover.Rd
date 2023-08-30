@@ -4,21 +4,24 @@
 \alias{clean_land_cover}
 \title{Clean land cover habitat data}
 \usage{
-clean_land_cover(att_sf, pattern = "CLC15_", append = "", quiet = FALSE)
+clean_land_cover(land_raw, pattern = "CLC15_", append = "", quiet = FALSE)
 }
 \arguments{
-\item{att_sf}{Spatial Data frame. sf attributes table.}
+\item{land_raw}{(Spatial) data frame. Land Cover data to be cleaned.}
 
 \item{pattern}{Character. Pattern to match and replace with 'LC'}
 
 \item{append}{Character. Text to append to end of land cover code}
+
+\item{quiet}{Logical. Whether to suppress progress messages.}
+}
+\value{
+(Spatial) Data frame with cleaned land cover column names.
 }
 \description{
 This is a general function to clean land cover columns.
 }
 \examples{
-
 psu_hex_clean <- clean_land_cover(psu_hex_dirty, pattern = "CLC0013_")
-
 
 }

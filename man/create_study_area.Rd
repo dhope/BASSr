@@ -13,7 +13,7 @@ create_study_area(
 )
 }
 \arguments{
-\item{landscape}{larger area to create hexagonal grid over.must be sf object}
+\item{landscape}{larger area to create hexagonal grid over. Must be sf object}
 
 \item{hexagon_size}{size of hexagon in area or diameter in units (see variable units for options)}
 

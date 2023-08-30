@@ -1,7 +1,7 @@
 test_that("calculate_inclusion_probs()", {
 
   expect_silent(b <- calculate_benefit(samples = psu_samples,
-                                       att_sf = psu_hexagons,
+                                       land_hex = psu_hexagons,
                                        hex_id = hex_id,
                                        quiet = TRUE))
 

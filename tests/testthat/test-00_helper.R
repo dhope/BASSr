@@ -49,16 +49,19 @@ test_that("estimate_cost_study_area()", {
 
 
 test_that("create_study_area()", {
-  nr <-  NLMR::nlm_randomcluster(
-    ncol = 30,
-    nrow = 30,
-    p = 0.4,
-    ai = c(0.05, 0.1, 0.15, 0.25, 0.25, 0.5),
-    rescale = FALSE)
 
   l <- sf::st_sfc(sf::st_polygon(list(cbind(c(0,3,3,0,0),c(0,0,3,3,0)))))
 
-  create_study_area(l, study_area_size = 10, study_unit_size = 1, units = "m")
+  expect_silent(
+    sa <- create_study_area(
+      l, hexagon_size = 50, units = "m2",
+      HexagonID_label = "hex_id", HexagonID_prefix = "SA")
+  )
 
+  expect_s3_class(sa, "sf")
+  expect_named(sa, c("x", "hex_id"))
+  expect_equal(sa$hex_id, paste0("SA_", 1:3))
+
+  expect_true(all(round(sf::st_area(sa)) == 50))
 
 })
