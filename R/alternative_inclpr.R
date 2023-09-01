@@ -1,8 +1,10 @@
 
-#' Calculate habitat probabilities
+#' Calculate Propbability Proportional to Size (PPS) inclusion probabilities
 #'
-#' Based on Van Wilgenburg et al. 2020
-#' https://doi.org/10.1371/journal.pone.0234494
+#' See for more information:
+#' https://www150.statcan.gc.ca/n1/en/pub/12-001-x/2011001/article/11450-eng.pdf?st=0oyBln55
+#' or
+#' https://en.wikipedia.org/wiki/Probability-proportional-to-size_sampling
 #'
 #'
 #' @inheritParams common_docs
@@ -11,10 +13,10 @@
 #'
 #' @examples
 #'
-#' calculate_BOSS_hab_inlc_pr(
+#' calculate_PPS_hab_inlc_pr(
 #'   land_hex = psu_hexagons,
 #'   hex_id = hex_id)
-calculate_BOSS_hab_inlc_pr <- function(land_hex,
+calculate_PPS_hab_inlc_pr <- function(land_hex,
                               hex_id, stratum_id = NULL,
                               quiet = FALSE) {
 
@@ -30,14 +32,14 @@ calculate_BOSS_hab_inlc_pr <- function(land_hex,
 
   att_summary <- calculate_land_cover_summary(land_hex, {{stratum_id }}) |>
     dplyr::group_by( across(by)) |>
-    dplyr::mutate(p_hab_BOSS = 1/(n()*sum(area_total)) ) |>
+    dplyr::mutate(p_hab_PPS = 1/(n()*sum(area_total)) ) |>
     dplyr::ungroup()
 
 
   dplyr::left_join(att_long, att_summary,
             by = by) |>
-    dplyr::mutate(psel_hex_hab_BOSS = p_hab_BOSS * area) |>
-    dplyr::summarize(p_sel_BOSS_hab = units::set_units(sum(psel_hex_hab_BOSS), NULL),
+    dplyr::mutate(psel_hex_hab_PPS = p_hab_PPS * area) |>
+    dplyr::summarize(p_sel_PPS_hab = units::set_units(sum(psel_hex_hab_PPS), NULL),
               .by = c({{stratum_id}},{{hex_id}})) |>
     dplyr::left_join(x = land_hex, by  = dplyr::join_by({{hex_id}}))
 
