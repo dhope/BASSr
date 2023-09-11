@@ -80,8 +80,11 @@ calculate_z_scores <-  function(land_hex,
   att_long |>
     dplyr::select(-area_total, -total_phab) |>
     dplyr::left_join(att_sum, by = by) |>
-    dplyr::mutate(z_score =(area-mean)/sd) |>
-    dplyr::summarise(avg_z_score = mean(z_score, na.rm = T),
+    dplyr::mutate(abs_diff = abs(area-mean),
+      z_score =(area-mean)/sd) |>
+    dplyr::summarise(
+      avg_abs_diff = mean(abs_diff, na.rm=T),
+      avg_z_score = mean(z_score, na.rm = T),
                      .by = {{hex_id}})
 
 
