@@ -12,6 +12,7 @@ run_grts_on_BASS(
   hex_id = NULL,
   stratum_id = NULL,
   remove_hexes = NULL,
+  selection_weighting = inclpr,
   seed = NULL,
   ...
 )
@@ -38,6 +39,9 @@ frame.}
 
 \item{remove_hexes}{Character Vector. Ids of hexagons to remove prior to
 sampling.}
+
+\item{selection_weighting}{Column. Identifies selection weightings used by
+the \code{aux_var} argument in \code{spsurvey::grts()}. Default is \code{inclpr}.}
 
 \item{seed}{Numeric. Random seed to use for random sampling. Seed only
 applies to specific sampling events (does not change seed in the
