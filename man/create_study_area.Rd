@@ -5,23 +5,33 @@
 \title{Create Hexagonal grid}
 \usage{
 create_study_area(
-  landscape,
-  hexagon_size,
-  units,
-  HexagonID_label,
-  HexagonID_prefix
+  land,
+  hex_size,
+  units = NULL,
+  hex_prefix = "SA_",
+  linear_type = "short_diagonal"
 )
 }
 \arguments{
-\item{landscape}{larger area to create hexagonal grid over. Must be sf object}
+\item{land}{sf Spatial. Area over which to create hexagonal grid. Must be
+have a valid CRS. If lat/lon (i.e. CRS 4326) will be projected to 3347 to
+ensure proper units.}
 
-\item{hexagon_size}{size of hexagon in area or diameter in units (see variable units for options)}
+\item{hex_size}{Numeric or Units. Size of hexagon in area or diagonal
+diameter. Can be a bear number (see \code{units}) or a \code{units} object with units
+embedded. See details for specifics.}
 
-\item{units}{Units of hexagonal units in area or diameter (valid values include 'm2', 'ha', 'km2','km', 'm')}
+\item{units}{Character. Units of \code{hex_size} in \code{"m"}, \code{"m2"}, \code{"km"},
+\code{"km2"}, or \code{"ha"}. Ignored if \code{hex_size} is a \code{units} object.}
 
-\item{HexagonID_label}{Name of column for hexigon id}
+\item{hex_prefix}{Character. Text to prefix to hexagon IDs. Default "SA_"
+results in hexagon ids of "SA_01", etc.}
 
-\item{HexagonID_prefix}{Prefix to affix to hexagon ID}
+\item{linear_type}{Character. Type of diameter to use when specifying linear
+hexagonal grid sizes. One of \code{"short_diagonal"} (default; for the short
+diameter from side to side, or centroid to centroid), or \code{"long_diagonal"}
+(for the long diameter from vertex to vertex passing through the centre of
+the hex).}
 }
 \value{
 Returns a sf polygon layer of hexagons with unique IDs
@@ -30,4 +40,63 @@ Returns a sf polygon layer of hexagons with unique IDs
 Function that takes a landscape as an sf object and returns a hexagonal grid of a given size.
 Allowed inputs are hectres ('ha'), metres squared ('m2'), metres or kilometres ('m', or 'km')
 as the diameter of each hexagon
+}
+\details{
+If \code{hex_size} is provided as a units object (i.e., \code{units::set_units(100, km^2)}) then the units can be any area or length unit recognized by the
+\code{units} package and convertible to \code{m} or \code{m2}. Otherwise, if using a bare number in \code{hex_size} and
+providing the units as a character in \code{units}, they must be one of \code{"m"},
+\code{"m2"}, \code{"km"}, \code{"km2"}, or \code{"ha"}.
+
+For example, \code{hex_size = units::set_units(100, ft)} will work, but \verb{hex_size = 100, units = "ft"} will not.
+}
+\examples{
+library(sf)
+plot <- st_polygon(list(cbind(c(-90,-90,-85,-85,-90),
+                              c(50,55,55,50,50))))
+plot <- sf::st_sfc(plot, crs = 4326) |>
+  st_transform(3347)
+
+ggplot() +
+  geom_sf(data = plot, fill = "white")
+
+# Create grid by area - 1000km2
+grid <- create_study_area(plot, hex_size = 1000, units = "km2")
+
+# Check the area
+st_area(grid[1,]) |>
+  units::set_units("km2")
+
+# Check the visual
+ggplot() +
+  geom_sf(data = plot, fill = "white") +
+  geom_sf(data = grid, fill = NA)
+
+# Create grid by diameter - 33.98088 km from side to side
+grid2 <- create_study_area(plot, hex_size = 33.98088, units = "km")
+
+# Check the area - Hah! A hexagon with the diameter of 33.98088 km has an area of ~1,000km
+st_area(grid2[1,]) |>
+  units::set_units("km2")
+
+# Check the visual - Identical
+ggplot() +
+  geom_sf(data = plot, fill = "white") +
+  geom_sf(data = grid2, fill = NA)
+
+# Diameter of a 1000 km2 hexagon is
+area_km2 <- 1000
+(sqrt(2 * area_km2 / (3 * sqrt(3)))) * sqrt(3)
+
+# Create grid by hectare
+grid <- create_study_area(plot, hex_size = 40000, units = "ha")
+ggplot() +
+  geom_sf(data = plot, fill = "white") +
+  geom_sf(data = grid, fill = NA)
+
+# Create grid with pre-set units
+area <- units::set_units(1000, "km2", mode = "character")
+grid <- create_study_area(plot, hex_size = area)
+ggplot() +
+  geom_sf(data = plot, fill = "white") +
+  geom_sf(data = grid, fill = NA)
 }
