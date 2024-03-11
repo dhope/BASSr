@@ -5,7 +5,7 @@
 #' @docType package
 #' @name BASSr
 #' @importFrom magrittr %>%
-#' @importFrom rlang .data .env :=
+#' @import rlang
 #' @importFrom Rcpp sourceCpp
 #' @useDynLib BASSr, .registration = TRUE
 #'

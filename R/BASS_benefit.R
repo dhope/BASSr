@@ -239,8 +239,8 @@ quick_ben <- function(d, samples, land_cover_summary, hex_id, print,
   d <- sf::st_drop_geometry(d)
   land_cover_summary <- sf::st_drop_geometry(land_cover_summary)
 
-  hexes <- d  |>
-    dplyr::as_tibble()  |>
+  hexes <- d |>
+    dplyr::as_tibble() |>
     dplyr::select(dplyr::matches("LC\\d"))
 
 
@@ -249,7 +249,7 @@ quick_ben <- function(d, samples, land_cover_summary, hex_id, print,
                   "i" =  "Check to be sure you have not input inputed percentages into your values.",
                   "x" = "Using percentages will not calculate accurate benefit values."), call = NULL)
   }
-  hexNames <- dplyr::as_tibble(d) %>%
+  hexNames <- dplyr::as_tibble(d) |>
     dplyr::select({{ hex_id }}) |>
     dplyr::pull(1)
 

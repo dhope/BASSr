@@ -315,17 +315,17 @@ check_crs <- function(crs) {
   }
 }
 
-check_int <- function(int, range) {
+check_int <- function(int, range, arg = caller_arg(int), call = caller_env()) {
 
   if(missing(int) || (!is.null(int) && (round(int) != int || !(int >= range[1] && int <= range[2])))) {
     rlang::abort(glue::glue(
-      "{deparse(substitute(int))} must be an integer between ",
-      "{range[1]} and {range[2]}"), call = NULL)
+      "{arg} must be an integer between ",
+      "{range[1]} and {range[2]}"), call = call)
   }
 }
 
-check_char <- function(char) {
+check_char <- function(char, arg = caller_arg(char), call = caller_env()) {
   if(!is.character(char)) {
-    rlang::abort(glue::glue("{deparse(substitute(int))} must be text"))
+    abort(glue::glue("{arg} must be text"), call = call)
   }
 }

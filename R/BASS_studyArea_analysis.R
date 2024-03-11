@@ -131,8 +131,8 @@ run_grts_on_BASS <- function(probs, nARUs, os = NULL, num_runs = 1,
 
     # Get strata columns and names
     stratum_name <- rlang::as_label(stratum_id)
-    strata_vector <- probs %>% # Vector of strata
-      dplyr::pull({{ stratum_id }}) %>%
+    strata_vector <- probs |> # Vector of strata
+      dplyr::pull({{ stratum_id }}) |>
       unique()
 
 
