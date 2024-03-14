@@ -23,7 +23,7 @@
 #'           returns a list of the points on the path and the original points selected to create the path.
 #' @export
 #'
-select_ssu <- function(SSUs,PSU_id,  SSU_id, type, nsamples, os, cluster_size, ARUonly, seed_, min_dist, useGRTS) {
+select_sites <- function(SSUs,PSU_id,  SSU_id, type, nsamples, os, cluster_size, ARUonly, seed_, min_dist, useGRTS) {
   set.seed(seed_)
   if (!"scaled_benefit" %in% names(SSUs)) {
     rlang::warn("Scaled benefit not included. I'm trying to calculate using benefit/max(benefit).")
