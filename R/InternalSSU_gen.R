@@ -1,45 +1,112 @@
-#' genSSU. Generate ssu layer aligned with hexagon PSU
+#' Create sampling sites within hexagons
 #'
-#' @param h Hexagon - sf polygon
-#' @param spacing distance between points
-#' @param HexID_column Name of column to identify individual PSU
+#' Creates a grid of sites within the hexagon grid cells created by
+#' `create_hexes()`. These sites can then be sampled with `sample_sites()`.
 #'
-#' @return SSU points as an sf object
+#' @param hex Spatial Data frame. Hexagon grid across sampling region.
+#'   Requires column identifying the hexagon IDs (see `hex_id`)
+#' @param spacing Numeric. Distance between sites. Units
+#'   are assumed to be those of `hex` spatial data frame.
+#' @param n Numeric. *Approximate* number of sites to create within a hex grid.
+#'
+#' @inheritParams common_docs
+#'
+#' @return Spatial data frame of sites as points.
 #' @export
 #'
-genSSU <- function(h, spacing, HexID_column){
-  if(attr(h, "sf_column")=="x") sf::st_geometry(h) = "geometry"
+#' @examples
+#' # Get sites by exact within-hex distances
+#' sites_sp <- create_sites(psu_hexagons, spacing = 5)
+#'
+#' # Get sites by approximate number of points (but equal spacing among hexes)
+#' sites_n <- create_sites(psu_hexagons, n = 61)
+#'
+#' # Same number of sites, but in slightly different spots, because creating by
+#' # n maximizes spacing, but creating by spacing using the exact spacing
+#' # specified.
+#'
+#' library(ggplot2)
+#' ggplot() +
+#'   geom_sf(data = psu_hexagons) +
+#'   geom_sf(data = sites_sp, size = 0.5, colour = "red") +
+#'   geom_sf(data = sites_n, size = 0.5, colour = "blue")
 
-  ch <- tibble::as_tibble(sf::st_coordinates(h))
-  top_point <- ch[which.max(ch$Y),]
-  bottom_point <- ch[which.min(ch$Y),]
-  gridsize <- 2*floor(abs(top_point$Y-bottom_point$Y)/spacing)+3
-  rowAngle <- tanh((top_point$X-bottom_point$X)/(top_point$Y-bottom_point$Y))
+create_sites <- function(hex, spacing = NULL, n = NULL, hex_id = hex_id) {
 
-  suppressWarnings({cent <- sf::st_centroid(h) %>%
-    dplyr::bind_cols(tibble::as_tibble(sf::st_coordinates(.))) %>%
-    sf::st_drop_geometry() %>%
-    dplyr::select({{HexID_column}}, X, Y)})
+  hex <- sf::st_set_geometry(hex, "geometry")
 
+  # Assume all hexess are identical
+  points <- tibble::as_tibble(sf::st_coordinates(hex[1, ]))
+  top_point <- points[which.max(points$Y),]
+  bottom_point <- points[which.min(points$Y),]
 
-  genRow <- function(cX, cY, sp,...){
-    tibble::tibble(rowid = seq(-gridsize,gridsize)) %>%
-      dplyr::mutate(X = sin(60*pi/180+rowAngle) *sp*rowid + {{cX}},
-             Y = cos(60*pi/180+rowAngle) *sp*rowid  + {{cY}})
+  if((is.null(spacing) & is.null(n)) || (!is.null(spacing) & !is.null(n))) {
+    abort("Must supply one of `spacing` or `n`")
   }
 
-  centroids <- tibble::tibble(crowid=seq(-gridsize,gridsize)) %>%
-    dplyr::mutate(cY = cos(rowAngle) *spacing*crowid + cent$Y,
-           #spacing/2*crowid + cent$Y,
-           cX =  sin(rowAngle) *spacing*crowid + cent$X) %>%
-    #cent$X + crowid* sqrt(spacing**2-(spacing/2)**2)) %>%
-    dplyr::rowwise() %>%
-    dplyr::mutate(row = list(genRow(cX = cX,cY = cY,sp = spacing))) %>%
-    tidyr::unnest(row) %>%
-    dplyr::select(X,Y) %>%
-    sf::st_as_sf(coords = c("X", "Y"), crs = sf::st_crs(h)) %>%
-    sf::st_filter(h) %>%
-    dplyr::mutate({{HexID_column}} := dplyr::pull(h,{{HexID_column}}),
-           ssuID = dplyr::row_number())
-  return(centroids)
+  if(!is.null(n)) {
+    n <- n_points(hex, n)
+    spacing <- as.numeric(sqrt(sf::st_area(hex[1,]) / n))
+  }
+
+  gridsize <- ceiling(abs(top_point[["Y"]] - bottom_point[["Y"]]) / spacing / 2) + 1
+  rowAngle <- tanh((top_point[["X"]] - bottom_point[["X"]]) /
+                     (top_point[["Y"]] - bottom_point[["Y"]]))
+
+  cent <- add_coords(hex) |>
+    sf::st_drop_geometry()
+
+  create_row <- function(cX, cY){
+    tibble::tibble(rowid = seq(-.env[["gridsize"]], .env[["gridsize"]])) |>
+      dplyr::mutate(
+        X = sin(60 * pi / 180 + .env[["rowAngle"]]) * .env[["spacing"]] * .data[["rowid"]] + {{ cX }},
+        Y = cos(60 * pi / 180 + .env[["rowAngle"]]) * .env[["spacing"]] * .data[["rowid"]] + {{ cY }})
+  }
+
+  # Create one Hex grid of points
+  grid <- tibble::tibble(crowid = seq(-gridsize, gridsize)) |>
+    dplyr::mutate(
+      cY = cos(.env[["rowAngle"]]) * .env[["spacing"]] * .data[["crowid"]] + cent$Y[1],
+      cX =  sin(.env[["rowAngle"]]) * .env[["spacing"]] * .data[["crowid"]] + cent$X[1]) |>
+    dplyr::mutate(row = purrr::map2(.data[["cX"]], .data[["cY"]], create_row)) |>
+    tidyr::unnest("row") |>
+    dplyr::select("X", "Y") |>
+    sf::st_as_sf(coords = c("X", "Y"), crs = sf::st_crs(hex)) |>
+    sf::st_filter(hex[1,])
+
+  # Get the centroid of this grid
+  cent_grid <- sf::st_union(grid) |>
+    sf::st_centroid()
+
+  # Shift and add the grid to each hexagon in turn
+  # - subtract the cent_grid, then add the hex centroid points
+  cent |>
+    dplyr::mutate(
+      grid = list(grid$geometry),
+      sites = purrr::pmap(list(.data[["X"]], .data[["Y"]], .data[["grid"]]),
+                          \(x, y, g) g - cent_grid + c(x, y))
+    ) |>
+    dplyr::select({{ hex_id }}, "sites") |>
+    tidyr::unnest("sites") |>
+    sf::st_as_sf(crs = sf::st_crs(hex)) |>
+    sf::st_set_geometry("geometry") |>
+    dplyr::mutate(site_id = 1:dplyr::n(), .by = "hex_id") |>
+    dplyr::relocate("site_id", .after = "hex_id")
 }
+
+
+# Find the nearest appropriate number of points in the grid pattern
+n_points <- function(hex, n) {
+
+  area <- as.numeric(sf::st_area(hex))[1]
+  diam <- sqrt((2 * area) / (3 * sqrt(3))) * 2
+
+  # n points along the diameter
+  n1 <- floor(diam / sqrt(area/n))
+  if(n1 %% 2 == 0) n1 <- n1 + 1
+  n2 <- ceiling(n1/2)
+
+  # Best number of points
+  sum(c(n1:n2)*2) - n1
+}
+

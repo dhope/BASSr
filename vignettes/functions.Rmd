@@ -60,7 +60,7 @@ grViz("digraph boxes_and_circles {
   select_ssu [label = 'select_ssu()' fillcolor = 'lightblue1']
   down [label = 'downweight_selection_pr()' fillcolor = 'lightblue1']
   gen_dist_mat [label = 'gen_dist_mat()']
-  genSSU [label = 'genSSU()' fillcolor = 'lightblue1']
+  create_sites [label = 'create_sites()' fillcolor = 'lightblue1']
   
   # Deprecated?
   full_sel [label = 'run_full_BASS_w_selection()' fillcolor = 'grey70']
