@@ -12,7 +12,7 @@ non-spatial, will be converted to spatial sf data frame using the \code{crs} and
 \code{coords} arguments. Requires columns identifying the Hex ID as well as the
 Stratum ID (see \code{hex_id} and \code{stratum_id} respectively).}
 
-\item{hex_id}{Column. Identifies hexagon IDs (e.g., \code{hex_id} or \code{ET_Index}).}
+\item{hex_id}{Column. Identifies hexagon IDs (e.g., default \code{hex_id}).}
 
 \item{stratum_id}{Column. Identifies larger area (e.g., \code{StudyAreaID} or
 \code{Province}).}

@@ -15,7 +15,7 @@ are assumed to be those of \code{hex} spatial data frame.}
 
 \item{n}{Numeric. \emph{Approximate} number of sites to create within a hex grid.}
 
-\item{hex_id}{Column. Identifies hexagon IDs (e.g., \code{hex_id} or \code{ET_Index}).}
+\item{hex_id}{Column. Identifies hexagon IDs (e.g., default \code{hex_id}).}
 }
 \value{
 Spatial data frame of sites as points.

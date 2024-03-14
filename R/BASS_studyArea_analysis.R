@@ -30,8 +30,7 @@
 #'   land_hex = psu_hexagons,
 #'   num_runs = 10,
 #'   n_samples = 3,
-#'   costs = psu_costs,
-#'   hex_id = hex_id)
+#'   costs = psu_costs)
 #'
 #' # Simple selection
 #' sel <- run_grts_on_BASS(

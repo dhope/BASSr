@@ -4,7 +4,12 @@
 \alias{calculate_PPS_hab_inlc_pr}
 \title{Calculate Propbability Proportional to Size (PPS) inclusion probabilities}
 \usage{
-calculate_PPS_hab_inlc_pr(land_hex, hex_id, stratum_id = NULL, quiet = FALSE)
+calculate_PPS_hab_inlc_pr(
+  land_hex,
+  hex_id = hex_id,
+  stratum_id = NULL,
+  quiet = FALSE
+)
 }
 \arguments{
 \item{land_hex}{(Spatial) Data frame. Land Cover data by hexagon. If
@@ -12,7 +17,7 @@ non-spatial, will be converted to spatial sf data frame using the \code{crs} and
 \code{coords} arguments. Requires columns identifying the Hex ID as well as the
 Stratum ID (see \code{hex_id} and \code{stratum_id} respectively).}
 
-\item{hex_id}{Column. Identifies hexagon IDs (e.g., \code{hex_id} or \code{ET_Index}).}
+\item{hex_id}{Column. Identifies hexagon IDs (e.g., default \code{hex_id}).}
 
 \item{stratum_id}{Column. Identifies larger area (e.g., \code{StudyAreaID} or
 \code{Province}).}
@@ -26,8 +31,5 @@ or
 https://en.wikipedia.org/wiki/Probability-proportional-to-size_sampling
 }
 \examples{
-
-calculate_PPS_hab_inlc_pr(
-  land_hex = psu_hexagons,
-  hex_id = hex_id)
+calculate_PPS_hab_inlc_pr(land_hex = psu_hexagons)
 }

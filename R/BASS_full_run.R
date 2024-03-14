@@ -19,8 +19,7 @@
 #'   land_hex = psu_hexagons,
 #'   num_runs = 10,
 #'   n_samples = 3,
-#'   costs = psu_costs,
-#'   hex_id = hex_id)
+#'   costs = psu_costs)
 #'
 #' # Omit water hexes
 #'
@@ -29,7 +28,6 @@
 #'   num_runs = 10,
 #'   n_samples = 3,
 #'   costs = psu_costs,
-#'   hex_id = hex_id,
 #'   omit_flag = water)
 #'
 #' # Keep grts objects
@@ -39,7 +37,6 @@
 #'   num_runs = 10,
 #'   n_samples = 3,
 #'   costs = psu_costs,
-#'   hex_id = hex_id,
 #'   return_grts = TRUE)
 #'
 #' names(d)
@@ -53,13 +50,12 @@
 #'   num_runs = 10,
 #'   n_samples = 3,
 #'   costs = psu_costs,
-#'   hex_id = hex_id,
 #'   mindis = 10, maxtry = 10)
 #'
 #' d
 
 full_BASS_run <- function(land_hex, num_runs, n_samples, costs = NULL,
-                          hex_id, stratum_id = NULL, omit_flag = NULL,
+                          hex_id = hex_id, stratum_id = NULL, omit_flag = NULL,
                           non_random_set = NULL,
                           benefit_weight = 0.5, land_cover_weights = NULL,
                           return_grts = FALSE,

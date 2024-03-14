@@ -2,14 +2,12 @@ test_that("calculate_inclusion_probs()", {
 
   expect_silent(b <- calculate_benefit(samples = psu_samples,
                                        land_hex = psu_hexagons,
-                                       hex_id = hex_id,
                                        quiet = TRUE))
 
 
   expect_silent(inc <- calculate_inclusion_probs(
     benefits = b,
-    costs = psu_costs,
-    hex_id = hex_id
+    costs = psu_costs
   )) %>%
     expect_s3_class(c("sf", "data.frame"))
 
@@ -24,7 +22,6 @@ test_that("calculate_inclusion_probs()", {
   expect_silent(inc2 <- calculate_inclusion_probs(
     benefits = b,
     costs = psu_costs,
-    hex_id = hex_id,
     benefit_weight = 1
   ))
 
@@ -38,8 +35,7 @@ test_that("calculate_inclusion_probs()", {
   expect_silent(inc3 <- calculate_inclusion_probs(
     benefits = b,
     costs = psu_costs,
-    omit = INLAKE,
-    hex_id = hex_id
+    omit = INLAKE
   ))
 
   expect_equal(sum(is.na(inc3$RawCost)), sum(psu_costs$INLAKE))
@@ -53,7 +49,6 @@ test_that("calculate_inclusion_probs()", {
   expect_silent(inc4 <- calculate_inclusion_probs(
     benefits = b,
     costs = psu_costs,
-    hex_id = hex_id,
     stratum_id = province
   ))
 

@@ -85,7 +85,7 @@
 #'   geom_sf(data = grid, fill = NA)
 
 create_hexes <- function(land, hex_size, units = NULL, hex_prefix = "SA_",
-                              linear_type = "short_diagonal") {
+                         linear_type = "short_diagonal") {
 
   if(!inherits(land, c("sf", "sfc")) ||
      is.na(sf::st_crs(land))) {

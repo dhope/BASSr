@@ -32,7 +32,7 @@ frame.}
 
 \item{num_runs}{Numeric. Number of times to draw random samples.}
 
-\item{hex_id}{Column. Identifies hexagon IDs (e.g., \code{hex_id} or \code{ET_Index}).}
+\item{hex_id}{Column. Identifies hexagon IDs (e.g., default \code{hex_id}).}
 
 \item{stratum_id}{Column. Identifies larger area (e.g., \code{StudyAreaID} or
 \code{Province}).}
@@ -69,8 +69,7 @@ d <- full_BASS_run(
   land_hex = psu_hexagons,
   num_runs = 10,
   n_samples = 3,
-  costs = psu_costs,
-  hex_id = hex_id)
+  costs = psu_costs)
 
 # Simple selection
 sel <- run_grts_on_BASS(

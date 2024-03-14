@@ -36,7 +36,7 @@ test_that("check_column_text()", {
 
 test_that("check_benefits()", {
   b <- calculate_benefit(land_hex = psu_hexagons, samples = psu_samples,
-                         hex_id = hex_id, quiet = TRUE)
+                         quiet = TRUE)
   expect_silent(check_benefits(b))
   expect_error(check_benefits(sf::st_drop_geometry(b)), "must be output of `calculate_benefit")
   expect_error(check_benefits(b[,-2]), "must be output of `calculate_benefit")
@@ -113,12 +113,11 @@ test_that("check_samples()", {
 test_that("check_probs()", {
   b <- calculate_benefit(land_hex = psu_hexagons,
                          samples = psu_samples,
-                         hex_id = hex_id, quiet = TRUE)
+                         quiet = TRUE)
 
   inc <- calculate_inclusion_probs(
     benefits = b,
-    costs = psu_costs,
-    hex_id = hex_id)
+    costs = psu_costs)
 
   expect_silent(check_probs(inc))
   expect_error(check_probs(sf::st_drop_geometry(inc)), "must be output")

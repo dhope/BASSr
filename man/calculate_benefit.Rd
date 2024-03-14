@@ -7,7 +7,7 @@
 calculate_benefit(
   land_hex,
   samples,
-  hex_id,
+  hex_id = hex_id,
   stratum_id = NULL,
   non_random_set = NULL,
   land_cover_weights = NULL,
@@ -24,7 +24,7 @@ Stratum ID (see \code{hex_id} and \code{stratum_id} respectively).}
 
 \item{samples}{(Spatial) Data frame. Results from \code{draw_random_samples()}.}
 
-\item{hex_id}{Column. Identifies hexagon IDs (e.g., \code{hex_id} or \code{ET_Index}).}
+\item{hex_id}{Column. Identifies hexagon IDs (e.g., default \code{hex_id}).}
 
 \item{stratum_id}{Column. Identifies larger area (e.g., \code{StudyAreaID} or
 \code{Province}).}
@@ -57,7 +57,6 @@ Calculate the benefit of a hexagon from  grts results.
 calculate_benefit(
   land_hex = psu_hexagons,
   samples = psu_samples,
-  hex_id = hex_id,
   non_random_set = c("SA_09", "SA_22", "SA_47"))
 
 # Specify a non-random set
@@ -65,7 +64,6 @@ calculate_benefit(
 calculate_benefit(
  land_hex = psu_hexagons,
  samples = psu_samples,
- hex_id = hex_id,
  non_random_set = c("SA_09", "SA_22", "SA_47"))
 
 # Without GRTS
@@ -78,8 +76,7 @@ non_grts_samples <- draw_random_samples(
 
 calculate_benefit(
  land_hex = psu_hexagons,
- samples = non_grts_samples,
- hex_id = hex_id)
+ samples = non_grts_samples)
 
 
 

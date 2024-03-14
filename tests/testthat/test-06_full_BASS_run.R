@@ -7,7 +7,7 @@ test_that("full_BASS_run()", {
   expect_silent({
     f1 <- full_BASS_run(num_runs = n_runs, n_samples = n_samples,
                         land_hex = psu_hexagons,
-                        hex_id = hex_id, stratum_id = province,
+                        stratum_id = province,
                         seed = 1234, quiet = TRUE)
   })
 
@@ -20,7 +20,7 @@ test_that("full_BASS_run()", {
   expect_silent({
     f2 <- full_BASS_run(num_runs = n_runs, n_samples = n_samples,
                         land_hex = psu_hexagons,
-                        hex_id = hex_id, stratum_id = province,
+                        stratum_id = province,
                         costs = psu_costs,
                         seed = 1234, quiet = TRUE)
   })
@@ -35,7 +35,7 @@ test_that("full_BASS_run()", {
   expect_silent({
     f3 <- full_BASS_run(num_runs = n_runs, n_samples = n_samples,
                         land_hex = psu_hexagons,
-                        hex_id = hex_id, return_grts = TRUE,
+                        return_grts = TRUE,
                         stratum_id = province,
                         seed = 1234, quiet = TRUE)
   })
@@ -48,7 +48,7 @@ test_that("full_BASS_run()", {
   expect_silent({
     f4 <- full_BASS_run(num_runs = n_runs, n_samples = n_samples,
                         land_hex = psu_hexagons,
-                        hex_id = hex_id, return_grts = TRUE,
+                        return_grts = TRUE,
                         stratum_id = province,
                         costs = psu_costs,
                         seed = 1234, quiet = TRUE)
@@ -83,7 +83,7 @@ test_that("full_BASS_run() - Pass ... to spsurvey::grts()", {
   expect_no_error(
     f <- full_BASS_run(num_runs = n_runs, n_samples = n_samples,
                        land_hex = psu_hexagons,
-                       hex_id = hex_id, return_grts = TRUE,
+                       return_grts = TRUE,
                        stratum_id = province,
                        costs = psu_costs,
                        mindis = 1000,
@@ -107,7 +107,7 @@ test_that("full_BASS_run() - return grts", {
   expect_silent({
     f <- full_BASS_run(num_runs = n_runs, n_samples = n_samples,
                        land_hex = psu_hexagons,
-                       hex_id = hex_id, return_grts = TRUE,
+                       return_grts = TRUE,
                        stratum_id = province,
                        costs = psu_costs,
                        seed = 1234, quiet = TRUE)
@@ -124,7 +124,7 @@ test_that("full_BASS_run() - return grts", {
   expect_silent({
     f <- full_BASS_run(num_runs = n_runs, n_samples = n_samples,
                        land_hex = psu_hexagons,
-                       hex_id = hex_id, return_grts = TRUE,
+                       return_grts = TRUE,
                        stratum_id = province,
                        costs = psu_costs,
                        seed = 1234, quiet = TRUE)

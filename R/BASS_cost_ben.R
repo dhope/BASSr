@@ -15,24 +15,21 @@
 #' @examples
 #'
 #' b <- calculate_benefit(land_hex = psu_hexagons,
-#'                        samples = psu_samples,
-#'                        hex_id = hex_id)
+#'                        samples = psu_samples)
 #'
 #' inc <- calculate_inclusion_probs(
 #'   benefits = b,
-#'   costs = psu_costs,
-#'   hex_id = hex_id)
+#'   costs = psu_costs)
 #'
 #' # Omit water hexes (identified by column `water`)
 #'
 #' inc <- calculate_inclusion_probs(
 #'   benefits = b,
 #'   costs = psu_costs,
-#'   hex_id = hex_id,
 #'   omit_flag = water)
-#'
+
 calculate_inclusion_probs <- function(benefits, costs,
-                                      hex_id, stratum_id = NULL,
+                                      hex_id = hex_id, stratum_id = NULL,
                                       omit_flag = NULL,
                                       benefit_weight = 0.5) {
 
