@@ -62,7 +62,10 @@ Often this is most usefully done outside of R, with habitat and costs incorporat
 
 
 ```{r}
-SA_SU <- BASSr::create_study_area(landscape = nc_for_survey,study_area_size = 100000, units = 'ha', study_unit_size = 100, output = 'all' )
+SA_SU <- create_hexes(landscape = nc_for_survey,
+                      study_area_size = 100000, 
+                      units = 'ha', 
+                      study_unit_size = 100, output = 'all' )
 ```
 
 ```{r}

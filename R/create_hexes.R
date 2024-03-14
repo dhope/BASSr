@@ -1,8 +1,8 @@
 #' Create Hexagonal grid
 #'
-#' Function that takes a landscape as an sf object and returns a hexagonal grid of a given size.
-#' Allowed inputs are hectres ('ha'), metres squared ('m2'), metres or kilometres ('m', or 'km')
-#' as the diameter of each hexagon
+#' Function that takes a landscape as an sf object and returns a hexagonal grid
+#' of a given size. Allowed inputs are hectres ('ha'), metres squared ('m2'),
+#' metres or kilometres ('m', or 'km') as the diameter of each hexagon
 #'
 #' @details
 #' If `hex_size` is provided as a units object (i.e., `units::set_units(100,
@@ -36,15 +36,15 @@
 #' @examples
 #' library(sf)
 #' plot <- st_polygon(list(cbind(c(-90,-90,-85,-85,-90),
-#'                               c(50,55,55,50,50))))
-#' plot <- sf::st_sfc(plot, crs = 4326) |>
+#'                               c(50,55,55,50,50)))) |>
+#'   st_sfc(crs = 4326) |>
 #'   st_transform(3347)
 #'
 #' ggplot() +
 #'   geom_sf(data = plot, fill = "white")
 #'
 #' # Create grid by area - 1000km2
-#' grid <- create_study_area(plot, hex_size = 1000, units = "km2")
+#' grid <- create_hexes(plot, hex_size = 1000, units = "km2")
 #'
 #' # Check the area
 #' st_area(grid[1,]) |>
@@ -56,7 +56,7 @@
 #'   geom_sf(data = grid, fill = NA)
 #'
 #' # Create grid by diameter - 33.98088 km from side to side
-#' grid2 <- create_study_area(plot, hex_size = 33.98088, units = "km")
+#' grid2 <- create_hexes(plot, hex_size = 33.98088, units = "km")
 #'
 #' # Check the area - Hah! A hexagon with the diameter of 33.98088 km has an area of ~1,000km
 #' st_area(grid2[1,]) |>
@@ -72,19 +72,19 @@
 #' (sqrt(2 * area_km2 / (3 * sqrt(3)))) * sqrt(3)
 #'
 #' # Create grid by hectare
-#' grid <- create_study_area(plot, hex_size = 40000, units = "ha")
+#' grid <- create_hexes(plot, hex_size = 40000, units = "ha")
 #' ggplot() +
 #'   geom_sf(data = plot, fill = "white") +
 #'   geom_sf(data = grid, fill = NA)
 #'
 #' # Create grid with pre-set units
 #' area <- units::set_units(1000, "km2", mode = "character")
-#' grid <- create_study_area(plot, hex_size = area)
+#' grid <- create_hexes(plot, hex_size = area)
 #' ggplot() +
 #'   geom_sf(data = plot, fill = "white") +
 #'   geom_sf(data = grid, fill = NA)
 
-create_study_area <- function(land, hex_size, units = NULL, hex_prefix = "SA_",
+create_hexes <- function(land, hex_size, units = NULL, hex_prefix = "SA_",
                               linear_type = "short_diagonal") {
 
   if(!inherits(land, c("sf", "sfc")) ||
@@ -95,7 +95,7 @@ create_study_area <- function(land, hex_size, units = NULL, hex_prefix = "SA_",
   if(sf::st_is_longlat(land)) {
     warn(c("Projecting `land` using CRS 3347 (Stats Canada)",
          paste0("If this is inappropriate, use `st_transform(land, crs = XXXX)` with your ",
-                "own CRS before using `create_study_area()`.")))
+                "own CRS before using `create_hexes()`.")))
     land <- sf::st_transform(land, crs = 3347)
   }
 
