@@ -13,7 +13,7 @@ test_that("full_BASS_run()", {
 
   expect_s3_class(f1, "data.frame")
   expect_equal(nrow(f1), nrow(psu_hexagons))
-  expect_named(f1, c("hex_id", "benefit", "x", "num_runs", "n_samples"))
+  expect_named(f1, c("hex_id", "benefit", "geometry", "num_runs", "n_samples"))
 
 
   # With costs
