@@ -16,7 +16,7 @@ Stratum ID (see \code{hex_id} and \code{stratum_id} respectively).}
 \item{stratum_id}{Column. Identifies larger area (e.g., \code{StudyAreaID} or
 \code{Province}).}
 
-\item{hex_id}{Column. Identifies hexagon ids (e.g., \code{hex_id} or \code{ET_Index}).}
+\item{hex_id}{Column. Identifies hexagon IDs (e.g., \code{hex_id} or \code{ET_Index}).}
 
 \item{omit_flag}{Column identifying hexes to omit (e.g., water hexes).}
 

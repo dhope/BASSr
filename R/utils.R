@@ -1,19 +1,19 @@
 
 
-#' Add coordinates of an sf object to itself
+#' Add centroid coordinates of an sf object to itself
 #'
 #' @param sf Spatial data frame
 #' @noRd
 add_coords <- function(sf) {
   # Set attributes as constant to avoid sf warnings
   # (cf. https://github.com/r-spatial/sf/issues/406)
-  sf <- sf::st_set_agr(sf, "constant") %>%
-    sf::st_centroid()
+  coords <- sf::st_set_agr(sf, "constant") |>
+    sf::st_centroid() |>
+    sf::st_coordinates() |>
+    dplyr::as_tibble()
 
-  sf %>%
-    sf::st_coordinates() %>%
-    dplyr::as_tibble() %>%
-    dplyr::bind_cols(sf, .)
+  dplyr::bind_cols(sf, coords) |>
+    dplyr::relocate(X, Y, geometry, .after = dplyr::last_col())
 }
 
 

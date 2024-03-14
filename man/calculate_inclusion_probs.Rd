@@ -19,7 +19,7 @@ calculate_inclusion_probs(
 
 \item{costs}{Data frame. Costs for each hexagon in a RawCost format.}
 
-\item{hex_id}{Column. Identifies hexagon ids (e.g., \code{hex_id} or \code{ET_Index}).}
+\item{hex_id}{Column. Identifies hexagon IDs (e.g., \code{hex_id} or \code{ET_Index}).}
 
 \item{stratum_id}{Column. Identifies larger area (e.g., \code{StudyAreaID} or
 \code{Province}).}

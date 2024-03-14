@@ -24,7 +24,7 @@ Stratum ID (see \code{hex_id} and \code{stratum_id} respectively).}
 
 \item{samples}{(Spatial) Data frame. Results from \code{draw_random_samples()}.}
 
-\item{hex_id}{Column. Identifies hexagon ids (e.g., \code{hex_id} or \code{ET_Index}).}
+\item{hex_id}{Column. Identifies hexagon IDs (e.g., \code{hex_id} or \code{ET_Index}).}
 
 \item{stratum_id}{Column. Identifies larger area (e.g., \code{StudyAreaID} or
 \code{Province}).}
