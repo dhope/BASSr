@@ -2,56 +2,72 @@
 % Please edit documentation in R/select_sites.R
 \name{select_sites}
 \alias{select_sites}
-\title{Select SSU}
+\title{Select sites for sampling}
 \usage{
 select_sites(
-  SSUs,
-  PSU_id,
-  SSU_id,
+  sites,
   type,
-  nsamples,
-  os,
-  cluster_size,
-  ARUonly,
-  seed_,
+  n_samples,
   min_dist,
-  useGRTS
+  cluster_size = NULL,
+  min_dist_cluster = NULL,
+  os = NULL,
+  hex_id = hex_id,
+  site_id = site_id,
+  ARUonly = FALSE,
+  useGRTS = TRUE,
+  progress = TRUE,
+  seed = NULL
 )
 }
 \arguments{
-\item{SSUs}{sf dataframe of points showing SSU locations}
+\item{sites}{Spatial Data frame. Site points created in \code{create_sites()}.
+Requires columns identifying the Hex ID as well as the Site ID (see
+\code{hex_id} and \code{site_id} respectively).}
 
-\item{PSU_id}{Lazy named column showing PSU id}
-
-\item{SSU_id}{String showing id column for SSU id}
-
-\item{type}{String. Method to select SSUs. Currently one of
+\item{type}{String. Method to select sites. Must be one of
 \itemize{
-\item "Cluster"
-\item "GTRS" - Depreciated. Use Random with useGRTS = TRUE
-\item "ShortestPath"
-\item "Random"
+\item "cluster" - Clustered sampling. Sample a single point, then \code{cluster_size}
+samples around that point.
+\item "path" - Shortest Path sampling. Sample a single point, then \code{cluster_size}
+samples in a path from that point.
+\item "Random" - Random sampling. Sample a random set of points.
 }}
 
-\item{nsamples}{Integer total number of points to select}
+\item{n_samples}{Numeric. Number of samples to draw for each hex.}
 
-\item{os}{Double. Proportion of oversample}
+\item{min_dist}{Numeric. Minimum distance between points, or if Clusters,
+between cluster centres.}
 
-\item{cluster_size}{Integer. Number of points per cluster. Not used for GRTS or Random}
+\item{cluster_size}{Integer. For \emph{Clusters}, number of points per cluster.
+For \emph{Shortest Paths}, number of points per path. Only applies to Clusters
+and Paths.}
 
-\item{ARUonly}{Logical. Used to flag if only ARUs are going to be used.}
+\item{min_dist_cluster}{Numeric. Minimum distance between ARU samples within
+clusters. Only applies to Clusters.}
 
-\item{seed_}{Random seed}
+\item{os}{Numeric. Over sample size (proportional). Only applies to Clusters
+and Random.}
 
-\item{min_dist}{Numeric. Minimum distance between points}
+\item{site_id}{Column. Identifies site IDs (default \code{site_id}).}
 
-\item{useGRTS}{Logical. Should the program be run using GRTS? Works for Cluster or Random}
+\item{ARUonly}{Logical. Return only ARU locations. If \code{FALSE} Clusters return
+point count locations as well. Only applies to Clusters and Random
+sampling.}
+
+\item{useGRTS}{Logical. Should the program be run using GRTS? Only applies to
+Clusters or Random samples.}
+
+\item{progress}{Logical. Show progress bars if applicable.}
 }
 \value{
-Returns a data frame of points selected from the SSUs object. Except for Shortest path, which
-returns a list of the points on the path and the original points selected to create the path.
+\itemize{
+\item If Clustered, returns a data frame of clustered points selected from sites.
+\item If Random, returns a data frame of sampled points selected from sites.
+\item If Shortest Path, returns a list of the points on the path and the original points selected to create the path.
+}
 }
 \description{
-Selection methods for processing SSU selection using GRTS, random sampling,
+Selection methods for processing site selection using GRTS, random sampling,
 clustering, or shortest path methods.
 }

@@ -7,365 +7,405 @@
 #'   Requires columns identifying the Hex ID as well as the Site ID (see
 #'   `hex_id` and `site_id` respectively).
 #' @param site_id Column. Identifies site IDs (default `site_id`).
-#' @param type String. Method to select sites. Currently one of
-#' * "Cluster"
-#' * "GTRS" - Depreciated. Use Random with useGRTS = TRUE
-#' * "ShortestPath"
-#' * "Random"
-#' @param nsamples Integer total number of points to select
-#' @param os Double. Proportion of oversample
-#' @param cluster_size Integer. Number of points per cluster. Not used for GRTS or Random
-#' @param ARUonly Logical. Used to flag if only ARUs are going to be used.
-#' @param min_dist Numeric. Minimum distance between points
-#' @param useGRTS Logical. Should the program be run using GRTS? Works for Cluster or Random
+#' @param type String. Method to select sites. Must be one of
+#' * "cluster" - Clustered sampling. Sample a single point, then `cluster_size`
+#'    samples around that point.
+#' * "path" - Shortest Path sampling. Sample a single point, then `cluster_size`
+#'    samples in a path from that point.
+#' * "Random" - Random sampling. Sample a random set of points.
+#' @param n_samples Numeric. Number of samples to draw for each hex.
+#' @param os Numeric. Over sample size (proportional). Only applies to Clusters
+#'   and Random.
+#' @param cluster_size Integer. For *Clusters*, number of points per cluster.
+#'   For *Shortest Paths*, number of points per path. Only applies to Clusters
+#'   and Paths.
+#' @param ARUonly Logical. Return only ARU locations. If `FALSE` Clusters return
+#'   point count locations as well. Only applies to Clusters and Random
+#'   sampling.
+#' @param min_dist Numeric. Minimum distance between points, or if Clusters,
+#'   between cluster centres.
+#' @param min_dist_cluster Numeric. Minimum distance between ARU samples within
+#'   clusters. Only applies to Clusters.
+#' @param useGRTS Logical. Should the program be run using GRTS? Only applies to
+#'   Clusters or Random samples.
+#' @param progress Logical. Show progress bars if applicable.
 #'
-#' @return Returns a data frame of points selected from the sites object. Except for Shortest path, which
-#'           returns a list of the points on the path and the original points selected to create the path.
+#' @return
+#'   * If Clustered, returns a data frame of clustered points selected from sites.
+#'   * If Random, returns a data frame of sampled points selected from sites.
+#'   * If Shortest Path, returns a list of the points on the path and the original points selected to create the path.
 #' @export
 #'
-select_sites <- function(sites, hexes, site_id = site_id,
-                         type, nsamples, os, cluster_size, ARUonly, min_dist, useGRTS,
-                         seed = NULL) {
-  set.seed(seed_)
-  if (!"scaled_benefit" %in% names(sites)) {
-    rlang::warn("Scaled benefit not included. I'm trying to calculate using benefit/max(benefit).")
-    sites$scaled_benefit <- sites$benefit / max(sites$benefit)
+#' @examples
+#'
+select_sites <- function(sites, type, n_samples, min_dist,
+                         cluster_size = NULL, min_dist_cluster = NULL, os = NULL,
+                         hex_id = hex_id, site_id = site_id,
+                         ARUonly = FALSE, useGRTS = TRUE,
+                         progress = TRUE, seed = NULL) {
+
+  # Checks
+  if(!type %in% c("cluster", "random", "path")) {
+    type_orig <- type
+    type <- tolower(type)
+    type <- dplyr::case_when(stringr::str_detect(type, "cluster") ~ "cluster",
+                             stringr::str_detect(type, "random") ~ "random",
+                             stringr::str_detect(type, "short|path") ~ "path")
+    inform(c(paste0("`type = \"", type_orig, "\"` did not match \"cluster\", \"random\", or \"path\"."),
+             paste0("Continuing with closest match: `", type, "`")))
   }
 
-  if (type == "Cluster") r <- select_by_cluster()
-  if (type == "Random" | type == "GRTS") r <- select_by_random()
-  if (type == "ShortestPath") r <- select_by_shortest()
+  if (!"scaled_benefit" %in% names(sites)) {
+    if(!"benefit" %in% names(sites)) abort("Must have `benefit` or `scaled_benefit` to sample sites")
+    warn("Scaled benefit not included. I'm trying to calculate using benefit/max(benefit).")
+    sites <- dplyr::mutate(sites, scaled_benefit = benefit / max(benefit), .by = {{ hex_id }})
+  }
+
+  if(type == "cluster") {
+    r <- select_by_cluster(sites, {{ hex_id }}, {{ site_id }}, n_samples, os, cluster_size,
+                           ARUonly, min_dist, min_dist_cluster, useGRTS, seed)
+  } else if (type == "random") {
+    if(!is.null(cluster_size) | !is.null(min_dist_cluster)) {
+      inform("`cluster_size` and `min_dist_cluster`, do not apply to Shortest Path sampling")
+    }
+    r <- select_by_random(sites, {{ hex_id }}, {{ site_id }}, n_samples, os,
+                          ARUonly, min_dist, useGRTS, seed)
+  } else if (type == "path") {
+    if(!is.null(os) | !is.null(min_dist_cluster)) {
+      inform("`os`, `min_dist_cluster`, `ARUonly` and `useGRTS` do not apply to Shortest Path sampling")
+    }
+    #if(cluster_size > 40) abort("Path lengths > 40 are not recommended")
+    r <- select_by_path(sites, {{ hex_id }}, {{ site_id }}, n_samples, cluster_size,
+                        min_dist, progress, seed)
+  }
+  r
 }
 
+select_with_grts <- function(sites, hex_id, site_id, n, os, min_dist, seed) {
 
-select_by_cluster <- function() {
-  nclusters <- floor(nsamples / cluster_size)
-  nosclusters <- floor(nclusters * (os))
-  if(isFALSE(useGRTS)){
-
-    z <- 0
-    while (z < 675) {
-      ExampleSiteCentroids <- slice_sample(sites,
-                                           n = (nosclusters + nclusters),
-                                           weight_by = scaled_benefit,
-                                           replace = F
-      ) %>%
-        arrange(desc(benefit))
-      a <- st_distance(ExampleSiteCentroids)
-      diag(a) <- NA
-      z <- min(a, na.rm = T) %>% units::drop_units()
-    }
-  }
-  if(isTRUE(useGRTS)){
-    if(min_dist<900) rlang::warn("Minimum cluster centroid less than meters apart.
-                            Chance of cluster overlap.
-                            Suggest setting min_dist to 900")
-    if("X" %in% names(sites) & "Y" %in% names(sites)){
-      ssutab <- sites
-    } else{
-      ssutab <- sites %>%
-        bind_cols(as_tibble(st_coordinates(.)))
-    }
-    sites_selected <- run_grts_on_BASS(
-      n_grts_tests = 1,
-      study_area_results = ssutab %>%
-        mutate(inclpr = scaled_benefit) %>%
-        dplyr::select({{ hex_id }}, {{ site_id }}, X, Y, inclpr) %>%
-        st_drop_geometry(),
-      nARUs = nclusters,
-      os = os,mindis = min_dist,
-      idcol = as_label(enquo( hex_id )),
-      hex_id = hex_id,
-      Stratum = None
-    )[[1]]
-    # browser()
-    ExampleSiteCentroids <- bind_rows(sites_selected$sites_base, sites_selected$sites_over) |>
-      st_drop_geometry() |> left_join(x=ssutab) |>
-      filter(!is.na(siteID)) #|> st_as_sf()
-
+  if(!("X" %in% names(sites) & "Y" %in% names(sites))) {
+    sites <- dplyr::bind_cols(sites, dplyr::as_tibble(sf::st_coordinates(sites)))
   }
 
-  exssuex <- sites[!sites[[site_id]] %in% ExampleSiteCentroids[[site_id]], ]
-  NNcentroids <- nngeo::st_nn(ExampleSiteCentroids,
-                              exssuex,
-                              k = (cluster_size - 1), returnDist = T, progress = F
+  hexes <- dplyr::pull(sites, {{ hex_id }}) |>
+    unique()
+  n <- rep(n, length(hexes)) |>
+    set_names(hexes)
+
+  sites <- sites |>
+    dplyr::mutate(inclpr = scaled_benefit) |>
+    dplyr::select({{ hex_id }}, {{ site_id }}, X, Y, inclpr)
+
+  selected <- run_grts_on_BASS(
+    probs = sites,
+    nARUs = n,
+    os = os,
+    mindis = min_dist,
+    hex_id = site_id,
+    stratum_id = hex_id,
+    seed = seed
   )
 
-
-  clusters <- purrr::map_df(1:nrow(ExampleSiteCentroids), ~ {
-    ExampleSiteCentroids[.x, ] %>%
-      bind_rows(exssuex[NNcentroids$nn[[.x]], ]) %>%
-      mutate(
-        cluster = .x, # paste0(ET_Index, "_0", .x))}) %>%
-        os = ifelse(cluster <= nclusters, "Primary", "Oversample")
-      )
-  }) %>%
-    group_by(cluster) %>%
-    arrange(desc(benefit)) %>%
-    mutate(pc_n_cluster = row_number()) # ,
-  # ARU_PC = ifelse(pc_n_cluster<=2, "ARU", "PC"))
-
-  aruN <- purrr::map_df(1:(nosclusters + nclusters), ~ {
-    cl <- clusters[clusters$cluster == .x, ] %>% st_distance(by_element = F)
-    rownames(cl) <- clusters[[site_id]][clusters$cluster == .x]
-    colnames(cl) <- clusters[[site_id]][clusters$cluster == .x]
-    cl <- units::drop_units(cl)
-    arus1 <- as_tibble(cl, rownames = "pc1") %>%
-      pivot_longer(
-        cols = matches("^\\d+"),
-        names_to = "pc2",
-        values_to = "m"
-      ) %>%
-      filter(m > 600) %>%
-      slice_sample(n = 1) %>%
-      dplyr::select(pc1, pc2)
-    # browser()
-    # c(.[["pc1"]], .[["pc2"]]) #[1,c("pc1", "pc2")] %>% unlist
-  })
-
-  clusters$aru <- ifelse(clusters[[site_id]] %in% aruN$pc1 | clusters[[site_id]] %in% aruN$pc2, "ARU", "PC")
-  clusters$centroid <- ifelse(clusters[[site_id]] %in% ExampleSSUcentroids[[site_id]],  "Centroid", "Adjacent")
-
-  if (isTRUE(ARUonly)) {
-    return(filter(clusters, aru == "ARU"))
-  }
-
-  return(clusters)
+  dplyr::bind_rows(selected$sites_base, selected$sites_over) |>
+    sf::st_drop_geometry() |>
+    dplyr::left_join(
+      x = sites,
+      by = dplyr::join_by({{ hex_id }}, {{site_id }},
+                          "X", "Y", "inclpr")) |>
+    dplyr::filter(!is.na(siteID))
 
 }
 
-select_by_random <- function() {
-  if(type == "GRTS") warn("type = 'GRTS' is depreciated. Use type = 'Random` with useGRTS=TRUE")
-  if(isTRUE(useGRTS) | type == "GRTS"){
-    if("X" %in% names(sites) & "Y" %in% names(sites)){
-      sitetab <- sites
-    } else{
-      sitetab <- sites %>%
-        bind_cols(as_tibble(st_coordinates(.)))
-    }
-    # browser()
-    site_selected <- run_grts_on_BASS(
-      n_grts_tests = 1,
-      study_area_results = sitetab %>%
-        mutate(inclpr = scaled_benefit) %>%
-        dplyr::select({{hex_id}}, {{site_id}}, X, Y, inclpr) %>%
-        st_drop_geometry(),
-      nARUs = nsamples,
-      os = os,mindis = min_dist,
-      idcol = as_label(enquo(PSU_id)),
-      hexid = site_id,
-      Stratum = None
-    )[[1]]
-    # browser()
-    output_site <- site_selected@data %>%
-      # dplyr::select(siteID:siteid) %>%
-      left_join(sites, by = {{site_id}}) %>%
-      st_as_sf() %>%
-      mutate(
-        os = ifelse(panel == "PanelOne", "Primary", "Oversample"),
-        aru = ifelse(isTRUE(ARUonly), "ARU", "PC")
-      )
-    return(output_site)
+select_by_cluster <- function(sites, hex_id, site_id, n_samples, os, cluster_size,
+                              ARUonly, min_dist, min_dist_cluster, useGRTS, seed) {
+
+  n_clusters <- floor(n_samples / cluster_size)
+  n_os_clusters <- floor(n_clusters * (os))
+
+  # Check spacing
+  spacing <- site_spacing(sites)
+  dist <- cluster_dist(cluster_size, spacing)
+  if((dist + spacing) >= min_dist) {
+    warn(paste0("Based on your site spacing (", spacing, "), ",
+                "the minimum distance between clusters (`min_dist = ", min_dist, "`),\n",
+                "and your desired cluster size (`cluster_size = ", cluster_size, "`) ",
+                "there is a good chance that your clusters will overlap/abut"))
   }
-  if(isFALSE(useGRTS)){
-    nos <- floor(nsamples * os)
-    if (isTRUE(ARUonly)) {
-      output <- sites %>%
-        slice_sample(
-          n = nsamples + nos,
+
+  if(useGRTS) selected <- select_with_grts(sites, hex_id, site_id, n_clusters, os, min_dist, seed)
+
+  if(!useGRTS) {
+    hexes <- dplyr::pull(sites, {{ hex_id }}) |> dplyr::n_distinct()
+    z <- 0
+    set_seed(seed, {
+
+      while (nrow(selected) < (n_os_clusters + n_clusters) * hexes) {
+        selected <- dplyr::slice_sample(
+          sites,
+          n = n_os_clusters + n_clusters,
+          weight_by = scaled_benefit,
+          replace = FALSE,
+          by = {{ hex_id }}
+        ) |>
+          dplyr::arrange(dplyr::desc(benefit))
+        a <- sf::st_distance(selected)
+        diag(a) <- NA
+        z <- min(a, na.rm = TRUE) |>
+          units::drop_units()
+      }
+    })
+  }
+
+  clusters <- dplyr::mutate(sites, selected = {{ site_id }} %in% dplyr::pull(selected, {{ site_id }})) |>
+    dplyr::select({{ hex_id }}, {{ site_id }}, "selected") |>
+    tidyr::nest(set = -c({{ hex_id }})) |>
+    dplyr::mutate(clusters = purrr::map(set, \(x) {
+
+      # Get clusters
+      s <- dplyr::filter(x, selected)
+      ns <- dplyr::filter(x, !selected)
+      nn <- nngeo::st_nn(s, ns,
+                         k = cluster_size - 1,
+                         returnDist = TRUE,
+                         progress = FALSE)[["nn"]]
+
+      cl <- purrr::map(seq_along(nn), \(x) {
+
+        cl1 <- dplyr::bind_rows(s[x, ], ns[nn[[x]], ]) |>
+          dplyr::mutate(cluster = .env[["x"]])
+
+        # Get ARUs
+        dist <- sf::st_distance(cl1, by_element = FALSE) |>
+          units::drop_units()
+        rownames(dist) <- colnames(dist) <- dplyr::pull(cl1, {{ site_id }})
+
+        arus <- dplyr::as_tibble(dist, rownames = "pc1") |>
+          tidyr::pivot_longer(
+            cols = dplyr::matches("^\\d+"),
+            names_to = "pc2",
+          values_to = "m"
+        ) |>
+        dplyr::filter(m >= .env[["min_dist_cluster"]]) |>
+        dplyr::slice_sample(n = 1) |>
+        dplyr::select("pc1", "pc2")
+
+        dplyr::mutate(
+          cl1,
+          aru = dplyr::if_else({{ site_id }} %in% c(arus$pc1, arus$pc2), "ARU", "PC"))
+      }) |>
+        purrr::list_rbind()
+    })) |>
+    dplyr::select({{ hex_id }}, "clusters") |>
+    tidyr::unnest("clusters") |>
+    sf::st_as_sf() |>
+    dplyr::left_join(sf::st_drop_geometry(sites),
+                     by = dplyr::join_by({{ hex_id }}, {{ site_id }})) |>
+    dplyr::group_by({{ hex_id }}, cluster) |>
+    dplyr::arrange(dplyr::desc(benefit)) |>
+    dplyr::mutate(pc_n_cluster = dplyr::row_number(),
+                  os = dplyr::if_else(.data[["cluster"]] <= .env[["n_clusters"]],
+                                      "Primary", "Oversample"),
+                  centroid = dplyr::if_else(.data[["selected"]], "Centroid", "Adjacent")) |>
+    dplyr::ungroup() |>
+    dplyr::select(-"selected")
+
+  if(ARUonly) clusters <- dplyr::filter(clusters, .data[["aru"]] == "ARU")
+
+  clusters
+}
+
+site_spacing <- function(sites) {
+ sf::st_distance(sites[1,], sites[-1,]) |>
+    as.numeric() |>
+    round() |>
+    min()
+}
+
+cluster_dist <- function(cells, spacing) {
+  rows <- ceiling(1 + ((cells - 1)/6))
+  max_dist <- (rows * 2) - 1
+  max_dist * spacing
+}
+
+select_by_random <- function(sites, hex_id, site_id, n_samples, os,
+                             ARUonly, min_dist, useGRTS, seed) {
+
+  if(useGRTS) {
+    selected <- select_with_grts(sites, hex_id, site_id, n = n_samples, os, min_dist, seed)
+    if(ARUonly) selected$aru <- "ARU" else selected$aru <- "PC"
+
+  } else {
+    n_os <- floor(n_samples * os)
+    if(ARUonly) {
+      output <- sites |>
+        dplyr::slice_sample(
+          n = n_samples + n_os,
           weight_by = scaled_benefit
-        ) %>%
-        arrange(desc(benefit)) %>%
-        mutate(
+        ) |>
+        dplyr::arrange(dplyr::desc(benefit)) |>
+        dplyr::mutate(
           aru = "ARU",
-          os = c(rep("Primary", {{ nsamples }}), rep("Oversample", times = {{ nos }}))
+          os = c(rep("Primary", .env[["n_samples"]]),
+                 rep("Oversample", times = .env[["nos"]]))
         )
-      return(output)
     }
   }
+  selected
 }
 
-select_by_shortest <- function() {
-  if (cluster_size < 5 | nsamples < 16) {
-    rlang::abort("Currently the function can only allocate routes of 5 or more points. Updates are forthcoming")
-  }
-  if(nsamples%% cluster_size!=0) abort("Cluster size must be a equal proportion of total samples.")
-  set.seed(2341)
-  # browser()
-  rwithben18 <-  sites %>%
-    slice_sample(n = nsamples, weight_by = scaled_benefit) %>%
-    arrange(desc(benefit)) %>%
-    mutate(
-      aru = "ARU",
-      os = # c(
-        rep("Primary", {{nsamples}} )
-    ) # ,rep("Oversample",times= 18)))
+select_by_path <- function(sites, hex_id, site_id, n_samples, cluster_size,
+                           min_dist, progress, seed, call = caller_env()) {
 
-  selp <- rwithben18[[site_id]][rwithben18$os == "Primary"]
-  # browser()
-  d <- sites %>%
-    st_buffer(dist = 20 + sqrt(2 * (300**2))) %>%
-    dplyr::select(focal_siteid = {{site_id}}) %>%
-    # slice_sample(n=1) %>%
-    rowwise() %>%
-    mutate(
-      nn = list(st_filter(x = sites, y = geometry)),
-      neigh_id = list(nn[[site_id]]),
+  if(n_samples %% cluster_size != 0) {
+    abort("Cluster size (samples per path) must be a equal proportion of total samples.", call = call)
+  }
+  #set.seed(2341)
+
+  sites <- tidyr::nest(sites, sites = -{{ hex_id }})
+
+  # Get initial sample
+  sampled <- dplyr::mutate(sites, sampled = purrr::map(sites, \(x) {
+    set.seed(2341)
+    x |>
+      dplyr::slice_sample(n = n_samples, weight_by = scaled_benefit) |>
+      dplyr::arrange(dplyr::desc(benefit)) |>
+      dplyr::mutate(aru = "ARU", os = rep("Primary", .env[["n_samples"]]))
+  }, .progress = progress))
+
+
+  routes <- sampled |>
+    dplyr::mutate(routes = purrr::map2(
+      sites, sampled, \(sites, sampled) {
+        select_by_path_hex(sites, sampled, {{ site_id }}, cluster_size, n_samples, min_dist)
+      }, .progress = progress)) |>
+    dplyr::select({{ hex_id }}, "routes") |>
+    tidyr::unnest("routes") |>
+    sf::st_as_sf()
+
+  sampled <- sampled |>
+    dplyr::select({{ hex_id }}, "sampled") |>
+    tidyr::unnest(sampled) |>
+    sf::st_as_sf()
+
+  list(sampled = sampled, routes = routes)
+}
+
+
+#' Select paths within a hex
+#'
+#' This is the workhorse function for selecting sites and their paths within
+#' a hex.
+#'
+#' @noRd
+select_by_path_hex <- function(sites, sampled, site_id, cluster_size, n_samples,
+                                   min_dist) {
+
+  sampled_ids <- dplyr::pull(sampled, {{ site_id }})
+
+  # Calculate distance among all sites
+  dist <- sf::st_distance(sites) |>
+    units::drop_units() |>
+    round(digits = 2)
+  dimnames(dist) <- list(dplyr::pull(sites, {{ site_id }}),
+                         dplyr::pull(sites, {{ site_id }}))
+
+  # Calculate neighbours for all sites
+  d <- sites |>
+    sf::st_buffer(dist = 20 + sqrt(2 * (300**2))) |>
+    dplyr::select(focal_siteid = {{ site_id }}) |>
+    dplyr::rowwise() |>
+    dplyr::mutate(
+      nn = list(sf::st_filter(x = sites, y = geometry)),
+      neigh_id = list(dplyr::pull(nn, {{ site_id }})),
       num_Neigh = nrow(nn),
-      dist = list(round(units::drop_units(st_distance(st_centroid(geometry), nn)), 2)),
-      insample = list(ifelse(nn[[site_id]] %in% selp, 1, 0)),
-      dvalue = list(case_when(dist < 150 ~ 0, dist < ({{min_dist}} +5) ~ 1, TRUE ~ 0.7)),
-      value = list(dvalue * (insample + 1)) # ,
-      # maxvalue = max(value),
-      # bestNeigbours = list(nn[[site_id]][value == maxvalue])
+      dist = list(dist[focal_siteid, neigh_id]),
+      insample = list(neigh_id %in% sampled_ids),
+      dvalue = list(dplyr::case_when(dist < 150 ~ 0,
+                                     dist < (min_dist + 5) ~ 1,
+                                     TRUE ~ 0.7)),
+      value = list(dvalue * (insample + 1))
     )
 
-  theAlgorithm <- function(z,cluster_size) {
-    i <- sites[sites[[site_id]] == selp[[z]], ]
-    tibble(
-      p0 = i [[site_id]],
-      p1 = (d$neigh_id[d$focal_siteid == i[[site_id]]]),
-      value = d$value[d$focal_siteid == i[[site_id]]]
-    ) %>%
-      ungroup() %>%
-      unnest(c(p1, value)) %>%
-      rowwise() %>%
-      mutate(
-        p2 = (d$neigh_id[d$focal_siteid == p1]),
-        value2 = (d$value[d$focal_siteid == p1])
-      ) %>%
-      ungroup() %>%
-      unnest(cols = c(p2, value2)) %>%
-      rowwise() %>%
-      filter(!p2 %in% c(p0, p1)) %>%
-      mutate(running_value = sum(c_across(matches("^value")))) %>%
-      group_by(p0) %>%
-      slice_max(order_by = running_value, with_ties = T) %>%
-      rowwise() %>%
-      mutate(
-        p3 = (d$neigh_id[d$focal_siteid == p2]),
-        value3 = (d$value[d$focal_siteid == p2])
-      ) %>%
-      ungroup() %>%
-      unnest(cols = c(p3, value3)) %>%
-      rowwise() %>%
-      filter(!p3 %in% c(p0, p1, p2)) %>%
-      mutate(running_value = sum(c_across(matches("^value")))) %>%
-      group_by(p0) %>%
-      slice_max(order_by = running_value, with_ties = T) %>%
-      {if({{cluster_size}}>5){
-        rowwise(.) %>%
-          mutate(
-            p4 = (d$neigh_id[d$focal_siteid == p3]),
-            value4 = (d$value[d$focal_siteid == p3])
-          ) %>%
-          ungroup() %>%
-          unnest(cols = c(p4, value4)) %>%
-          rowwise() %>%
-          filter(!p4 %in% c(p0, p1, p2, p3)) %>%
-          mutate(running_value = sum(c_across(matches("^value")))) %>%
-          group_by(p0) %>%
-          slice_max(order_by = running_value, with_ties = T)} else{.}
-      } %>%
-      {if({{cluster_size}}>5){
-        rowwise(.) %>%
-          mutate(
-            p5 = (d$neigh_id[d$focal_siteid == p4]),
-            value5 = (d$value[d$focal_siteid == p4])
-          ) %>%
-          ungroup() %>%
-          unnest(cols = c(p5, value5)) %>%
-          rowwise() %>%
-          filter(!p5 %in% c(p0, p1, p2, p3, p4)) %>%
-          mutate(running_value = sum(c_across(matches("^value")))) %>%
-          group_by(p0) %>%
-          slice_max(order_by = running_value, with_ties = T) } else{.}
-      } %>%
-      {if({{cluster_size}}>6){
-        rowwise(.) %>%
-          mutate(
-            p6 = (d$neigh_id[d$focal_siteid == p5]),
-            value6 = (d$value[d$focal_siteid == p5])
-          ) %>%
-          ungroup() %>%
-          unnest(cols = c(p6, value6)) %>%
-          rowwise() %>%
-          filter(!p6 %in% c(p0, p1, p2, p3, p4, p5)) %>%
-          mutate(running_value = sum(c_across(matches("^value")))) %>%
-          group_by(p0) %>%
-          slice_max(order_by = running_value, with_ties = T) } else{.}
-      } %>%
-      {if({{cluster_size}}>7){
-        rowwise(.) %>%
-          mutate(
-            p7 = (d$neigh_id[d$focal_siteid == p6]),
-            value7 = (d$value[d$focal_siteid == p6])
-          ) %>%
-          ungroup() %>%
-          unnest(cols = c(p7, value7)) %>%
-          rowwise() %>%
-          filter(!p7 %in% c(p0, p1, p2, p3, p4, p5, p6)) %>%
-          mutate(running_value = sum(c_across(matches("^value")))) %>%
-          group_by(p0) %>%
-          slice_max(order_by = running_value, with_ties = T) } else{.}
-      } %>%
-      {if({{cluster_size}}>8){
-        rowwise(.) %>%
-          mutate(
-            p8 = (d$neigh_id[d$focal_siteid == p7]),
-            value8 = (d$value[d$focal_siteid == p7])
-          ) %>%
-          ungroup() %>%
-          unnest(cols = c(p8, value8)) %>%
-          rowwise() %>%
-          filter(!p8 %in% c(p0, p1, p2, p3, p4, p5, p6, p7)) %>%
-          mutate(running_value = sum(c_across(matches("^value")))) %>%
-          group_by(p0) %>%
-          slice_max(order_by = running_value, with_ties = T)} else{.}
-      } %>%
-      rowwise() %>%
-      mutate(
-        total_value = sum(c_across(matches("^value"))),
-        mean_value = mean(c_across(matches("^value")))
-      ) %>%
-      ungroup()
-  }
-  fullHexAlg <- purrr::map_df(1:length(selp), theAlgorithm, cluster_size = cluster_size)
-  fh <- fullHexAlg %>%
-    mutate(origin = p0, lineid = row_number()) %>%
-    dplyr::select(-matches("^value")) %>%
-    dplyr::select(-matches("^value")) %>%
-    pivot_longer(cols = matches("^p\\d"), values_to = {{ site_id }}, names_to = "linepoint")
+  # Calculate paths among neighbours for sampled sites
+  full_paths <- path(sites, sampled_ids, d, cluster_size) |>
+    dplyr::arrange(match(p0, sampled_ids)) # To match the order of sampling
 
-  nroutes <- nsamples/cluster_size
 
-  routes <- fullHexAlg %>%
-    # group_by(p0) %>%
-    slice_max(mean_value, n = 1, with_ties = F) %>%
-    mutate(origin = p0, lineid = row_number()) %>%
-    dplyr::select(-matches("^value")) %>%
-    pivot_longer(cols = matches("^p\\d"), values_to = {{ site_id }}, names_to = "linepoint") %>%
-    left_join(sites) %>%
-    st_as_sf() %>%
-    group_by(origin, lineid) %>%
-    arrange({{ site_id }}) %>%
-    mutate(route = 1)
-  for(i in 2:nroutes){
-    routetmp <- filter(fullHexAlg, if_all((matches("^p\\d")), .fns = ~ !.x %in% routes[[site_id]])) %>%
-      slice_max(mean_value, n = 1, with_ties = F) %>%
-      mutate(origin = p0, lineid = row_number()) %>%
-      dplyr::select(-matches("^value")) %>%
-      pivot_longer(cols = matches("^p\\d"), values_to = {{ site_id }}, names_to = "linepoint") %>%
-      left_join(sites) %>%
-      st_as_sf() %>%
-      group_by(origin, lineid) %>%
-      arrange({{ site_id }}) %>%
-      mutate(route = i)
-
-    routes <- bind_rows(routes, routetmp)
+  # Creates routes
+  n_routes <- n_samples/cluster_size
+  routes <- sites[0,]
+  for(r in seq_len(n_routes)) {
+    rts <- full_paths |>
+      dplyr::filter(dplyr::if_all(
+        dplyr::matches("^p\\d"),
+        \(x) !x %in% dplyr::pull(routes, {{ site_id }}))) |>
+      dplyr::slice_max(.data[["mean_value"]], n = 1, with_ties = FALSE) |>
+      dplyr::mutate(origin = .data[["p0"]], lineid = dplyr::row_number()) |>
+      dplyr::select(-matches("^value")) |>
+      tidyr::pivot_longer(cols = matches("^p\\d"),
+                          values_to = as_name(enquo(site_id)),
+                          names_to = "linepoint") |>
+      dplyr::left_join(sites, by = dplyr::join_by({{ site_id }})) |>
+      sf::st_as_sf() |>
+      dplyr::group_by(dplyr::pick("origin", "lineid")) |>
+      dplyr::arrange({{ site_id }}) |>
+      dplyr::mutate(route = .env[["r"]])
+    routes <- dplyr::bind_rows(routes, rts)
   }
 
-
-  return(list(sampled = rwithben18, routes = routes))
+  routes
 }
 
+
+path <- function(sites, sampled_ids, d, cluster_size) {
+
+  d0 <- sf::st_drop_geometry(d) |>
+    dplyr::select(focal = focal_siteid, p = neigh_id, value) |>
+    tidyr::unnest(c(p, value))
+
+  paths <- dplyr::rename(d0, "p0" = "focal", "p1" = "p", "value1" = "value") |>
+    dplyr::filter(p0 %in% sampled_ids)
+
+  n <- c(0, 0)
+  while(n[2] < (cluster_size - 1)) {
+    n <- next_paths(paths)
+    paths <- add_path(d0, paths, n)
+  }
+
+  paths <- paths |>
+    dplyr::mutate(
+      total_value = rowSums(dplyr::select(paths, dplyr::starts_with("value"))),
+      mean_value = rowMeans(dplyr::select(paths, dplyr::starts_with("value")))
+    )
+#
+#   test <- dplyr::filter(paths, p0 == "41152_160") |>
+#     dplyr::arrange(dplyr::pick(dplyr::starts_with("p")))
+#
+#   waldo::compare(test, dplyr::ungroup(t), ignore_attr = TRUE)
+  paths
+}
+
+next_paths <- function(paths) {
+  current <- stringr::str_extract(names(paths), "(?<=p)\\d{1,2}") |>
+    as.numeric() |>
+    max(na.rm = TRUE)
+
+  c(current, current + 1)
+}
+
+add_path <- function(d0, paths, n) {
+  p <- paste0("p", n)
+  p_old <- stringr::str_subset(names(paths), "^p\\d{1,2}")
+
+  paths <- paths |>
+    dplyr::left_join(
+      dplyr::rename_with(d0, \(x) paste0(x, n[2]), .cols = c("p", "value")),
+      by = set_names("focal", p[1]),
+      relationship = "many-to-many") |>
+    dplyr::filter(!dplyr::if_any(dplyr::all_of(p_old), \(x) x == .data[[p[2]]]))
+
+  paths <- paths |>
+    dplyr::mutate(
+      running_value = rowSums(dplyr::select(paths, dplyr::starts_with("value")))) |>
+    dplyr::slice_max(running_value, with_ties = TRUE, by = "p0")
+}
