@@ -4,10 +4,10 @@
 \alias{create_sites}
 \title{Create sampling sites within hexagons}
 \usage{
-create_sites(hex, spacing = NULL, n = NULL, hex_id = hex_id)
+create_sites(hexes, spacing = NULL, n = NULL, hex_id = hex_id)
 }
 \arguments{
-\item{hex}{Spatial Data frame. Hexagon grid across sampling region.
+\item{hexes}{Spatial Data frame. Hexagon grid across sampling region.
 Requires column identifying the hexagon IDs (see \code{hex_id})}
 
 \item{spacing}{Numeric. Distance between sites. Units

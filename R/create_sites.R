@@ -3,7 +3,7 @@
 #' Creates a grid of sites within the hexagon grid cells created by
 #' `create_hexes()`. These sites can then be sampled with `sample_sites()`.
 #'
-#' @param hex Spatial Data frame. Hexagon grid across sampling region.
+#' @param hexes Spatial Data frame. Hexagon grid across sampling region.
 #'   Requires column identifying the hexagon IDs (see `hex_id`)
 #' @param spacing Numeric. Distance between sites. Units
 #'   are assumed to be those of `hex` spatial data frame.
@@ -31,12 +31,13 @@
 #'   geom_sf(data = sites_sp, size = 0.5, colour = "red") +
 #'   geom_sf(data = sites_n, size = 0.5, colour = "blue")
 
-create_sites <- function(hex, spacing = NULL, n = NULL, hex_id = hex_id) {
+create_sites <- function(hexes, spacing = NULL, n = NULL, hex_id = hex_id) {
 
-  hex <- sf::st_set_geometry(hex, "geometry")
+  hexes <- sf::st_set_geometry(hexes, "geometry")
+  hex <- hexes[1, ]
 
   # Assume all hexess are identical
-  points <- tibble::as_tibble(sf::st_coordinates(hex[1, ]))
+  points <- tibble::as_tibble(sf::st_coordinates(hex))
   top_point <- points[which.max(points$Y),]
   bottom_point <- points[which.min(points$Y),]
 
@@ -46,14 +47,15 @@ create_sites <- function(hex, spacing = NULL, n = NULL, hex_id = hex_id) {
 
   if(!is.null(n)) {
     n <- n_points(hex, n)
-    spacing <- as.numeric(sqrt(sf::st_area(hex[1,]) / n))
+    spacing <- as.numeric(sqrt(sf::st_area(hex) / n))
   }
 
   gridsize <- ceiling(abs(top_point[["Y"]] - bottom_point[["Y"]]) / spacing / 2) + 1
   rowAngle <- tanh((top_point[["X"]] - bottom_point[["X"]]) /
                      (top_point[["Y"]] - bottom_point[["Y"]]))
 
-  cent <- add_coords(hex) |>
+  # Get all hexes as centroids
+  cent <- add_coords(hexes) |>
     sf::st_drop_geometry()
 
   create_row <- function(cX, cY){
@@ -63,7 +65,7 @@ create_sites <- function(hex, spacing = NULL, n = NULL, hex_id = hex_id) {
         Y = cos(60 * pi / 180 + .env[["rowAngle"]]) * .env[["spacing"]] * .data[["rowid"]] + {{ cY }})
   }
 
-  # Create one Hex grid of points
+  # Create a single grid of points for a single hex
   grid <- tibble::tibble(crowid = seq(-gridsize, gridsize)) |>
     dplyr::mutate(
       cY = cos(.env[["rowAngle"]]) * .env[["spacing"]] * .data[["crowid"]] + cent$Y[1],
@@ -88,9 +90,9 @@ create_sites <- function(hex, spacing = NULL, n = NULL, hex_id = hex_id) {
     ) |>
     dplyr::select({{ hex_id }}, "sites") |>
     tidyr::unnest("sites") |>
-    sf::st_as_sf(crs = sf::st_crs(hex)) |>
+    sf::st_as_sf(crs = sf::st_crs(hexes)) |>
     sf::st_set_geometry("geometry") |>
-    dplyr::mutate(site_id = 1:dplyr::n(), .by = "hex_id") |>
+    dplyr::mutate(site_id = 1:dplyr::n()) |>
     dplyr::relocate("site_id", .after = "hex_id")
 }
 
