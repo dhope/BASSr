@@ -76,7 +76,7 @@ select_sites <- function(sites, type, n_samples, min_dist,
     if(!is.null(os) | !is.null(min_dist_cluster)) {
       inform("`os`, `min_dist_cluster`, `ARUonly` and `useGRTS` do not apply to Shortest Path sampling")
     }
-    if(cluster_size < 3) warn("There is a minimum `cluster_size` of 3 for Shortest Path sampling")
+    if(cluster_size < 3) abort("`cluster_size` must be >= 3 for Shortest Path sampling")
     #if(cluster_size > 40) abort("Path lengths > 40 are not recommended")
     r <- select_by_path(sites, {{ hex_id }}, {{ site_id }}, n_samples, cluster_size,
                         min_dist, progress, spacing, seed)
