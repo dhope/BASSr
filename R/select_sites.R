@@ -61,9 +61,11 @@ select_sites <- function(sites, type, n_samples, min_dist,
     sites <- dplyr::mutate(sites, scaled_benefit = benefit / max(benefit), .by = {{ hex_id }})
   }
 
+  spacing <- site_spacing(sites)
+
   if(type == "cluster") {
     r <- select_by_cluster(sites, {{ hex_id }}, {{ site_id }}, n_samples, os, cluster_size,
-                           ARUonly, min_dist, min_dist_cluster, useGRTS, seed)
+                           ARUonly, min_dist, min_dist_cluster, useGRTS, spacing, seed)
   } else if (type == "random") {
     if(!is.null(cluster_size) | !is.null(min_dist_cluster)) {
       inform("`cluster_size` and `min_dist_cluster`, do not apply to Shortest Path sampling")
@@ -117,13 +119,12 @@ select_with_grts <- function(sites, hex_id, site_id, n, os, min_dist, seed) {
 }
 
 select_by_cluster <- function(sites, hex_id, site_id, n_samples, os, cluster_size,
-                              ARUonly, min_dist, min_dist_cluster, useGRTS, seed) {
+                              ARUonly, min_dist, min_dist_cluster, useGRTS, spacing, seed) {
 
   n_clusters <- floor(n_samples / cluster_size)
   n_os_clusters <- floor(n_clusters * (os))
 
   # Check spacing
-  spacing <- site_spacing(sites)
   dist <- cluster_dist(cluster_size, spacing)
   if((dist + spacing) >= min_dist) {
     warn(paste0("Based on your site spacing (", spacing, "), ",
@@ -138,8 +139,7 @@ select_by_cluster <- function(sites, hex_id, site_id, n_samples, os, cluster_siz
     hexes <- dplyr::pull(sites, {{ hex_id }}) |> dplyr::n_distinct()
     z <- 0
     set_seed(seed, {
-
-      while (nrow(selected) < (n_os_clusters + n_clusters) * hexes) {
+      while (z < sqrt(spacing**2 + (spacing/2)**2)*2) { # Or min dist?
         selected <- dplyr::slice_sample(
           sites,
           n = n_os_clusters + n_clusters,
@@ -147,7 +147,7 @@ select_by_cluster <- function(sites, hex_id, site_id, n_samples, os, cluster_siz
           replace = FALSE,
           by = {{ hex_id }}
         ) |>
-          dplyr::arrange(dplyr::desc(benefit))
+          dplyr::arrange(dplyr::desc(scaled_benefit))
         a <- sf::st_distance(selected)
         diag(a) <- NA
         z <- min(a, na.rm = TRUE) |>
