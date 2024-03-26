@@ -35,6 +35,7 @@
 #'
 #' @examples
 #' library(sf)
+#' library(ggplot2)
 #' plot <- st_polygon(list(cbind(c(-90,-90,-85,-85,-90),
 #'                               c(50,55,55,50,50)))) |>
 #'   st_sfc(crs = 4326) |>

@@ -31,5 +31,5 @@ or
 https://en.wikipedia.org/wiki/Probability-proportional-to-size_sampling
 }
 \examples{
-calculate_PPS_hab_inlc_pr(land_hex = psu_hexagons)
+# calculate_PPS_hab_inlc_pr(land_hex = psu_hexagons)
 }

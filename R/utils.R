@@ -13,7 +13,7 @@ add_coords <- function(sf) {
     dplyr::as_tibble()
 
   dplyr::bind_cols(sf, coords) |>
-    dplyr::relocate(X, Y, geometry, .after = dplyr::last_col())
+    dplyr::relocate("X", "Y", "geometry", .after = dplyr::last_col())
 }
 
 

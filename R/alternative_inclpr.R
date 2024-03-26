@@ -12,7 +12,7 @@
 #' @return
 #'
 #' @examples
-#' calculate_PPS_hab_inlc_pr(land_hex = psu_hexagons)
+#' # calculate_PPS_hab_inlc_pr(land_hex = psu_hexagons)
 
 calculate_PPS_hab_inlc_pr <- function(land_hex,
                               hex_id = hex_id, stratum_id = NULL,
