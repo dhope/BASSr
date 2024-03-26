@@ -33,17 +33,25 @@
 
 create_sites <- function(hexes, spacing = NULL, n = NULL, hex_id = hex_id) {
 
-  hexes <- sf::st_set_geometry(hexes, "geometry")
-  hex <- hexes[1, ]
-
-  # Assume all hexess are identical
-  points <- tibble::as_tibble(sf::st_coordinates(hex))
-  top_point <- points[which.max(points$Y),]
-  bottom_point <- points[which.min(points$Y),]
+  # Checks
+  check_spatial(hexes)
 
   if((is.null(spacing) & is.null(n)) || (!is.null(spacing) & !is.null(n))) {
     abort("Must supply one of `spacing` or `n`")
+  } else if(!is.null(spacing)) {
+    check_int(spacing, range = c(1, Inf))
+  } else if(!is.null(n)) {
+    check_int(n, range = c(1, Inf))
   }
+
+  # Prep data
+  hexes <- sf::st_set_geometry(hexes, "geometry")
+  hex <- hexes[1, ]
+
+  # Assume all hexes are identical
+  points <- dplyr::as_tibble(sf::st_coordinates(hex))
+  top_point <- points[which.max(points$Y),]
+  bottom_point <- points[which.min(points$Y),]
 
   if(!is.null(n)) {
     n <- n_points(hex, n)
@@ -66,7 +74,7 @@ create_sites <- function(hexes, spacing = NULL, n = NULL, hex_id = hex_id) {
   }
 
   # Create a single grid of points for a single hex
-  grid <- tibble::tibble(crowid = seq(-gridsize, gridsize)) |>
+  grid <- dplyr::tibble(crowid = seq(-gridsize, gridsize)) |>
     dplyr::mutate(
       cY = cos(.env[["rowAngle"]]) * .env[["spacing"]] * .data[["crowid"]] + cent$Y[1],
       cX =  sin(.env[["rowAngle"]]) * .env[["spacing"]] * .data[["crowid"]] + cent$X[1]) |>

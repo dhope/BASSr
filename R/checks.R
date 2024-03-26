@@ -82,7 +82,7 @@ check_land_hex <- function(land_hex, crs = NULL, coords = NULL, quiet = FALSE) {
 
   }
 
-  land_hex <- check_points(land_hex, quiet)
+  land_hex <- check_points(land_hex, quiet = quiet)
   check_land_cover(land_hex)
 
   land_hex
@@ -150,19 +150,26 @@ check_land_cover <- function(land_hex) {
 #' @param quiet Logical. Whether to suppress progress/FYI) messages.
 #'
 #' @noRd
-check_points <- function(land_hex, quiet = FALSE) {
+check_points <- function(land_hex, fix = TRUE, quiet = FALSE, arg = caller_arg(land_hex),
+                         call = caller_env()) {
 
   if (all(sf::st_is(land_hex, "POLYGON"))) {
-    if(!quiet) {
-      nm <- deparse(substitute(land_hex))
-      rlang::inform(c(
-        "i" = paste0("Spatial object ", nm, " should be POINTs not POLYGONs"),
-        "*" = "Don't worry, I'll fix it!",
-      "*" = "Assuming constant attributes and using centroids as points"))
+    msg <- paste0("Spatial object ", arg, " should be POINTs not POLYGONs")
+
+    if(fix) {
+      if(!quiet) {
+        nm <- deparse(substitute(land_hex))
+        rlang::inform(c(
+          "i" = msg,
+          "*" = "Don't worry, I'll fix it!",
+          "*" = "Assuming constant attributes and using centroids as points"))
+      }
+      land_hex <- land_hex %>%
+        sf::st_set_agr("constant") %>%
+        sf::st_centroid(land_hex)
+    } else {
+      abort(msg, call = call)
     }
-    land_hex <- land_hex %>%
-      sf::st_set_agr("constant") %>%
-      sf::st_centroid(land_hex)
   }
   land_hex
 }
@@ -329,3 +336,9 @@ check_char <- function(char, arg = caller_arg(char), call = caller_env()) {
     abort(glue::glue("{arg} must be text"), call = call)
   }
 }
+
+check_spatial <- function(sf, arg = caller_arg(sf), call = caller_env()) {
+  if(!inherits(sf, "sf")) abort(glue::glue("{arg} must be a spatial sf object"), call = call)
+}
+
+

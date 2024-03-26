@@ -54,12 +54,17 @@ select_sites <- function(sites, type, n_samples, min_dist,
     inform(c(paste0("`type = \"", type_orig, "\"` did not match \"cluster\", \"random\", or \"path\"."),
              paste0("Continuing with closest match: `", type, "`")))
   }
+  check_spatial(sites)
+  check_points(sites, fix = FALSE)
 
   if (!"scaled_benefit" %in% names(sites)) {
     if(!"benefit" %in% names(sites)) abort("Must have `benefit` or `scaled_benefit` to sample sites")
     warn("Scaled benefit not included. I'm trying to calculate using benefit/max(benefit).")
-    sites <- dplyr::mutate(sites, scaled_benefit = benefit / max(benefit), .by = {{ hex_id }})
+    sites <- dplyr::mutate(sites, scaled_benefit = .data[["benefit"]] / max(.data[["benefit"]]),
+                           .by = {{ hex_id }})
   }
+
+  # Define selection type
 
   spacing <- site_spacing(sites)
 
