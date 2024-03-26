@@ -84,7 +84,6 @@ test_that("quick_ben()", {
       d = psu_hexagons,
       samples = samples,
       land_cover_summary = lc_sum,
-      hex_id = hex_id,
       print = FALSE
     )
   }) %>%
@@ -102,7 +101,6 @@ test_that("quick_ben()", {
       d = psu_hexagons,
       samples = samples,
       land_cover_summary = lc_sum,
-      hex_id = hex_id,
       land_cover_weights = w,
       print = FALSE
     )
@@ -119,7 +117,7 @@ test_that("calculate_benefit()", {
   expect_silent({
     b1 <- calculate_benefit(samples = psu_samples,
                             land_hex = psu_hexagons,
-                            hex_id = hex_id, quiet = TRUE)
+                            quiet = TRUE)
   })
 
   expect_s3_class(b1, "sf")
@@ -131,7 +129,6 @@ test_that("calculate_benefit()", {
     b2 <- calculate_benefit(
       land_hex = psu_hexagons,
       samples = psu_samples,
-      hex_id = hex_id,
       non_random_set = c("SA_09", "SA_22", "SA_47"),
       quiet = TRUE)
   })
@@ -158,7 +155,6 @@ test_that("calculate_benefit() without GRTS", {
   expect_silent({
     b <- calculate_benefit(land_hex = psu_hexagons,
                            samples = g,
-                           hex_id = hex_id,
                            quiet = TRUE)
   })
 

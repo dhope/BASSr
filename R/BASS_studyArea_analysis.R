@@ -14,6 +14,8 @@
 #'   frame.
 #' @param remove_hexes Character Vector. Ids of hexagons to remove prior to
 #'   sampling.
+#' @param selection_weighting Column. Identifies selection weightings used by
+#'   the `aux_var` argument in `spsurvey::grts()`. Default is `inclpr`.
 #'
 #' @inheritParams common_docs
 #' @inheritSection common_docs Extra arguments
@@ -28,8 +30,7 @@
 #'   land_hex = psu_hexagons,
 #'   num_runs = 10,
 #'   n_samples = 3,
-#'   costs = psu_costs,
-#'   hex_id = hex_id)
+#'   costs = psu_costs)
 #'
 #' # Simple selection
 #' sel <- run_grts_on_BASS(
@@ -57,12 +58,14 @@
 #'
 run_grts_on_BASS <- function(probs, nARUs, os = NULL, num_runs = 1,
                              hex_id = NULL, stratum_id = NULL,
-                             remove_hexes = NULL, seed = NULL,
-                             ...) {
+                             remove_hexes = NULL,
+                             selection_weighting = inclpr,
+                             seed = NULL, ...) {
 
   # Checks
   check_column(probs, {{ hex_id }})
   check_column(probs, {{ stratum_id }})
+  check_column(probs, {{ selection_weighting }})
   check_probs(probs)
   check_int(num_runs, c(1, Inf))
   check_int(seed, c(0, Inf))
@@ -110,7 +113,7 @@ run_grts_on_BASS <- function(probs, nARUs, os = NULL, num_runs = 1,
     n_os <- round(nARUs * os)
     if(n_os == 0) n_os <- NULL
 
-  #Stratified
+  # Stratified
   } else {
 
     # Missing strata column name
@@ -127,8 +130,8 @@ run_grts_on_BASS <- function(probs, nARUs, os = NULL, num_runs = 1,
 
     # Get strata columns and names
     stratum_name <- rlang::as_label(stratum_id)
-    strata_vector <- probs %>% # Vector of strata
-      dplyr::pull({{ stratum_id }}) %>%
+    strata_vector <- probs |> # Vector of strata
+      dplyr::pull({{ stratum_id }}) |>
       unique()
 
 
@@ -181,6 +184,8 @@ run_grts_on_BASS <- function(probs, nARUs, os = NULL, num_runs = 1,
     }
   }
 
+  selection_weighting <- rlang::as_name(rlang::enquo(selection_weighting))
+
   s <- set_seed(seed, {
     purrr::map(
       1:num_runs,
@@ -189,8 +194,7 @@ run_grts_on_BASS <- function(probs, nARUs, os = NULL, num_runs = 1,
                           n_over = n_os,
                           n_base = n_strata,
                           stratum_var = stratum_name,
-                          DesignID = "sample",
-                          aux_var = "inclpr",
+                          aux_var = selection_weighting,
                           ...)
     )
   })
@@ -208,7 +212,7 @@ run_grts_on_BASS <- function(probs, nARUs, os = NULL, num_runs = 1,
 #' Wrapper around `rlang::abort()` for consistent messaging when stratification
 #' arguments are not correct.
 #'
-#' @param msg Alternative message if required (otherwise returns defaul message
+#' @param msg Alternative message if required (otherwise returns default message
 #'   regarding the `nARUs` parameter)
 #'
 #' @noRd

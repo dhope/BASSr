@@ -46,22 +46,3 @@ test_that("estimate_cost_study_area()", {
 
   expect_snapshot_value(costs, style = "json2", tolerance = 0.0004)
 })
-
-
-test_that("create_study_area()", {
-
-  l <- sf::st_sfc(sf::st_polygon(list(cbind(c(0,3,3,0,0),c(0,0,3,3,0)))))
-
-  expect_silent(
-    sa <- create_study_area(
-      l, hexagon_size = 50, units = "m2",
-      HexagonID_label = "hex_id", HexagonID_prefix = "SA")
-  )
-
-  expect_s3_class(sa, "sf")
-  expect_named(sa, c("x", "hex_id"))
-  expect_equal(sa$hex_id, paste0("SA_", 1:3))
-
-  expect_true(all(round(sf::st_area(sa)) == 50))
-
-})

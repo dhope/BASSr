@@ -6,7 +6,7 @@
         "names": {
           "type": "character",
           "attributes": {},
-          "value": ["siteID", "siteuse", "replsite", "lon_WGS84", "lat_WGS84", "stratum", "wgt", "ip", "caty", "hex_id", "province", "water", "LC1", "LC2", "LC3", "LC4", "LC5", "LC6", "x", "run", "num_runs", "n_samples"]
+          "value": ["siteID", "siteuse", "replsite", "lon_WGS84", "lat_WGS84", "stratum", "wgt", "ip", "caty", "hex_id", "province", "water", "LC1", "LC2", "LC3", "LC4", "LC5", "LC6", "geometry", "run", "num_runs", "n_samples"]
         },
         "row.names": {
           "type": "integer",
@@ -16,7 +16,7 @@
         "sf_column": {
           "type": "character",
           "attributes": {},
-          "value": ["x"]
+          "value": ["geometry"]
         },
         "agr": {
           "type": "integer",

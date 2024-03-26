@@ -7,7 +7,7 @@
 calculate_inclusion_probs(
   benefits,
   costs,
-  hex_id,
+  hex_id = hex_id,
   stratum_id = NULL,
   omit_flag = NULL,
   benefit_weight = 0.5
@@ -19,7 +19,7 @@ calculate_inclusion_probs(
 
 \item{costs}{Data frame. Costs for each hexagon in a RawCost format.}
 
-\item{hex_id}{Column. Identifies hexagon ids (e.g., \code{hex_id} or \code{ET_Index}).}
+\item{hex_id}{Column. Identifies hexagon IDs (e.g., default \code{hex_id}).}
 
 \item{stratum_id}{Column. Identifies larger area (e.g., \code{StudyAreaID} or
 \code{Province}).}
@@ -39,20 +39,16 @@ Calculate the cost-benefits and inclusion probabilities.
 \examples{
 
 b <- calculate_benefit(land_hex = psu_hexagons,
-                       samples = psu_samples,
-                       hex_id = hex_id)
+                       samples = psu_samples)
 
 inc <- calculate_inclusion_probs(
   benefits = b,
-  costs = psu_costs,
-  hex_id = hex_id)
+  costs = psu_costs)
 
 # Omit water hexes (identified by column `water`)
 
 inc <- calculate_inclusion_probs(
   benefits = b,
   costs = psu_costs,
-  hex_id = hex_id,
   omit_flag = water)
-
 }

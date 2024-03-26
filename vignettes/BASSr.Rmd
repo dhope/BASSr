@@ -46,8 +46,7 @@ ggplot(data = psu_hex, aes(fill = LC01)) +
 ```{r}
 d <- full_BASS_run(land_hex = psu_hex, 
                    num_runs = 10,
-                   n_samples = 3,
-                   hex_id = hex_id)
+                   n_samples = 3)
 
 ggplot(data = d, aes(colour = benefit)) +
   geom_sf() +
@@ -68,8 +67,7 @@ ggplot(data = d_hex, aes(fill = benefit)) +
 d <- full_BASS_run(land_hex = psu_hex, 
                    num_runs = 10,
                    n_samples = 3,
-                   costs = psu_costs,
-                   hex_id = hex_id)
+                   costs = psu_costs)
 
 d_hex <- left_join(psu_hex, st_drop_geometry(d), by = "hex_id")
 
@@ -89,8 +87,7 @@ high_cost$RawCost[26] <- high_cost$RawCost[26] * 100
 d <- full_BASS_run(land_hex = psu_hex, 
                    num_runs = 10,
                    n_samples = 3,
-                   costs = high_cost,
-                   hex_id = hex_id)
+                   costs = high_cost)
 
 d_hex <- left_join(psu_hex, st_drop_geometry(d), by = "hex_id")
 
@@ -108,10 +105,8 @@ Still high inclusion probability, but other points become relatively 'better'.
 ```{r}
 psu_hex <- clean_land_cover(psu_hex_dirty, pattern = "CLC0013_")
 samples <- draw_random_samples(psu_hex, num_runs = 10, n_samples = 3)
-benefit <- calculate_benefit(psu_hex, samples, hex_id = hex_id)
-inc_prob <- calculate_inclusion_probs(benefit, 
-                                      costs = psu_costs, 
-                                      hex_id = hex_id)
+benefit <- calculate_benefit(psu_hex, samples)
+inc_prob <- calculate_inclusion_probs(benefit, costs = psu_costs)
 
 d_hex <- left_join(psu_hex, st_drop_geometry(inc_prob), by = "hex_id")
 
@@ -127,8 +122,8 @@ Alternative pipe
 final <- psu_hex_dirty %>%
   clean_land_cover(pattern = "CLC0013_") %>%
   draw_random_samples(num_runs = 10, n_samples = 3) %>%
-  calculate_benefit(psu_hex, samples = ., hex_id = hex_id) %>%
-  calculate_inclusion_probs(costs = psu_costs, hex_id = hex_id)
+  calculate_benefit(psu_hex, samples = .) %>%
+  calculate_inclusion_probs(costs = psu_costs)
 ```
 
 
@@ -259,9 +254,5 @@ g +
 
 ```
 
-
-## SSUs
-
-...
 
 

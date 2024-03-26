@@ -9,7 +9,7 @@ full_BASS_run(
   num_runs,
   n_samples,
   costs = NULL,
-  hex_id,
+  hex_id = hex_id,
   stratum_id = NULL,
   omit_flag = NULL,
   non_random_set = NULL,
@@ -35,7 +35,7 @@ Stratum ID (see \code{hex_id} and \code{stratum_id} respectively).}
 
 \item{costs}{Data frame. Costs for each hexagon in a RawCost format.}
 
-\item{hex_id}{Column. Identifies hexagon ids (e.g., \code{hex_id} or \code{ET_Index}).}
+\item{hex_id}{Column. Identifies hexagon IDs (e.g., default \code{hex_id}).}
 
 \item{stratum_id}{Column. Identifies larger area (e.g., \code{StudyAreaID} or
 \code{Province}).}
@@ -92,8 +92,7 @@ d <- full_BASS_run(
   land_hex = psu_hexagons,
   num_runs = 10,
   n_samples = 3,
-  costs = psu_costs,
-  hex_id = hex_id)
+  costs = psu_costs)
 
 # Omit water hexes
 
@@ -102,7 +101,6 @@ d <- full_BASS_run(
   num_runs = 10,
   n_samples = 3,
   costs = psu_costs,
-  hex_id = hex_id,
   omit_flag = water)
 
 # Keep grts objects
@@ -112,7 +110,6 @@ d <- full_BASS_run(
   num_runs = 10,
   n_samples = 3,
   costs = psu_costs,
-  hex_id = hex_id,
   return_grts = TRUE)
 
 names(d)
@@ -126,7 +123,6 @@ d <- full_BASS_run(
   num_runs = 10,
   n_samples = 3,
   costs = psu_costs,
-  hex_id = hex_id,
   mindis = 10, maxtry = 10)
 
 d
