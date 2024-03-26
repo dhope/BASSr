@@ -238,17 +238,19 @@ select_by_random <- function(sites, hex_id, site_id, n_samples, os,
   } else {
     n_os <- floor(n_samples * os)
     if(ARUonly) {
-      output <- sites |>
-        dplyr::slice_sample(
-          n = n_samples + n_os,
-          weight_by = scaled_benefit
-        ) |>
-        dplyr::arrange(dplyr::desc(scaled_benefit)) |>
-        dplyr::mutate(
-          aru = "ARU",
-          os = c(rep("Primary", .env[["n_samples"]]),
-                 rep("Oversample", times = .env[["nos"]]))
-        )
+      set_seed(seed, {
+        output <- sites |>
+          dplyr::slice_sample(
+            n = n_samples + n_os,
+            weight_by = .data[["scaled_benefit"]]
+          ) |>
+          dplyr::arrange(dplyr::desc(.data[["scaled_benefit"]])) |>
+          dplyr::mutate(
+            aru = "ARU",
+            os = c(rep("Primary", .env[["n_samples"]]),
+                   rep("Oversample", times = .env[["nos"]]))
+          )
+      })
     }
   }
   selected
@@ -260,28 +262,28 @@ select_by_path <- function(sites, hex_id, site_id, n_samples, cluster_size,
   if(n_samples %% cluster_size != 0) {
     abort("Cluster size (samples per path) must be a equal proportion of total samples.", call = call)
   }
-  #set.seed(2341)
 
   sites <- tidyr::nest(sites, sites = -{{ hex_id }})
 
-  # Get initial sample
-  sampled <- dplyr::mutate(sites, sampled = purrr::map(sites, \(x) {
-    set.seed(2341)
-    x |>
-      dplyr::slice_sample(n = n_samples, weight_by = scaled_benefit) |>
-      dplyr::arrange(dplyr::desc(scaled_benefit)) |>
-      dplyr::mutate(aru = "ARU", os = rep("Primary", .env[["n_samples"]]))
-  }, .progress = progress))
+  set_seed(seed, {
+    # Get initial sample
+    sampled <- dplyr::mutate(sites, sampled = purrr::map(sites, \(x) {
+      x |>
+        dplyr::slice_sample(n = n_samples, weight_by = .data[["scaled_benefit"]]) |>
+        dplyr::arrange(dplyr::desc(.data[["scaled_benefit"]])) |>
+        dplyr::mutate(aru = "ARU", os = rep("Primary", .env[["n_samples"]]))
+    }, .progress = progress))
 
 
-  routes <- sampled |>
-    dplyr::mutate(routes = purrr::map2(
-      sites, sampled, \(sites, sampled) {
-        select_by_path_hex(sites, sampled, {{ site_id }}, cluster_size, n_samples, min_dist, spacing)
-      }, .progress = progress)) |>
-    dplyr::select({{ hex_id }}, "routes") |>
-    tidyr::unnest("routes") |>
-    sf::st_as_sf()
+    routes <- sampled |>
+      dplyr::mutate(routes = purrr::map2(
+        sites, sampled, \(sites, sampled) {
+          select_by_path_hex(sites, sampled, {{ site_id }}, cluster_size, n_samples, min_dist, spacing)
+        }, .progress = progress)) |>
+      dplyr::select({{ hex_id }}, "routes") |>
+      tidyr::unnest("routes") |>
+      sf::st_as_sf()
+  })
 
   sampled <- sampled |>
     dplyr::select({{ hex_id }}, "sampled") |>
