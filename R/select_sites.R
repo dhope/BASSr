@@ -30,6 +30,8 @@
 #'   Clusters or Random samples.
 #' @param progress Logical. Show progress bars if applicable.
 #'
+#' @inheritParams common_docs
+#'
 #' @return
 #'   * If Clustered, returns a data frame of clustered points selected from sites.
 #'   * If Random, returns a data frame of sampled points selected from sites.
@@ -37,7 +39,49 @@
 #' @export
 #'
 #' @examples
+#' library(dplyr)
+#' library(ggplot2)
 #'
+#' sites <- psu_hexagons |>
+#'     slice_sample(n = 7) |>
+#'     create_sites(spacing = 5) |>
+#'     mutate(scaled_benefit = 1, benefit = 0.95)
+#'
+#' # Basic clusters
+#' s <- select_sites(sites = sites, hex_id = hex_id, site_id = site_id,
+#'                   type = "cluster", os = 0.75, n_samples = 7, cluster_size = 5,
+#'                   ARUonly = FALSE, seed = 1234, useGRTS = TRUE,
+#'                   min_dist = 25, min_dist_cluster = 9)
+#' ggplot() +
+#'   geom_sf(data = psu_hexagons) +                   # Hex grid
+#'   geom_sf(data = sites, alpha = 0.4) +      # Sites on selected Hex grids
+#'   geom_sf(data = s, aes(colour = aru)) + # Selected sites
+#'   scale_colour_viridis_d()
+#'
+#' # Random samples
+#'
+#' s <- select_sites(sites = sites, hex_id = hex_id, site_id = site_id,
+#'                   type = "random", os = 1.0, n_samples = 2,
+#'                   ARUonly = FALSE, seed = 1234, min_dist = 10)
+#'
+#' ggplot() +
+#'   geom_sf(data = psu_hexagons) +                   # Hex grid
+#'   geom_sf(data = sites, alpha = 0.4) +      # Sites on selected Hex grids
+#'   geom_sf(data = s, aes(colour = siteuse)) + # Selected sites
+#'   scale_colour_viridis_d()
+#'
+#' # Shortest Path
+#'
+#' s <- select_sites(sites = sites, hex_id = hex_id, site_id = site_id,
+#'                   type = "path", n_samples = 8, cluster_size = 4,
+#'                   ARUonly = FALSE, seed = 1234, useGRTS = TRUE,
+#'                   min_dist = 10, progress = FALSE)
+#'
+#' ggplot() +
+#'   geom_sf(data = sites, alpha = 0.4) + # Sites on selected Hex grid
+#'   geom_sf(data = s$routes, aes(colour = factor(route))) + # Selected sites
+#'   scale_colour_viridis_d()
+
 select_sites <- function(sites, type, n_samples, min_dist,
                          cluster_size = NULL, min_dist_cluster = NULL, os = NULL,
                          hex_id = hex_id, site_id = site_id,
@@ -101,8 +145,8 @@ select_with_grts <- function(sites, hex_id, site_id, n, os, min_dist, seed) {
     set_names(hexes)
 
   sites <- sites |>
-    dplyr::mutate(inclpr = scaled_benefit) |>
-    dplyr::select({{ hex_id }}, {{ site_id }}, X, Y, inclpr)
+    dplyr::mutate(inclpr = .data[["scaled_benefit"]]) |>
+    dplyr::select({{ hex_id }}, {{ site_id }}, "X", "Y", "inclpr")
 
   selected <- run_grts_on_BASS(
     probs = sites,
@@ -120,7 +164,7 @@ select_with_grts <- function(sites, hex_id, site_id, n, os, min_dist, seed) {
       x = sites,
       by = dplyr::join_by({{ hex_id }}, {{site_id }},
                           "X", "Y", "inclpr")) |>
-    dplyr::filter(!is.na(siteID))
+    dplyr::filter(!is.na(.data[["siteID"]]))
 
 }
 
@@ -149,11 +193,11 @@ select_by_cluster <- function(sites, hex_id, site_id, n_samples, os, cluster_siz
         selected <- dplyr::slice_sample(
           sites,
           n = n_os_clusters + n_clusters,
-          weight_by = scaled_benefit,
+          weight_by = .data[["scaled_benefit"]],
           replace = FALSE,
           by = {{ hex_id }}
         ) |>
-          dplyr::arrange(dplyr::desc(scaled_benefit))
+          dplyr::arrange(dplyr::desc(.data[["scaled_benefit"]]))
         a <- sf::st_distance(selected)
         diag(a) <- NA
         z <- min(a, na.rm = TRUE) |>
@@ -165,11 +209,11 @@ select_by_cluster <- function(sites, hex_id, site_id, n_samples, os, cluster_siz
   clusters <- dplyr::mutate(sites, selected = {{ site_id }} %in% dplyr::pull(selected, {{ site_id }})) |>
     dplyr::select({{ hex_id }}, {{ site_id }}, "selected") |>
     tidyr::nest(set = -c({{ hex_id }})) |>
-    dplyr::mutate(clusters = purrr::map(set, \(x) {
+    dplyr::mutate(clusters = purrr::map(.data[["set"]], \(x) {
 
       # Get clusters
-      s <- dplyr::filter(x, selected)
-      ns <- dplyr::filter(x, !selected)
+      s <- dplyr::filter(x, .data[["selected"]])
+      ns <- dplyr::filter(x, !.data[["selected"]])
       nn <- nngeo::st_nn(s, ns,
                          k = cluster_size - 1,
                          returnDist = TRUE,
@@ -191,7 +235,7 @@ select_by_cluster <- function(sites, hex_id, site_id, n_samples, os, cluster_siz
             names_to = "pc2",
           values_to = "m"
         ) |>
-        dplyr::filter(m >= .env[["min_dist_cluster"]]) |>
+        dplyr::filter(.data[["m"]] >= .env[["min_dist_cluster"]]) |>
         dplyr::slice_sample(n = 1) |>
         dplyr::select("pc1", "pc2")
 
@@ -206,8 +250,8 @@ select_by_cluster <- function(sites, hex_id, site_id, n_samples, os, cluster_siz
     sf::st_as_sf() |>
     dplyr::left_join(sf::st_drop_geometry(sites),
                      by = dplyr::join_by({{ hex_id }}, {{ site_id }})) |>
-    dplyr::group_by({{ hex_id }}, cluster) |>
-    dplyr::arrange(dplyr::desc(scaled_benefit)) |>
+    dplyr::group_by({{ hex_id }}, .data[["cluster"]]) |>
+    dplyr::arrange(dplyr::desc(.data[["scaled_benefit"]])) |>
     dplyr::mutate(pc_n_cluster = dplyr::row_number(),
                   os = dplyr::if_else(.data[["cluster"]] <= .env[["n_clusters"]],
                                       "Primary", "Oversample"),
@@ -323,20 +367,21 @@ select_by_path_hex <- function(sites, sampled, site_id, cluster_size, n_samples,
     dplyr::select(focal_siteid = {{ site_id }}) |>
     dplyr::rowwise() |>
     dplyr::mutate(
-      nn = list(sf::st_filter(x = sites, y = geometry)),
-      neigh_id = list(dplyr::pull(nn, {{ site_id }})),
-      num_Neigh = nrow(nn),
-      dist = list(dist[as.character(focal_siteid), as.character(neigh_id)]),
-      insample = list(neigh_id %in% sampled_ids),
+      nn = list(sf::st_filter(x = sites, y = .data[["geometry"]])),
+      neigh_id = list(dplyr::pull(.data[["nn"]], {{ site_id }})),
+      num_Neigh = nrow(.data[["nn"]]),
+      dist = list(dist[as.character(.data[["focal_siteid"]]),
+                       as.character(.data[["neigh_id"]])]),
+      insample = list(.data[["neigh_id"]] %in% .env[["sampled_ids"]]),
       dvalue = list(dplyr::case_when(dist < .env[["spacing"]]/2 ~ 0,
                                      dist < .env[["min_dist"]] + 5 ~ 1,
                                      TRUE ~ 0.7)),
-      value = list(dvalue * (insample + 1))
+      value = list(.data[["dvalue"]] * (.data[["insample"]] + 1))
     )
 
   # Calculate paths among neighbours for sampled sites
   full_paths <- path(sites, sampled_ids, d, cluster_size) |>
-    dplyr::arrange(match(p0, sampled_ids)) # To match the order of sampling
+    dplyr::arrange(match(.data[["p0"]], .env[["sampled_ids"]])) # To match the order of sampling
 
 
   # Creates routes
@@ -349,8 +394,8 @@ select_by_path_hex <- function(sites, sampled, site_id, cluster_size, n_samples,
         \(x) !x %in% dplyr::pull(routes, {{ site_id }}))) |>
       dplyr::slice_max(.data[["mean_value"]], n = 1, with_ties = FALSE) |>
       dplyr::mutate(origin = .data[["p0"]], lineid = dplyr::row_number()) |>
-      dplyr::select(-matches("^value")) |>
-      tidyr::pivot_longer(cols = matches("^p\\d"),
+      dplyr::select(-dplyr::matches("^value")) |>
+      tidyr::pivot_longer(cols = dplyr::matches("^p\\d"),
                           values_to = as_name(enquo(site_id)),
                           names_to = "linepoint") |>
       dplyr::left_join(sites, by = dplyr::join_by({{ site_id }})) |>
@@ -368,11 +413,11 @@ select_by_path_hex <- function(sites, sampled, site_id, cluster_size, n_samples,
 path <- function(sites, sampled_ids, d, cluster_size) {
 
   d0 <- sf::st_drop_geometry(d) |>
-    dplyr::select(focal = focal_siteid, p = neigh_id, value) |>
-    tidyr::unnest(c(p, value))
+    dplyr::select("focal" = "focal_siteid", "p" = "neigh_id", "value") |>
+    tidyr::unnest(c("p", "value"))
 
   paths <- dplyr::rename(d0, "p0" = "focal", "p1" = "p", "value1" = "value") |>
-    dplyr::filter(p0 %in% sampled_ids)
+    dplyr::filter(.data[["p0"]] %in% .env[["sampled_ids"]])
 
   n <- c(0, 0)
   while(n[2] < (cluster_size - 1)) {
@@ -415,5 +460,5 @@ add_path <- function(d0, paths, n) {
   paths <- paths |>
     dplyr::mutate(
       running_value = rowSums(dplyr::select(paths, dplyr::starts_with("value")))) |>
-    dplyr::slice_max(running_value, with_ties = TRUE, by = "p0")
+    dplyr::slice_max(.data[["running_value"]], with_ties = TRUE, by = "p0")
 }

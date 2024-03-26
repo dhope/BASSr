@@ -49,6 +49,8 @@ clusters. Only applies to Clusters.}
 \item{os}{Numeric. Over sample size (proportional). Only applies to Clusters
 and Random.}
 
+\item{hex_id}{Column. Identifies hexagon IDs (e.g., default \code{hex_id}).}
+
 \item{site_id}{Column. Identifies site IDs (default \code{site_id}).}
 
 \item{ARUonly}{Logical. Return only ARU locations. If \code{FALSE} Clusters return
@@ -59,6 +61,10 @@ sampling.}
 Clusters or Random samples.}
 
 \item{progress}{Logical. Show progress bars if applicable.}
+
+\item{seed}{Numeric. Random seed to use for random sampling. Seed only
+applies to specific sampling events (does not change seed in the
+environment). \code{NULL} does not set a seed.}
 }
 \value{
 \itemize{
@@ -70,4 +76,48 @@ Clusters or Random samples.}
 \description{
 Selection methods for processing site selection using GRTS, random sampling,
 clustering, or shortest path methods.
+}
+\examples{
+library(dplyr)
+library(ggplot2)
+
+sites <- psu_hexagons |>
+    slice_sample(n = 7) |>
+    create_sites(spacing = 5) |>
+    mutate(scaled_benefit = 1, benefit = 0.95)
+
+# Basic clusters
+s <- select_sites(sites = sites, hex_id = hex_id, site_id = site_id,
+                  type = "cluster", os = 0.75, n_samples = 7, cluster_size = 5,
+                  ARUonly = FALSE, seed = 1234, useGRTS = TRUE,
+                  min_dist = 25, min_dist_cluster = 9)
+ggplot() +
+  geom_sf(data = psu_hexagons) +                   # Hex grid
+  geom_sf(data = sites, alpha = 0.4) +      # Sites on selected Hex grids
+  geom_sf(data = s, aes(colour = aru)) + # Selected sites
+  scale_colour_viridis_d()
+
+# Random samples
+
+s <- select_sites(sites = sites, hex_id = hex_id, site_id = site_id,
+                  type = "random", os = 1.0, n_samples = 2,
+                  ARUonly = FALSE, seed = 1234, min_dist = 10)
+
+ggplot() +
+  geom_sf(data = psu_hexagons) +                   # Hex grid
+  geom_sf(data = sites, alpha = 0.4) +      # Sites on selected Hex grids
+  geom_sf(data = s, aes(colour = siteuse)) + # Selected sites
+  scale_colour_viridis_d()
+
+# Shortest Path
+
+s <- select_sites(sites = sites, hex_id = hex_id, site_id = site_id,
+                  type = "path", n_samples = 8, cluster_size = 4,
+                  ARUonly = FALSE, seed = 1234, useGRTS = TRUE,
+                  min_dist = 10, progress = FALSE)
+
+ggplot() +
+  geom_sf(data = sites, alpha = 0.4) + # Sites on selected Hex grid
+  geom_sf(data = s$routes, aes(colour = factor(route))) + # Selected sites
+  scale_colour_viridis_d()
 }

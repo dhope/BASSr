@@ -110,13 +110,14 @@ test_that("select_sites() - Shortest Path", {
 test_that("select_sites() - Shortest Path", {
   skip_on_ci()
 
+
   p1 <- test_path("../../../BASSr - Extra/2022_Peawanuck_SSU_w_ben.rds")
   p2 <- test_path("../../misc/shortest_path_eg_raw.rds")
   skip_if_not(file.exists(p1))
   skip_if_not(file.exists(p2))
 
-  sites <- readr::read_rds(p1) |> sf::st_set_geometry("geometry")
-  orig <- readr::read_rds(p2) |> purrr::list_transpose()
+  sites <- readRds(p1) |> sf::st_set_geometry("geometry")
+  orig <- readRds(p2) |> purrr::list_transpose()
 
   expect_warning(
     s1 <- select_sites(dplyr::filter(sites, SW_ID == 41152), type = "path",
@@ -124,18 +125,23 @@ test_that("select_sites() - Shortest Path", {
                        n_samples = 18, cluster_size = 6, seed = 6554)
   )
 
-  expect_equal(s1$sampled, orig$sampled[[1]], ignore_attr = TRUE, list_as_map = TRUE)
-  expect_equal(dplyr::arrange(s1$routes, COMP_ID), dplyr::arrange(orig$routes[[1]], COMP_ID),
-               list_as_map = TRUE, ignore_attr = TRUE)
+  expect_snapshot_value(s1$sampled, style = "json2")
+  expect_snapshot_value(s1$routes, style = "json2")
+
+  # skip("No longer comparable because of moving the seed location")
+  # expect_equal(s1$sampled, orig$sampled[[1]], ignore_attr = TRUE, list_as_map = TRUE)
+  # expect_equal(dplyr::arrange(s1$routes, COMP_ID), dplyr::arrange(orig$routes[[1]], COMP_ID),
+  #              list_as_map = TRUE, ignore_attr = TRUE)
 
   # # Visual inspection
-  library(ggplot2)
-  ggplot() +
-    geom_sf(data = dplyr::filter(sites, SW_ID == 41152), alpha = 0.4) + # Sites on selected Hex grid
-    geom_sf(data = s1$routes, aes(colour = factor(route)), size = 5) + # Selected sites
-    scale_colour_viridis_d() +
-    labs(title = "Shortest Paths",
-         subtitle = "n_samples = 18; min_dist = 300; site spacing = 300; cluster_size = 6")
+  # library(ggplot2)
+  # ggplot() +
+  #   geom_sf(data = dplyr::filter(sites, SW_ID == 41152), alpha = 0.4) + # Sites on selected Hex grid
+  #   geom_sf(data = s1$routes, aes(colour = factor(route)), size = 5) + # Selected sites
+  #   scale_colour_viridis_d() +
+  #   labs(title = "Shortest Paths",
+  #        subtitle = "n_samples = 18; min_dist = 300; site spacing = 300; cluster_size = 6")
+  #
 
   h <- 1:2
   for(h in list(c(1:2), c(1:5))) {
@@ -147,11 +153,15 @@ test_that("select_sites() - Shortest Path", {
                          seed = 6554, progress = FALSE)
     )
 
-    expect_equal(s2$sampled, purrr::list_rbind(orig$sampled[h]), ignore_attr = TRUE, list_as_map = TRUE)
-    expect_equal(dplyr::arrange(s2$routes, COMP_ID),
-                 purrr::list_rbind(orig$routes[h]) |> dplyr::arrange(COMP_ID),
-                 list_as_map = TRUE, ignore_attr = TRUE)
+    expect_snapshot_value(s2$sampled, style = "json2")
+    expect_snapshot_value(s2$routes, style = "json2")
+    # skip("No longer comparable because of moving the seed location")
+    # expect_equal(s2$sampled, purrr::list_rbind(orig$sampled[h]), ignore_attr = TRUE, list_as_map = TRUE)
+    # expect_equal(dplyr::arrange(s2$routes, COMP_ID),
+    #              purrr::list_rbind(orig$routes[h]) |> dplyr::arrange(COMP_ID),
+    #              list_as_map = TRUE, ignore_attr = TRUE)
   }
+
 
 })
 
