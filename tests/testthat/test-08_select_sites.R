@@ -28,7 +28,7 @@ test_that("select_sites() - Clusters", {
                dplyr::select(sites, hex_id, site_id, geometry, scaled_benefit, benefit) |>
                  dplyr::filter(site_id %in% s$site_id))
 
-  # Visual check
+  # # Visual check
   # library(ggplot2)
   # ggplot() +
   #   geom_sf(data = psu_hexagons) +                   # Hex grid
@@ -65,7 +65,7 @@ test_that("select_sites() - Random", {
                dplyr::select(sites, hex_id, site_id, geometry) |>
                  dplyr::filter(site_id %in% s$site_id))
 
-  # Visual inspection
+  # # Visual inspection
   # library(ggplot2)
   # ggplot() +
   #   geom_sf(data = psu_hexagons) +                   # Hex grid

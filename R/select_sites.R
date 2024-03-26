@@ -78,7 +78,7 @@ select_sites <- function(sites, type, n_samples, min_dist,
     }
     #if(cluster_size > 40) abort("Path lengths > 40 are not recommended")
     r <- select_by_path(sites, {{ hex_id }}, {{ site_id }}, n_samples, cluster_size,
-                        min_dist, progress, seed)
+                        min_dist, progress, spacing, seed)
   }
   r
 }
@@ -201,7 +201,7 @@ select_by_cluster <- function(sites, hex_id, site_id, n_samples, os, cluster_siz
     dplyr::left_join(sf::st_drop_geometry(sites),
                      by = dplyr::join_by({{ hex_id }}, {{ site_id }})) |>
     dplyr::group_by({{ hex_id }}, cluster) |>
-    dplyr::arrange(dplyr::desc(benefit)) |>
+    dplyr::arrange(dplyr::desc(scaled_benefit)) |>
     dplyr::mutate(pc_n_cluster = dplyr::row_number(),
                   os = dplyr::if_else(.data[["cluster"]] <= .env[["n_clusters"]],
                                       "Primary", "Oversample"),
@@ -242,7 +242,7 @@ select_by_random <- function(sites, hex_id, site_id, n_samples, os,
           n = n_samples + n_os,
           weight_by = scaled_benefit
         ) |>
-        dplyr::arrange(dplyr::desc(benefit)) |>
+        dplyr::arrange(dplyr::desc(scaled_benefit)) |>
         dplyr::mutate(
           aru = "ARU",
           os = c(rep("Primary", .env[["n_samples"]]),
@@ -254,7 +254,7 @@ select_by_random <- function(sites, hex_id, site_id, n_samples, os,
 }
 
 select_by_path <- function(sites, hex_id, site_id, n_samples, cluster_size,
-                           min_dist, progress, seed, call = caller_env()) {
+                           min_dist, progress, spacing, seed, call = caller_env()) {
 
   if(n_samples %% cluster_size != 0) {
     abort("Cluster size (samples per path) must be a equal proportion of total samples.", call = call)
@@ -268,7 +268,7 @@ select_by_path <- function(sites, hex_id, site_id, n_samples, cluster_size,
     set.seed(2341)
     x |>
       dplyr::slice_sample(n = n_samples, weight_by = scaled_benefit) |>
-      dplyr::arrange(dplyr::desc(benefit)) |>
+      dplyr::arrange(dplyr::desc(scaled_benefit)) |>
       dplyr::mutate(aru = "ARU", os = rep("Primary", .env[["n_samples"]]))
   }, .progress = progress))
 
@@ -276,7 +276,7 @@ select_by_path <- function(sites, hex_id, site_id, n_samples, cluster_size,
   routes <- sampled |>
     dplyr::mutate(routes = purrr::map2(
       sites, sampled, \(sites, sampled) {
-        select_by_path_hex(sites, sampled, {{ site_id }}, cluster_size, n_samples, min_dist)
+        select_by_path_hex(sites, sampled, {{ site_id }}, cluster_size, n_samples, min_dist, spacing)
       }, .progress = progress)) |>
     dplyr::select({{ hex_id }}, "routes") |>
     tidyr::unnest("routes") |>
@@ -298,7 +298,7 @@ select_by_path <- function(sites, hex_id, site_id, n_samples, cluster_size,
 #'
 #' @noRd
 select_by_path_hex <- function(sites, sampled, site_id, cluster_size, n_samples,
-                                   min_dist) {
+                               min_dist, spacing) {
 
   sampled_ids <- dplyr::pull(sampled, {{ site_id }})
 
@@ -311,7 +311,7 @@ select_by_path_hex <- function(sites, sampled, site_id, cluster_size, n_samples,
 
   # Calculate neighbours for all sites
   d <- sites |>
-    sf::st_buffer(dist = 20 + sqrt(2 * (300**2))) |>
+    sf::st_buffer(dist = 20 + sqrt(2 * spacing**2)) |>
     dplyr::select(focal_siteid = {{ site_id }}) |>
     dplyr::rowwise() |>
     dplyr::mutate(
@@ -320,8 +320,8 @@ select_by_path_hex <- function(sites, sampled, site_id, cluster_size, n_samples,
       num_Neigh = nrow(nn),
       dist = list(dist[focal_siteid, neigh_id]),
       insample = list(neigh_id %in% sampled_ids),
-      dvalue = list(dplyr::case_when(dist < 150 ~ 0,
-                                     dist < (min_dist + 5) ~ 1,
+      dvalue = list(dplyr::case_when(dist < .env[["spacing"]]/2 ~ 0,
+                                     dist < .env[["min_dist"]] + 5 ~ 1,
                                      TRUE ~ 0.7)),
       value = list(dvalue * (insample + 1))
     )
