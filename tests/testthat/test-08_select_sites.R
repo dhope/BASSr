@@ -79,19 +79,31 @@ test_that("select_sites() - Random", {
 
 test_that("select_sites() - Shortest Path", {
   sites <- psu_hexagons |>
-    dplyr::slice_sample(n = 7) |>
+    dplyr::filter(hex_id %in% c("SA_43", "SA_48", "SA_51")) |>
     create_sites(spacing = 5) |>
-    dplyr::mutate(scaled_benefit = 1, benefit = 0.95)
+    dplyr::mutate(scaled_benefit = 1)
 
-  # Basic clusters
-  # expect_silent({
-  #   s <- select_sites(sites = sites, hex_id = hex_id, site_id = site_id,
-  #                     type = "path", n_samples = 4, cluster_size = 2,
-  #                     ARUonly = FALSE, seed = 1234, useGRTS = TRUE,
-  #                     min_dist = 25, min_dist_cluster = 9)
-  # }, "projected points") |>
-  #   suppressMessages()
+  expect_silent({
+    s <- select_sites(sites = sites, hex_id = hex_id, site_id = site_id,
+                      type = "path", n_samples = 8, cluster_size = 4,
+                      ARUonly = FALSE, seed = 1234, useGRTS = TRUE,
+                      min_dist = 10, progress = FALSE)
+  })
 
+  expect_equal(nrow(s$routes), 8 * 3) # 8 samples, 3 hexes
+  expect_equal(dplyr::n_distinct(s$routes$route), 8/4)
+  expect_equal(dplyr::arrange(s$routes, hex_id, site_id) |> dplyr::select(hex_id, site_id, geometry, scaled_benefit),
+               dplyr::filter(sites, site_id %in% s$routes$site_id),
+               list_as_map = TRUE, ignore_attr = TRUE)
+
+  # # Visual inspection
+  # library(ggplot2)
+  # ggplot() +
+  #   geom_sf(data = sites, alpha = 0.4) + # Sites on selected Hex grid
+  #   geom_sf(data = s$routes, aes(colour = factor(route)), size = 4) + # Selected sites
+  #   scale_colour_viridis_d() +
+  #   labs(title = "Shortest Paths",
+  #        subtitle = "n_samples = 4; min_dist = 10; site spacing = 5; cluster_size = 2")
 })
 
 
@@ -116,14 +128,14 @@ test_that("select_sites() - Shortest Path", {
   expect_equal(dplyr::arrange(s1$routes, COMP_ID), dplyr::arrange(orig$routes[[1]], COMP_ID),
                list_as_map = TRUE, ignore_attr = TRUE)
 
-  # Visual inspection
-  # library(ggplot2)
-  # ggplot() +
-  #   geom_sf(data = dplyr::filter(sites, SW_ID == 41152), alpha = 0.4) + # Sites on selected Hex grid
-  #   geom_sf(data = s1$routes, aes(colour = factor(route)), size = 5) + # Selected sites
-  #   scale_colour_viridis_d() +
-  #   labs(title = "Shortest Paths",
-  #        subtitle = "n_samples = 18; min_dist = 300; site spacing = 300; cluster_size = 6")
+  # # Visual inspection
+  library(ggplot2)
+  ggplot() +
+    geom_sf(data = dplyr::filter(sites, SW_ID == 41152), alpha = 0.4) + # Sites on selected Hex grid
+    geom_sf(data = s1$routes, aes(colour = factor(route)), size = 5) + # Selected sites
+    scale_colour_viridis_d() +
+    labs(title = "Shortest Paths",
+         subtitle = "n_samples = 18; min_dist = 300; site spacing = 300; cluster_size = 6")
 
   h <- 1:2
   for(h in list(c(1:2), c(1:5))) {

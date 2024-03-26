@@ -76,6 +76,7 @@ select_sites <- function(sites, type, n_samples, min_dist,
     if(!is.null(os) | !is.null(min_dist_cluster)) {
       inform("`os`, `min_dist_cluster`, `ARUonly` and `useGRTS` do not apply to Shortest Path sampling")
     }
+    if(cluster_size < 3) warn("There is a minimum `cluster_size` of 3 for Shortest Path sampling")
     #if(cluster_size > 40) abort("Path lengths > 40 are not recommended")
     r <- select_by_path(sites, {{ hex_id }}, {{ site_id }}, n_samples, cluster_size,
                         min_dist, progress, spacing, seed)
@@ -311,14 +312,14 @@ select_by_path_hex <- function(sites, sampled, site_id, cluster_size, n_samples,
 
   # Calculate neighbours for all sites
   d <- sites |>
-    sf::st_buffer(dist = 20 + sqrt(2 * spacing**2)) |>
+    sf::st_buffer(dist = sqrt(2 * spacing**2)) |>
     dplyr::select(focal_siteid = {{ site_id }}) |>
     dplyr::rowwise() |>
     dplyr::mutate(
       nn = list(sf::st_filter(x = sites, y = geometry)),
       neigh_id = list(dplyr::pull(nn, {{ site_id }})),
       num_Neigh = nrow(nn),
-      dist = list(dist[focal_siteid, neigh_id]),
+      dist = list(dist[as.character(focal_siteid), as.character(neigh_id)]),
       insample = list(neigh_id %in% sampled_ids),
       dvalue = list(dplyr::case_when(dist < .env[["spacing"]]/2 ~ 0,
                                      dist < .env[["min_dist"]] + 5 ~ 1,
