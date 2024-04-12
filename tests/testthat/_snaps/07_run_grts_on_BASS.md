@@ -6,7 +6,7 @@
         "names": {
           "type": "character",
           "attributes": {},
-          "value": ["siteID", "siteuse", "replsite", "lon_WGS84", "lat_WGS84", "stratum", "wgt", "ip", "caty", "aux", "hex_id", "RawCost", "benefit", "x", "LogCost", "ScLogCost", "scale_ben", "partIP", "weightedIP", "inclpr", "num_runs", "n_samples", "Province"]
+          "value": ["siteID", "siteuse", "replsite", "lon_WGS84", "lat_WGS84", "stratum", "wgt", "ip", "caty", "aux", "hex_id", "RawCost", "benefit", "geometry", "LogCost", "ScLogCost", "scale_ben", "partIP", "weightedIP", "inclpr", "num_runs", "n_samples", "Province"]
         },
         "row.names": {
           "type": "integer",
@@ -21,7 +21,7 @@
         "sf_column": {
           "type": "character",
           "attributes": {},
-          "value": ["x"]
+          "value": ["geometry"]
         },
         "agr": {
           "type": "integer",
@@ -49,7 +49,7 @@
         {
           "type": "character",
           "attributes": {},
-          "value": ["sample-01", "sample-02", "sample-03", "sample-04", "sample-05", "sample-06", "sample-07", "sample-08", "sample-09", "sample-10", "sample-11", "sample-12"]
+          "value": ["Site-01", "Site-02", "Site-03", "Site-04", "Site-05", "Site-06", "Site-07", "Site-08", "Site-09", "Site-10", "Site-11", "Site-12"]
         },
         {
           "type": "character",
@@ -110,7 +110,7 @@
         {
           "type": "double",
           "attributes": {},
-          "value": [2021498787.6364634, 2382096174.37554, 2306466307.87221, 1735381030.95330811, 1578422880.3360765, 2176967921.93306, 1271175837.12326503, 1795738616.94375181, 1342539923.94812179, 1675176739.99072576, 1776813125.62567019, 1998651235.31030917]
+          "value": [2021498787.6364634, 2382096174.3755426, 2306466307.8722124, 1735381030.95330811, 1578422880.3360765, 2176967921.933063, 1271175837.12326503, 1795738616.94375181, 1342539923.94812179, 1675176739.99072576, 1776813125.62567019, 1998651235.31030917]
         },
         {
           "type": "double",
@@ -370,7 +370,7 @@
         "names": {
           "type": "character",
           "attributes": {},
-          "value": ["siteID", "siteuse", "replsite", "lon_WGS84", "lat_WGS84", "stratum", "wgt", "ip", "caty", "aux", "hex_id", "RawCost", "benefit", "x", "LogCost", "ScLogCost", "scale_ben", "partIP", "weightedIP", "inclpr", "num_runs", "n_samples", "Province"]
+          "value": ["siteID", "siteuse", "replsite", "lon_WGS84", "lat_WGS84", "stratum", "wgt", "ip", "caty", "aux", "hex_id", "RawCost", "benefit", "geometry", "LogCost", "ScLogCost", "scale_ben", "partIP", "weightedIP", "inclpr", "num_runs", "n_samples", "Province"]
         },
         "row.names": {
           "type": "integer",
@@ -385,7 +385,7 @@
         "sf_column": {
           "type": "character",
           "attributes": {},
-          "value": ["x"]
+          "value": ["geometry"]
         },
         "agr": {
           "type": "integer",
@@ -413,7 +413,7 @@
         {
           "type": "character",
           "attributes": {},
-          "value": ["sample-01", "sample-02", "sample-03", "sample-04", "sample-05", "sample-06", "sample-07", "sample-08", "sample-09", "sample-10"]
+          "value": ["Site-01", "Site-02", "Site-03", "Site-04", "Site-05", "Site-06", "Site-07", "Site-08", "Site-09", "Site-10"]
         },
         {
           "type": "character",

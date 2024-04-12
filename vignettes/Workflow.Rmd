@@ -62,11 +62,16 @@ Often this is most usefully done outside of R, with habitat and costs incorporat
 
 
 ```{r}
-SA_SU <- BASSr::create_study_area(landscape = nc_for_survey,study_area_size = 100000, units = 'ha', study_unit_size = 100, output = 'all' )
+SA_SU <- create_hexes(landscape = nc_for_survey,
+                      study_area_size = 100000, 
+                      units = 'ha', 
+                      study_unit_size = 100, output = 'all' )
 ```
 
 ```{r}
-ggplot(SA_SU$large)  + geom_sf(data = nc) + geom_sf(fill = 'grey', alpha = 0.5) 
+ggplot(SA_SU$large) + 
+  geom_sf(data = nc) + 
+  geom_sf(fill = 'grey', alpha = 0.5) 
 ```
 
 
@@ -77,8 +82,8 @@ su_ex <- st_filter(SA_SU$small, SA_SU$large[16,])
 
 ggplot() +  
   geom_sf(data = nc, fill = 'lightpink') +
-  geom_sf(data =SA_SU$large[16,], fill = NA) +
-  geom_sf(data =su_ex, fill = NA) +
+  geom_sf(data = SA_SU$large[16,], fill = NA) +
+  geom_sf(data = su_ex, fill = NA) +
   coord_sf(xlim =st_bbox(SA_SU$large[16,])[c(1,3)], ylim = st_bbox(SA_SU$large[16,])[c(2,4)])
 ```
 

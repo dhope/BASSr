@@ -55,7 +55,7 @@
         "names": {
           "type": "character",
           "attributes": {},
-          "value": ["hex_id", "benefit", "x"]
+          "value": ["hex_id", "benefit", "geometry"]
         },
         "row.names": {
           "type": "integer",
@@ -70,7 +70,7 @@
         "sf_column": {
           "type": "character",
           "attributes": {},
-          "value": ["x"]
+          "value": ["geometry"]
         },
         "agr": {
           "type": "integer",
@@ -550,7 +550,7 @@
         "names": {
           "type": "character",
           "attributes": {},
-          "value": ["hex_id", "benefit", "x"]
+          "value": ["hex_id", "benefit", "geometry"]
         },
         "row.names": {
           "type": "integer",
@@ -565,7 +565,7 @@
         "sf_column": {
           "type": "character",
           "attributes": {},
-          "value": ["x"]
+          "value": ["geometry"]
         },
         "agr": {
           "type": "integer",
@@ -1045,7 +1045,7 @@
         "names": {
           "type": "character",
           "attributes": {},
-          "value": ["hex_id", "benefit", "x"]
+          "value": ["hex_id", "benefit", "geometry"]
         },
         "row.names": {
           "type": "integer",
@@ -1060,7 +1060,7 @@
         "sf_column": {
           "type": "character",
           "attributes": {},
-          "value": ["x"]
+          "value": ["geometry"]
         },
         "agr": {
           "type": "integer",
@@ -1540,7 +1540,7 @@
         "names": {
           "type": "character",
           "attributes": {},
-          "value": ["hex_id", "benefit", "x"]
+          "value": ["hex_id", "benefit", "geometry"]
         },
         "row.names": {
           "type": "integer",
@@ -1555,7 +1555,7 @@
         "sf_column": {
           "type": "character",
           "attributes": {},
-          "value": ["x"]
+          "value": ["geometry"]
         },
         "agr": {
           "type": "integer",

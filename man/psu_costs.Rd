@@ -11,7 +11,7 @@ A data frame with 33 rows and 27 columns
 \item{province}{Province code for that hex}
 \item{water}{Whether that hex is in water or not}
 \item{area}{Area of the hex in m2}
-\item{pr-total_heli_cost}{Specific costs for each hex (see ?\code{estimate_cost_study_area})}
+\item{pr - total_heli_cost}{Specific costs for each hex (see ?\code{estimate_cost_study_area})}
 \item{narus}{Number of ARUs to be deployed}
 \item{RawCost}{Total raw cost of sampling this hex}
 }

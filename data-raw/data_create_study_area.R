@@ -26,15 +26,12 @@ stars_df <- nr %>%
   stars::st_as_stars() %>%
   sf::st_as_sf()
 
-psu_hexagons <- create_study_area(
-  stars_df, hexagon_size = 50, units = "m", HexagonID_label = "hex_id", HexagonID_prefix = "SA") |>
+psu_hexagons <- create_hexes(stars_df, hex_size = 50, units = "m", hex_prefix = "SA_") |>
   sf::st_filter(bbx, .predicate = sf::st_covered_by) %>%
   dplyr::mutate(province = "ON",
                 water = withr::with_seed(1234, sample(c(TRUE, FALSE), dplyr::n(), replace = TRUE)))
 
-ssu_points <- purrr::map_df(
-  1:nrow(psu_hexagons),
-  ~ genSSU(psu_hexagons[.x,], spacing = 5, HexID_column = hex_id))%>%
+ssu_points <- create_sites(psu_hexagons, spacing = 5, hex_id) |>
   dplyr::mutate(province = "ON")
 
 usethis::use_data(ssu_points, overwrite = TRUE)

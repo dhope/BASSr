@@ -57,10 +57,10 @@ grViz("digraph boxes_and_circles {
   # Selection?
   grts [label = 'run_grts_on_BASS()' fillcolor = 'cadetblue3']
   subsample_benefit [label = 'subsample_grts_and_calc_benefit()']
-  select_ssu [label = 'select_ssu()' fillcolor = 'lightblue1']
+  select_sites [label = 'select_sites()' fillcolor = 'lightblue1']
   down [label = 'downweight_selection_pr()' fillcolor = 'lightblue1']
   gen_dist_mat [label = 'gen_dist_mat()']
-  genSSU [label = 'genSSU()' fillcolor = 'lightblue1']
+  create_sites [label = 'create_sites()' fillcolor = 'lightblue1']
   
   # Deprecated?
   full_sel [label = 'run_full_BASS_w_selection()' fillcolor = 'grey70']
@@ -113,7 +113,7 @@ grViz("digraph boxes_and_circles {
   
   no_grts->prepare_hab_long[lhead=cluster_0];
   
-  select_ssu->grts
+  select_sites->grts
   
   # C++
   speedbass->sumC

@@ -3,7 +3,6 @@ test_that("run_grts_on_BASS()", {
   d <- full_BASS_run(land_hex = psu_hexagons,
                      num_runs = 10, n_samples = 3,
                      costs = psu_costs,
-                     hex_id = hex_id,
                      seed = 1234, quiet = TRUE) %>%
     dplyr::mutate(Province = "ON")
 
@@ -174,7 +173,6 @@ test_that("run_grts_on_BASS() remove_hexes", {
                      num_runs = 10,
                      n_samples = 3,
                      costs = psu_costs,
-                     hex_id = hex_id,
                      quiet = TRUE,
                      seed = 1234)
 
@@ -206,7 +204,6 @@ test_that("run_grts_on_BASS() Pass ... to spsurvey::grts()", {
                      num_runs = 10,
                      n_samples = 3,
                      costs = psu_costs,
-                     hex_id = hex_id,
                      quiet = TRUE,
                      seed = 1234)
 

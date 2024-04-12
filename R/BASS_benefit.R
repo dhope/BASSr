@@ -19,7 +19,6 @@
 #' calculate_benefit(
 #'   land_hex = psu_hexagons,
 #'   samples = psu_samples,
-#'   hex_id = hex_id,
 #'   non_random_set = c("SA_09", "SA_22", "SA_47"))
 #'
 #' # Specify a non-random set
@@ -27,7 +26,6 @@
 #' calculate_benefit(
 #'  land_hex = psu_hexagons,
 #'  samples = psu_samples,
-#'  hex_id = hex_id,
 #'  non_random_set = c("SA_09", "SA_22", "SA_47"))
 #'
 #' # Without GRTS
@@ -40,13 +38,12 @@
 #'
 #' calculate_benefit(
 #'  land_hex = psu_hexagons,
-#'  samples = non_grts_samples,
-#'  hex_id = hex_id)
+#'  samples = non_grts_samples)
 #'
 #'
 #'
 calculate_benefit <- function(land_hex, samples,
-                              hex_id, stratum_id = NULL,
+                              hex_id = hex_id, stratum_id = NULL,
                               non_random_set = NULL,
                               land_cover_weights = NULL,
                               crs = 4326, coords = c("lon", "lat"),
@@ -233,14 +230,14 @@ subsample_grts_and_calc_benefit <- function(#n_samples, num_runs, grts_file, lan
 #' @return data frame with benefits per hex
 #' @noRd
 
-quick_ben <- function(d, samples, land_cover_summary, hex_id, print,
+quick_ben <- function(d, samples, land_cover_summary, hex_id = hex_id, print,
                       land_cover_weights = NULL) {
 
   d <- sf::st_drop_geometry(d)
   land_cover_summary <- sf::st_drop_geometry(land_cover_summary)
 
-  hexes <- d  |>
-    dplyr::as_tibble()  |>
+  hexes <- d |>
+    dplyr::as_tibble() |>
     dplyr::select(dplyr::matches("LC\\d"))
 
 
@@ -249,7 +246,7 @@ quick_ben <- function(d, samples, land_cover_summary, hex_id, print,
                   "i" =  "Check to be sure you have not input inputed percentages into your values.",
                   "x" = "Using percentages will not calculate accurate benefit values."), call = NULL)
   }
-  hexNames <- dplyr::as_tibble(d) %>%
+  hexNames <- dplyr::as_tibble(d) |>
     dplyr::select({{ hex_id }}) |>
     dplyr::pull(1)
 

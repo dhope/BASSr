@@ -43,7 +43,7 @@ ggplot() +
   geom_sf(data = ont_hex)
 ```
 
-What does this land scape look like specifically? (Thinking about LC01)
+What does this landscape look like specifically? (Thinking about LC01)
 ```{r}
 ggplot() +
   geom_sf(data = ont_hex, aes(fill = LC01)) +
@@ -296,9 +296,5 @@ g +
 
 ```
 
-
-## SSUs
-
-...
 
 

@@ -37,5 +37,5 @@ If selection column is null return a vector of the downweights alone.
 Adjust selection weighting
 }
 \examples{
-downweight_selection_pr(BASSr::all_study_areas[1:10,], BASSr::all_study_areas[20:30,], scalingFactor = 0.1, sigma_value = 1e5, fun = 'cauchy', selection_column = NULL)
+# downweight_selection_pr(BASSr::all_study_areas[1:10,], BASSr::all_study_areas[20:30,], scalingFactor = 0.1, sigma_value = 1e5, fun = 'cauchy', selection_column = NULL)
 }
