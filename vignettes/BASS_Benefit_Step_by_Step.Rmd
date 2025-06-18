@@ -3,6 +3,7 @@ title: "Step by Step"
 author: "David Hope"
 date: "`r Sys.Date()`"
 output:
+  pdf_document: default
   html_document:
     code_folding: hide
     theme: united
@@ -16,7 +17,7 @@ vignette: >
 
 ```{r setup, include=T, warning=F, message =F}
 knitr::opts_chunk$set(
-  eval = T, warning = F, message = F,
+  eval = T, warning = F, message = F,#cache = T,echo=F,
   collapse = TRUE,
   comment = "#>"
 )
@@ -40,8 +41,9 @@ The process of calculating benefit can be defined below:
   b. Hypothetical sample set ($p_{HSS}$)
   c. Hypothetical sample set plus focal sample unit ($p_{HSS}^*$)
 2.Calculate difference between Study area and sample sets:
-  a. $\DeltaHSS = p_{SA} - p_{HSS}$
-  b. $\DeltaHSS^*=p_{SA} - p_{HSS}^*$
+  a. ${\Delta HSS} = {p_{SA}} - {p_{HSS}}$
+  
+  b. ${\Delta HSS^*} = {p_{SA}} - {p_{HSS}^*}$
 
 Calculate benefit for land cover type $i$ in sample unit $j$ with a given hypothetical sample set $H$  as:
 	$$
@@ -296,13 +298,9 @@ sample_hexes <- BASSr::draw_random_samples(
   land_hex = StudyArea_hexes$landcover,
   num_runs = 1, n_samples = 10
 )
-if (packageVersion("spsurvey") < 5) {
-  sample_hexes_sf <- StudyArea_hexes$landcover %>%
-    filter(SampleUnitID %in% (sample_hexes$random_sample %>% filter(panel == "PanelOne"))$SampleUnitID)
-} else {
-  sample_hexes_sf <- StudyArea_hexes$landcover %>%
+sample_hexes_sf <- StudyArea_hexes$landcover %>%
     dplyr::filter(SampleUnitID %in% sample_hexes$SampleUnitID)
-}
+
 hex_wHHS <-
   ggplot(exampleHex) +
   geom_sf(fill = "red") +
@@ -482,13 +480,13 @@ In the table above, there are only 5 land cover types with a benefit (Urban and 
 
 ```{r, include =F, results = 'asis'}
 a <- sum(rep_tabl$benefit)
-b <- quick_ben(
+b <- BASSr:::quick_ben(
   d = exampleHex %>% as_tibble() %>%
     mutate_at(.vars = vars(contains("LC")), .funs = ~ (. * hexsize)),
   samples = sample_hexes %>%
     st_drop_geometry() |>
     summarize_at(.vars = vars(contains("LC")), .funs = ~ sum(. * hexsize)),
-  land_cover_summary = SA_sum %>% mutate(ha = pHab_SA * study_area_size),
+  land_cover_summary = SA_sum %>% mutate(area = pHab_SA * study_area_size),
   hex_id = SampleUnitID, print = F
 )
 
@@ -529,12 +527,12 @@ multi_ex <- BASSr::calculate_benefit(
 
 
 BASSr:::prepare_hab_long(
-  StudyArea_hexes$landcover
+  StudyArea_hexes$landcover |> select(-area)
   # mutate_at(.vars = vars(contains("LC")),.funs = ~(.*hexsize))
 ) |>
-  dplyr::select("lc", "ha_total") %>%
+  dplyr::select("lc", "area_total") %>%
   dplyr::distinct() %>%
-  dplyr::rename("ha" = "ha_total") |>
+  dplyr::rename("area" = "area_total") |>
   arrange(lc)
 SA_sum %>%
   mutate(ha = pHab_SA * study_area_size) |>
@@ -544,7 +542,7 @@ SA_sum %>%
 
 multi_exbroken <- purrr::map_df(
   1:200,
-  ~ quick_ben(
+  ~ BASSr:::quick_ben(
     d = exampleHex, # %>% as_tibble %>%
     # dplyr::select(-geometry) %>%
     # mutate_at(.vars = vars(contains("LC")),
@@ -553,7 +551,7 @@ multi_exbroken <- purrr::map_df(
       st_drop_geometry() |>
       filter(run == .x) %>%
       summarize_at(.vars = vars(contains("LC")), .funs = ~ sum(.)),
-    land_cover_summary = SA_sum %>% mutate(ha = pHab_SA * study_area_size),
+    land_cover_summary = SA_sum %>% mutate(area = pHab_SA * study_area_size),
     hex_id = SampleUnitID, print = F
   )
 )
@@ -580,10 +578,10 @@ The there is quite a large variation in the benefit calculated across all sample
 The total benefit for the example focal sample unit based on national land cover is shown in Figure 7 (`r  round(multi_ex$benefit,3)`). How does this compare with values calculated using the other sample units in the study area as the focal sample unit ? We start by calculating the benefit for each sample unit using the hypothetical sample set shown in `Figure 5`.
 
 ```{r all-benefits, fig.lab = "Figure 8. Single hypothetical sample set used to calculate benefit estimates across all sample units in a study area"}
-one_sample <- quick_ben(
+one_sample <- BASSr:::quick_ben(
   d = StudyArea_hexes$landcover,
   samples = sample_hexes[1, ] |> st_drop_geometry(),
-  land_cover_summary = SA_sum %>% mutate(ha = pHab_SA * study_area_size),
+  land_cover_summary = SA_sum %>% mutate(area = pHab_SA * study_area_size),
   hex_id = SampleUnitID, print = F
 )
 

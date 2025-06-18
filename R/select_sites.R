@@ -113,6 +113,8 @@ select_sites <- function(sites, type, n_samples, min_dist,
   spacing <- site_spacing(sites)
 
   if(type == "cluster") {
+    if(is.null(cluster_size) | is.null(min_dist_cluster)) {
+      inform("`cluster_size` and `min_dist_cluster`, do not applyare required for cluster sampling")
     r <- select_by_cluster(sites, {{ hex_id }}, {{ site_id }}, n_samples, os, cluster_size,
                            ARUonly, min_dist, min_dist_cluster, useGRTS, spacing, seed)
   } else if (type == "random") {
@@ -183,7 +185,7 @@ select_by_cluster <- function(sites, hex_id, site_id, n_samples, os, cluster_siz
                 "there is a good chance that your clusters will overlap/abut"))
   }
 
-  if(useGRTS) selected <- select_with_grts(sites, hex_id, site_id, n_clusters, os, min_dist, seed)
+  if(useGRTS) selected <- select_with_grts(sites, {{hex_id}}, {{site_id}}, n_clusters, os, min_dist, seed)
 
   if(!useGRTS) {
     hexes <- dplyr::pull(sites, {{ hex_id }}) |> dplyr::n_distinct()

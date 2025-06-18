@@ -62,14 +62,13 @@ Often this is most usefully done outside of R, with habitat and costs incorporat
 
 
 ```{r}
-SA_SU <- create_hexes(landscape = nc_for_survey,
-                      study_area_size = 100000, 
-                      units = 'ha', 
-                      study_unit_size = 100, output = 'all' )
+SA <- create_hexes(land = nc_for_survey,
+                       hex_size =  100000, 
+                      units = 'ha' )
 ```
 
 ```{r}
-ggplot(SA_SU$large) + 
+ggplot(SA) + 
   geom_sf(data = nc) + 
   geom_sf(fill = 'grey', alpha = 0.5) 
 ```
@@ -78,18 +77,20 @@ ggplot(SA_SU$large) +
 Here is an example study area. Not all of the study area is within North Carolina (pink) and so we will not deploy here.
 
 ```{r}
-su_ex <- st_filter(SA_SU$small, SA_SU$large[16,])
+su_ex <- create_hexes(land = SA[16,],
+                       hex_size =  100, 
+                      units = 'ha' )
 
 ggplot() +  
   geom_sf(data = nc, fill = 'lightpink') +
-  geom_sf(data = SA_SU$large[16,], fill = NA) +
+  geom_sf(data = SA[16,], fill = NA) +
   geom_sf(data = su_ex, fill = NA) +
-  coord_sf(xlim =st_bbox(SA_SU$large[16,])[c(1,3)], ylim = st_bbox(SA_SU$large[16,])[c(2,4)])
+  coord_sf(xlim =st_bbox(SA[16,])[c(1,3)], ylim = st_bbox(SA[16,])[c(2,4)])
 ```
 
 
 ```{r}
-st_area(SA_SU$large[16,])
+st_area(SA[16,])
 
 pHA_region <- tibble(lc = 1:18) %>% 
   mutate(pHA_region = runif(18),
@@ -104,13 +105,13 @@ estBetaParams <- function(mu, var) {
 
 beta_values <- estBetaParams(pHA_region$pHA_region, pHA_region$varbeta)
 SA_LC <- 
-expand_grid(StudyAreaID = unique(SA_SU$large$StudyAreaID), lc = 1:18) %>% 
+expand_grid(hex_id = unique(SA$hex_id), lc = 1:18) %>% 
   left_join(pHA_region, by = 'lc') %>% 
   mutate(LandCover = glue::glue("LC{stringr::str_pad(lc,width = 2, side = 'left', pad = 0 )}"),
          pha = rbeta(nrow(.),beta_values$alpha,beta_values$beta)) %>% 
          # a = (pHA_region**2)*((1-pHA_region)/(varbeta)- (1/pHA_region)),
          # pha = rbeta(nrow(.),a,a*(1/pHA_region-1))) %>% 
-  group_by(StudyAreaID) %>% 
+  group_by(hex_id) %>% 
   mutate(ha = pha/sum(pha)*1e9*.0001,
          pha = ha/sum(ha)) %>% ungroup
 

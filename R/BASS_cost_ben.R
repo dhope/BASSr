@@ -62,7 +62,7 @@ calculate_inclusion_probs <- function(benefits, costs,
       # Inclusion probability
       partIP = (1 - .data$ScLogCost) * .data$scale_ben,
       # Benefit weighted by benefit weight
-      weightedIP = (1 - (.data$ScLogCost * (1 - .env$benefit_weight))) *
+      weightedIP = ((1 - .data$ScLogCost) * (1 - .env$benefit_weight)) +
         .data$scale_ben * .env$benefit_weight,
       # Scaled inclusion probability
       inclpr = .data$weightedIP / max(.data$weightedIP, na.rm = TRUE)

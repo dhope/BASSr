@@ -29,3 +29,8 @@
 # ^R/Full_Run_w_SampleSelect.R$
 # ^R/InternalSSU_gen.R$
 # ^R/SSU_selection_methods.R$
+^doc$
+^Meta$
+^_pkgdown\.yml$
+^docs$
+^pkgdown$
