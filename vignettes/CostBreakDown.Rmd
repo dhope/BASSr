@@ -21,13 +21,12 @@ knitr::opts_chunk$set(
   fig.height = 8,
   comment = "#>"
 )
-library(tidyverse)
+library(dplyr)
+library(purrr)
+library(tidyr)
+library(ggplot2)
 library(sf)
-library(spsurvey)
-library(glue)
 library(BASSr)
-library(raster)
-library(rlang)
 library(patchwork)
 
 

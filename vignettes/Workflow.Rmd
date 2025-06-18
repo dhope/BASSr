@@ -16,7 +16,8 @@ vignette: >
 ## Packages and settings
 
 ```{r pkgs}
-library(tidyverse)
+library(dplyr)
+library(ggplot2)
 library(BASSr)
 library(sf)
 
