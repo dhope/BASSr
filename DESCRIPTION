@@ -31,7 +31,8 @@ Suggests:
     testthat (>= 3.0.0),
     withr,
     palmerpenguins,
-    patchwork
+    patchwork,
+    terra
 Encoding: UTF-8
 LazyData: true
 VignetteBuilder: knitr

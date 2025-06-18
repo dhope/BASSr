@@ -23,9 +23,11 @@ knitr::opts_chunk$set(
 )
 library(BASSr)
 library(ggplot2)
+library(dplyr)
+library(tidyr)
+library(purrr)
 library(glue)
 library(patchwork)
-library(tidyverse)
 library(sf)
 
 ont.proj <- 3161
@@ -134,10 +136,10 @@ ggplot(exampleHex) +
 This example study area is shown below. The habitat is shown from the National Land Cover Classification 2015. The study area is `r nrow(StudyArea_hexes$landcover)` sample unit hexagons of `r round(mean(st_area(StudyArea_hexes$landcover)),0)`$m^2$.
 
 ```{r raster-plot, fig.cap = "Figure 3. The distribution of land cover classes across an example study area."}
-r <- raster::raster(system.file("extdata", glue("{study_area_id}.tif"),
+r <- terra::rast(system.file("extdata", glue("{study_area_id}.tif"),
   package = "BASSr", mustWork = T
 )) %>%
-  raster::as.data.frame(xy = T, long = T) %>%
+  terra::as.data.frame(xy = T, long = T) %>%
   as_tibble() %>%
   filter(!is.na(value)) %>%
   left_join(lcc2015_codes, by = c("value" = "LCC_CODE"))
@@ -171,7 +173,7 @@ exLC %>%
   ggplot(aes(sampletype, phabitat, fill = lcc_fac)) +
   geom_bar(stat = "identity", position = "dodge") +
   labs(x = "", y = "Percentage of total", fill = "Land Cover") +
-  cowplot::theme_cowplot() +
+  theme_minimal() +
   scale_fill_manual(values = pal_)
 ```
 
@@ -234,7 +236,7 @@ exLC %>%
   ggplot(aes(sampletype, phabitat, fill = lcc_fac)) +
   geom_bar(stat = "identity") +
   labs(x = "", y = "Percentage of total", fill = "Land Cover", title = exLC$LCC_NAME[grepl("grassland-lichen-moss", exLC$LCC_NAME)]) +
-  cowplot::theme_cowplot() +
+  theme_minimal() +
   theme(legend.position = "none") +
   scale_fill_manual(values = pal_) +
   lims(y = c(0, 100))
@@ -253,7 +255,7 @@ exLC %>%
     x = "", y = "Percentage of total", fill = "Land Cover",
     title = glue::glue("{exLC$LCC_NAME[grepl('grassland-lichen-moss',exLC$LCC_NAME)]} and Wetland")
   ) +
-  cowplot::theme_cowplot() +
+  theme_minimal() +
   theme(legend.position = "none") +
   scale_fill_manual(values = pal_) +
   lims(y = c(0, 100))
@@ -272,7 +274,7 @@ exLC %>%
     x = "", y = "Percentage of total",
     fill = "Land Cover"
   ) +
-  cowplot::theme_cowplot() +
+  theme_minimal() +
   scale_fill_manual(values = pal_)
 ```
 
@@ -351,7 +353,7 @@ plot_single <- function(x) {
     # scale_fill_manual(values = pal_)+
     labs(x = "", y = "Percentage of total", fill = "Land Cover", title = names(pal_[x])) +
     geom_text(aes(label = glue::glue("{round(phabitat,1)} %")), position = position_nudge(y = -1)) +
-    cowplot::theme_cowplot()
+    theme_minimal() 
 }
 ```
 
@@ -368,7 +370,7 @@ hexplot <- function(fill_) {
 hhs_plot <-
   ggplot(StudyArea_hexes$landcover) +
   geom_sf(fill = NA, colour = "white") +
-  cowplot::theme_cowplot() +
+  theme_minimal() +
   theme(
     axis.text = element_blank(), axis.line = element_blank(),
     axis.ticks = element_blank()
@@ -409,7 +411,7 @@ fullplot <- d %>%
   geom_bar(stat = "identity") +
   scale_fill_manual(values = pal_) +
   labs(x = "", y = "Percentage of total", fill = "Land Cover") +
-  cowplot::theme_cowplot()
+  theme_minimal() 
 (fullplot / (key_row)) + plot_layout(heights = c(2, 1))
 ```
 
