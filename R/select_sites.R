@@ -115,6 +115,7 @@ select_sites <- function(sites, type, n_samples, min_dist,
   if(type == "cluster") {
     if(is.null(cluster_size) | is.null(min_dist_cluster)) {
       inform("`cluster_size` and `min_dist_cluster`, do not applyare required for cluster sampling")
+    }
     r <- select_by_cluster(sites, {{ hex_id }}, {{ site_id }}, n_samples, os, cluster_size,
                            ARUonly, min_dist, min_dist_cluster, useGRTS, spacing, seed)
   } else if (type == "random") {
