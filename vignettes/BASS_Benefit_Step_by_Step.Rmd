@@ -139,10 +139,10 @@ This example study area is shown below. The habitat is shown from the National L
 r <- terra::rast(system.file("extdata", glue("{study_area_id}.tif"),
   package = "BASSr", mustWork = T
 )) %>%
-  terra::as.data.frame(xy = T, long = T) %>%
+  terra::as.data.frame(xy = T) %>%
   as_tibble() %>%
-  filter(!is.na(value)) %>%
-  left_join(lcc2015_codes, by = c("value" = "LCC_CODE"))
+  filter(!is.na({{study_area_id}})) %>%
+  left_join(lcc2015_codes, by = join_by({{study_area_id}} == LCC_CODE))
 
 
 pal_ <- clrfile$rgb
