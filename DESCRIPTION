@@ -32,7 +32,8 @@ Suggests:
     withr,
     palmerpenguins,
     patchwork,
-    terra
+    terra,
+    forcats
 Encoding: UTF-8
 LazyData: true
 VignetteBuilder: knitr
