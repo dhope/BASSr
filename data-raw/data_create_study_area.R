@@ -9,7 +9,7 @@ if(FALSE) {
       ai = c(0.05, 0.1, 0.15, 0.25, 0.25, 0.5),
       rescale = FALSE)
   })
-  raster::crs(nr) <- 3161
+  terra::crs(nr) <- 3161
   saveRDS(nr, "data-raw/nr.rds")
 }
 
@@ -31,7 +31,7 @@ psu_hexagons <- create_hexes(stars_df, hex_size = 50, units = "m", hex_prefix = 
   dplyr::mutate(province = "ON",
                 water = withr::with_seed(1234, sample(c(TRUE, FALSE), dplyr::n(), replace = TRUE)))
 
-ssu_points <- create_sites(psu_hexagons, spacing = 5, hex_id) |>
+ssu_points <- create_sites(psu_hexagons, spacing = 5,hex_id =  hex_id) |>
   dplyr::mutate(province = "ON")
 
 usethis::use_data(ssu_points, overwrite = TRUE)
@@ -53,7 +53,7 @@ ssu_land_cover <- sf::st_buffer(ssu_points, 2.5) %>%
   sf::st_join(stars_df) %>%
   dplyr::mutate(Area = sf::st_area(.)) |>
   sf::st_drop_geometry() |>
-  dplyr::group_by(hex_id, ssuID, clumps) |>
+  dplyr::group_by(hex_id, site_id, clumps) |>
   dplyr::summarise(Area = sum(Area), .groups = 'drop_last') |>
   dplyr::mutate(HexArea = sum(Area)) |>
   dplyr::ungroup() |>

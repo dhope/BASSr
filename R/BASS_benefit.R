@@ -320,7 +320,6 @@ quick_ben <- function(d, samples, land_cover_summary, hex_id = hex_id, print,
   tot <- total[1, ] %>%
     t() %>%
     as.vector()
-
   dplyr::tibble({{ hex_id }} := hexNames,
                 benefit = allhexes(h, s, tot, w, printDets = print))
 }

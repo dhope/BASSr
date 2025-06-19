@@ -25,3 +25,6 @@ data frame
 \description{
 Calculate z-scores for each hexagon by sum of individual z scores
 }
+\examples{
+calculate_z_scores(psu_hexagons, hex_id)
+}

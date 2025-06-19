@@ -167,3 +167,4 @@ test_that("calculate_benefit() without GRTS", {
   expect_snapshot_value(b, style = "json2", tolerance = 0.0004)
 
 })
+

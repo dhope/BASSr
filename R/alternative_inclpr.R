@@ -9,10 +9,10 @@
 #'
 #' @inheritParams common_docs
 #'
-#' @return
+#' @return tibble with selection weights from PPS
 #'
-#' @examples
-#' # calculate_PPS_hab_inlc_pr(land_hex = psu_hexagons)
+#' @examplesIf exists("psu_hexagons")
+#'  calculate_PPS_hab_inlc_pr(land_hex = psu_hexagons)
 
 calculate_PPS_hab_inlc_pr <- function(land_hex,
                               hex_id = hex_id, stratum_id = NULL,
@@ -29,8 +29,8 @@ calculate_PPS_hab_inlc_pr <- function(land_hex,
   by <- by[by != "NULL"] # omit NULL turned to label
 
   att_summary <- calculate_land_cover_summary(land_hex, {{stratum_id }}) |>
-    dplyr::group_by( across(by)) |>
-    dplyr::mutate(p_hab_PPS = 1/(n()*sum(area_total)) ) |>
+    dplyr::group_by( dplyr::across(by)) |>
+    dplyr::mutate(p_hab_PPS = 1/(dplyr::n()*sum(area_total)) ) |>
     dplyr::ungroup()
 
 
@@ -52,6 +52,7 @@ calculate_PPS_hab_inlc_pr <- function(land_hex,
 #' @return data frame
 #'
 #' @examples
+#' calculate_z_scores(psu_hexagons, hex_id)
 calculate_z_scores <-  function(land_hex,
                                 hex_id, stratum_id = NULL,
                                 quiet = FALSE) {
@@ -66,11 +67,11 @@ calculate_z_scores <-  function(land_hex,
   # Prep data
 
   att_long <- prepare_hab_long(land_hex, {{ stratum_id }}) |>
-    mutate(area = units::set_units(area, NULL))
+    dplyr::mutate(area = units::set_units(area, NULL))
 
   # calculate mean and sd of eac land cover class
   att_sum <- att_long |>
-    summarize(mean = mean(area),
+    dplyr::summarize(mean = mean(area),
               sd = sd(area),
               .by = by)
 

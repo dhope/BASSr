@@ -2,8 +2,18 @@
 % Please edit documentation in R/BASSr-package.R
 \docType{package}
 \name{BASSr}
+\alias{BASSr-package}
 \alias{BASSr}
 \title{BASSr: Benefit Applied Strategic Sampling in R}
 \description{
 The BASSr package implements the Benefit Applied Strategic Sampling
+}
+\seealso{
+Useful links:
+\itemize{
+  \item \url{https://github.com/dhope/BASSr}
+  \item \url{http://davidhope.ca/BASSr/}
+  \item Report bugs at \url{https://github.com/dhope/BASSr/issues}
+}
+
 }

@@ -24,6 +24,9 @@ Stratum ID (see \code{hex_id} and \code{stratum_id} respectively).}
 
 \item{quiet}{Logical. Whether to suppress progress messages.}
 }
+\value{
+tibble with selection weights from PPS
+}
 \description{
 See for more information:
 https://www150.statcan.gc.ca/n1/en/pub/12-001-x/2011001/article/11450-eng.pdf?st=0oyBln55
@@ -31,5 +34,7 @@ or
 https://en.wikipedia.org/wiki/Probability-proportional-to-size_sampling
 }
 \examples{
-# calculate_PPS_hab_inlc_pr(land_hex = psu_hexagons)
+\dontshow{if (exists("psu_hexagons")) (if (getRversion() >= "3.4") withAutoprint else force)(\{ # examplesIf}
+ calculate_PPS_hab_inlc_pr(land_hex = psu_hexagons)
+\dontshow{\}) # examplesIf}
 }

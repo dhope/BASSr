@@ -9,7 +9,7 @@
 #' @importFrom Rcpp sourceCpp
 #' @useDynLib BASSr, .registration = TRUE
 #'
-NULL
+"_PACKAGE"
 
 
 # Dealing with CRAN Notes due to Non-standard evaluation
