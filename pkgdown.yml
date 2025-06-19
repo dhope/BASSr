@@ -1,0 +1,14 @@
+pandoc: 3.1.11
+pkgdown: 2.1.3
+pkgdown_sha: ~
+articles:
+  BASS_Benefit_Step_by_Step: BASS_Benefit_Step_by_Step.html
+  BASSr_real: BASSr_real.html
+  BASSr: BASSr.html
+  CostBreakDown: CostBreakDown.html
+  functions: functions.html
+  Workflow: Workflow.html
+last_built: 2025-06-19T16:13Z
+urls:
+  reference: https://davidhope.ca/BASSr/reference
+  article: https://davidhope.ca/BASSr/articles
