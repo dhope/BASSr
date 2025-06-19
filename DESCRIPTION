@@ -9,7 +9,7 @@ Description: Sampling design for generating a spatially
 License: GPL (>= 3)
 LinkingTo: Rcpp
 Depends:
-  R (>= 4.0),
+  R (>= 4.1.0),
 Imports:
     dplyr (>= 1.0),
     purrr (>= 1.0.1),
@@ -33,7 +33,8 @@ Suggests:
     palmerpenguins,
     patchwork,
     terra,
-    forcats
+    forcats,
+    DiagrammeR
 Encoding: UTF-8
 LazyData: true
 VignetteBuilder: knitr
