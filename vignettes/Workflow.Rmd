@@ -18,6 +18,7 @@ vignette: >
 ```{r pkgs}
 library(dplyr)
 library(ggplot2)
+library(tidyr)
 library(BASSr)
 library(sf)
 

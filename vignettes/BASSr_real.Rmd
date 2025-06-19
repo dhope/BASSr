@@ -2,7 +2,7 @@
 title: "Getting Started - Some real data"
 output: rmarkdown::html_vignette
 vignette: >
-  %\VignetteIndexEntry{Examples with real data}
+  %\VignetteIndexEntry{Getting Started - Some real data}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---

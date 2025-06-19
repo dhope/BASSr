@@ -36,7 +36,7 @@ estimate_cost_study_area(
 
 \item{AirportType}{Column with nearest airport type}
 
-\item{vars}{}
+\item{vars}{List containing parameters for cost estimation}
 }
 \value{
 data frame

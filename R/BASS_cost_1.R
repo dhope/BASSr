@@ -62,7 +62,7 @@ cost_vars <- list(
 #' @param dist_airport_sa Column with distance between airport and study area
 #' @param dist2airport_base Column with distance between airport and base camp
 #' @param AirportType Column with nearest airport type
-#' @param vars
+#' @param vars List containing parameters for cost estimation
 #'
 #' @return data frame
 #' @export
@@ -179,10 +179,10 @@ getroaddensity <- function(hexes, sa, pr, sr, wr, r, idcol, ...) {
   }
 
   saa <- as.numeric(st_area(hex))
-  if ("r_lg" %in% colnames(hex)) { # Shortcut to avoid calculating road densitys where there are no roads in SA
+  if ("r_lg" %in% colnames(hex)) { # Shortcut to avoid calculating road density where there are no roads in SA
     if (!isTRUE(any(hex$r_lg))) {
       return(
-        tibble(
+        dplyr::tibble(
           saa = saa,
           pr = 0,
           sr = 0,
@@ -264,7 +264,7 @@ getroaddensity <- function(hexes, sa, pr, sr, wr, r, idcol, ...) {
 #' \dontrun{
 #' prepare_cost(
 #'   truck_roads = NA, atv_roads = NA, winter_roads = NA, all_roads = NA, airports = airports_official, basecamps = tourism, hexagons = study_area_hexagons_in_brandt %>%
-#'     left_join(road_info, by = c("StudyAreaID" = "StudyArea")), idcol_ = StudyAreaID, calc_roads = F, airport_cols = c("NAME", "AIRPORT_TY", "OGF_ID"),
+#'     sf::left_join(road_info, by = c("StudyAreaID" = "StudyArea")), idcol_ = StudyAreaID, calc_roads = F, airport_cols = c("NAME", "AIRPORT_TY", "OGF_ID"),
 #'   basecamp_cols = c("OFFICIAL_N", "OGF_ID", "CLASS_SUBT")
 #' )
 #' }
@@ -278,75 +278,87 @@ prepare_cost <- function(truck_roads, atv_roads, winter_roads, all_roads, airpor
   if (isTRUE(calc_roads)) {
     # 1 Calculate the proportion of each hexagon covered by roads
     # message("Getting road density")
-    pb <- progress::progress_bar$new(total=length(ids),
-                                     format =
-                                       "Getting road density [:bar] :percent eta: :eta")
+    # pb <- progress::progress_bar$new(total=length(ids),
+    #                                  format =
+    #                                    "Getting road density [:bar] :percent eta: :eta")
     if(isTRUE(args_$Multicor)){
-      library(furrr)
-      plan(multisession, workers= max(as.numeric(args_$Cores), 2, na.rm=T))
+      if(rlang::is_installed("furrr") &&
+         rlang::is_installed("future")){
+
+        mc <- switch (tolower(Sys.info()[["sysname"]]),
+          "windows" = future::multisession,
+          "linux" = future::multicore,
+          'mac' = future::multicore
+        )
+
+      future::plan(mc, workers= max(as.numeric(args_$Cores), 2, na.rm=T))
       # browser()
       dfk <- as_label(enquo( idcol_ ))
-      hexagons_w_roads <- future_map(ids,
-                                     ~{pb$tick();getroaddensity(sa = .x,
+      hexagons_w_roads <- furrr::future_map(ids,
+                                     ~{getroaddensity(sa = .x,
                                                                 hexes = hexagons, wr = winter_roads,
                                                                 pr = truck_roads, sr = atv_roads,
                                                                 r = all_roads, idcol = dfk, ... )},
-                                     .options = furrr_options(seed = TRUE)
+                                     .options = furrr::furrr_options(seed = TRUE), .progress = T
       ) %>% do.call("rbind", .) %>%
-        left_join(x = hexagons, y = .) %>%
-        st_as_sf()
+        dplyr::left_join(x = hexagons, y = .) %>%
+        sf::st_as_sf()
+      } else{
+        rlang::abort("To use Multi core, must install 'furrr' and 'future' packages.")
+      }
+
     }else{
-    hexagons_w_roads <- purrr::map_df(ids, ~{pb$tick();getroaddensity(sa = .x,
+    hexagons_w_roads <- purrr::map_df(ids, ~{getroaddensity(sa = .x,
       hexes = hexagons, wr = winter_roads,
-      pr = truck_roads, sr = atv_roads, r = all_roads, idcol = {{ idcol_ }}, ... )}
+      pr = truck_roads, sr = atv_roads, r = all_roads, idcol = {{ idcol_ }}, ... )},
+      .progress=T
     ) %>%
-      left_join(x = hexagons, y = .) %>%
-      st_as_sf()
+      dplyr::left_join(x = hexagons, y = .) %>%
+      sf::st_as_sf()
     }
   } else {
     hexagons_w_roads <- hexagons
   }
   if("Status" %in% names(airports)){
     # browser()
-    ha <- airports %>% filter(Status == "Highway")
-    Hwy_airports <-  bind_cols(
+    ha <- airports %>% dplyr::filter(Status == "Highway")
+    Hwy_airports <-  dplyr::bind_cols(
       dplyr::select(basecamps, basecamp_cols[[2]]),ha[
-      st_nearest_feature(basecamps, ha),] %>%
-        st_drop_geometry() %>%
-        transmute(HWY_AIRPORT = NAME )) %>% st_drop_geometry()
-  } else{Hwy_airports <- dplyr::select(basecamps, basecamp_cols) %>% st_drop_geometry()}
+      sf::st_nearest_feature(basecamps, ha),] %>%
+        sf::st_drop_geometry() %>%
+        dplyr::transmute(HWY_AIRPORT = NAME )) %>% sf::st_drop_geometry()
+  } else{Hwy_airports <- dplyr::select(basecamps, basecamp_cols) %>% sf::st_drop_geometry()}
   # Hexagon centroids
-  hexagon_centroids <- st_centroid(hexagons_w_roads)
+  hexagon_centroids <- sf::st_centroid(hexagons_w_roads)
 
   min_dist <- function(x, y) {
-    (st_distance(x, y, by_element = F) %>%
+    (sf::st_distance(x, y, by_element = F) %>%
       apply(., 1, FUN = min, na.rm = T) %>% as.numeric()
     ) / 1000
   }
 
   centroids_with_road_air <- hexagon_centroids %>%
-    mutate(
+    dplyr::mutate(
       airportdist_km = min_dist(., airports),
       basecamps = min_dist(., basecamps)
     )
 
   tst <-
     basecamps %>%
-    st_nearest_feature(y = airports)
-  # browser()
+    sf::st_nearest_feature(y = airports)
   if(length(airport_cols) == 3){
   basecamps[c("nearest_airport", "airporttype", "airportID")] <- airports[tst, airport_cols] %>%
-    as_tibble() %>%
+    dplyr::as_tibble() %>%
     dplyr::select(-geometry)
   } else  if(length(airport_cols) == 4){
     basecamps[c("nearest_airport", "airporttype", "airportID", "AirportStatus")] <- airports[tst, airport_cols] %>%
-      as_tibble() %>%
+      dplyr::as_tibble() %>%
       dplyr::select(-geometry)
   } else stop("Airport columns needs to be a vector 3 or 4 strings")
 
   # browser()
   basecamps$dist_to_air <- min_dist(basecamps, airports)
-  if("Status" %in% names(airports)){basecamps$dist_to_Hwy_air <- min_dist(basecamps, filter(airports,
+  if("Status" %in% names(airports)){basecamps$dist_to_Hwy_air <- min_dist(basecamps, dplyr::filter(airports,
                                                                                             Status == "Highway"))
   } else{
     basecamps$dist_to_Hwy_air <- NA
@@ -356,7 +368,7 @@ prepare_cost <- function(truck_roads, atv_roads, winter_roads, all_roads, airpor
 
   basecamp_order <-
     centroids_with_road_air %>%
-    st_nearest_feature(y = basecamps)
+    sf::st_nearest_feature(y = basecamps)
 
 
   centroids_with_road_air[c(
@@ -368,7 +380,7 @@ prepare_cost <- function(truck_roads, atv_roads, winter_roads, all_roads, airpor
     "cabin_airportID",
     "cabin_dist_to_air",
     "cabin_dist_to_hwyair"
-  )] <- as_tibble(basecamps)[(basecamp_order), c(
+  )] <- dplyr::as_tibble(basecamps)[(basecamp_order), c(
     basecamp_cols, "nearest_airport",
     "airporttype",
     "airportID",
@@ -378,39 +390,39 @@ prepare_cost <- function(truck_roads, atv_roads, winter_roads, all_roads, airpor
 
 
   nearest_airport <- centroids_with_road_air %>%
-    st_nearest_feature(y = airports)
+    sf::st_nearest_feature(y = airports)
 
   if(length(airport_cols) == 3){
-  centroids_with_road_air[c("nearest_airport", "airporttype", "airportID")] <- as_tibble(airports)[
+  centroids_with_road_air[c("nearest_airport", "airporttype", "airportID")] <- dplyr::as_tibble(airports)[
     nearest_airport,
     airport_cols
   ]
   } else  if(length(airport_cols) == 4){
-    centroids_with_road_air[c("nearest_airport", "airporttype", "airportID","AirportStatus")] <- as_tibble(airports)[
+    centroids_with_road_air[c("nearest_airport", "airporttype", "airportID","AirportStatus")] <- dplyr::as_tibble(airports)[
       nearest_airport,
       airport_cols
     ]
   } else stop("Airport columns needs to be a vector 3 or 4 strings")
 
 
-  left_join(
+  dplyr::left_join(
     hexagons,
-    st_drop_geometry(centroids_with_road_air)
+    sf::st_drop_geometry(centroids_with_road_air)
     # dplyr::select(as_tibble(centroids_with_road_air), -geometry)
-  ) %>% left_join(Hwy_airports, by = c("CabinID" = basecamp_cols[[2]]))
+  ) %>% dplyr::left_join(Hwy_airports, by = c("CabinID" = basecamp_cols[[2]]))
 }
 
 # Test
 # brantStudyAreas <- read_rds(here::here("output/NONT_HexesWithinBrant.rds"))
 #
 # den_map <- read_rds(here::here("output/road_density_byHex_full.rds")) %>%
-#   mutate(prim = pr / saa, sec = sr / saa, allroads = r/saa,
+#   dplyr::mutate(prim = pr / saa, sec = sr / saa, allroads = r/saa,
 #          wint = wr /saa,
 #          saa_m_prim = allroads - prim)
 #
 # samp <- brantStudyAreas %>% sample_n(3, weight = .$pr)
 #
-# sa <- samp[1,] %>% left_join(den_map, by = c("StudyAreaID" = "StudyArea"))
+# sa <- samp[1,] %>% sf::left_join(den_map, by = c("StudyAreaID" = "StudyArea"))
 # base <- samp[2,]
 # air <- samp[3,]
 #

@@ -33,7 +33,7 @@ downweight_selection_pr <- function(sample_locs,
                                            mn = 0,
                                            sd = sigma_value) /
                           f(0,0,sd = sigma_value))))
-  if(!rlang::quo_is.null(enquo(selection_column))) {
+  if(!rlang::quo_is_null(enquo(selection_column))) {
     # browser()
     # stopifnot(as_label(enquo(selection_column)) %in% names(sample_locs))
     if(!as_label(enquo(selection_column)) %in% names(sample_locs)){

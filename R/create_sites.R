@@ -67,7 +67,7 @@ create_sites <- function(hexes, spacing = NULL, n = NULL, hex_id = hex_id) {
     sf::st_drop_geometry()
 
   create_row <- function(cX, cY){
-    tibble::tibble(rowid = seq(-.env[["gridsize"]], .env[["gridsize"]])) |>
+    dplyr::tibble(rowid = seq(-.env[["gridsize"]], .env[["gridsize"]])) |>
       dplyr::mutate(
         X = sin(60 * pi / 180 + .env[["rowAngle"]]) * .env[["spacing"]] * .data[["rowid"]] + {{ cX }},
         Y = cos(60 * pi / 180 + .env[["rowAngle"]]) * .env[["spacing"]] * .data[["rowid"]] + {{ cY }})

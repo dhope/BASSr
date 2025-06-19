@@ -3,13 +3,13 @@
 # su <- read_rds("C:/Users/hoped/Documents/Local_Workspace/Projects/BASSr_ONT/output_data/rds/NOntario_BASS_hexes.rds")$SampleUnits
 # df_hex <- su[1234:1236,]
 # df <- su[1234:1236,]
-# df_preped <- df %>% st_centroid %>% bind_cols(as_tibble(st_coordinates(.))) %>% dplyr::select(-geometry)
-# df_preped2 <- df %>% st_centroid %>% bind_cols(as_tibble(st_coordinates(.))) %>% dplyr::select(-geometry) %>%
+# df_preped <- df %>% sf::st_centroid %>% dplyr::bind_cols(as_tibble(st_coordinates(.))) %>% dplyr::select(-geometry)
+# df_preped2 <- df %>% sf::st_centroid %>% dplyr::bind_cols(as_tibble(st_coordinates(.))) %>% dplyr::select(-geometry) %>%
 #   mutate(type = c("full", "4corners", "2corners"))
 
 #' Extract Point Count or multiple locations within a sample unit.
 #'
-#' @param df data.table or tibble or sf object that contains sample units to add points to.
+#' @param df data.table or dplyr::tibble or sf object that contains sample units to add points to.
 #' @param crs_ CRS to add to the points. Should be based on the centroids. Does not to be specificied if df is an 'sf' object.
 #'
 #' @return Returns an sf object with points within provided hexagons
@@ -17,20 +17,20 @@
 generate_Points_around_centroid <- function(df, crs_ = NULL) {
 
   if (is.null(crs_)) {
-    crs_ <- st_crs(df)
+    crs_ <- sf::st_crs(df)
   }
 
   if (!("X" %in% names(df) & "Y" %in% names(df))) {
     if (!"sf" %in% class(df)) {
       stop("Object must either contain X & Y coordinates or be an object of type sf. Please fix and try again")
     } else {
-      if(attr(df, "sf_column")=="x") st_geometry(df) = "geometry"
+      if(attr(df, "sf_column")=="x") sf::st_geometry(df) = "geometry"
       if (all(sf::st_is(df, "POLYGON"))) {
         message("Spatial Feature object should be points not polygons or GRTS expects clusters. Don't worry, I'll fix it!")
-        df <- st_centroid(df)
+        df <- sf::st_centroid(df)
       }
       df <- df %>%
-        bind_cols(as_tibble(st_coordinates(.))) %>%
+        dplyr::bind_cols(as_tibble(st_coordinates(.))) %>%
         dplyr::select(-geometry)
     }
   }
@@ -39,7 +39,7 @@ generate_Points_around_centroid <- function(df, crs_ = NULL) {
   }
   calc_loc <- function(X, Y, type = "full", crs_) {
     if (type == "full") {
-      locs <- tibble(
+      locs <- dplyr::tibble(
         distance = c(
           0, 300, 424, 300, 424, 300, 424, 300, 424
         ),
@@ -48,7 +48,7 @@ generate_Points_around_centroid <- function(df, crs_ = NULL) {
     }
 
     if (grepl("corners", type)) {
-      locs <- tibble(
+      locs <- dplyr::tibble(
         distance = c(
           424, 424, 424, 424
         ),
@@ -57,7 +57,7 @@ generate_Points_around_centroid <- function(df, crs_ = NULL) {
     }
     if (type == "2corners") {
       b <- sample(c(1, 3), 1) * 45
-      locs <- tibble(distance = rep(424, 2), bearing = c(b, b + 180))
+      locs <- dplyr::tibble(distance = rep(424, 2), bearing = c(b, b + 180))
     }
 
 

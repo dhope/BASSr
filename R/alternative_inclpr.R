@@ -11,7 +11,9 @@
 #'
 #' @return tibble with selection weights from PPS
 #'
-#' @examplesIf exists("psu_hexagons")
+#' @export
+#'
+#' @examples
 #'  calculate_PPS_hab_inlc_pr(land_hex = psu_hexagons)
 
 calculate_PPS_hab_inlc_pr <- function(land_hex,
@@ -50,6 +52,8 @@ calculate_PPS_hab_inlc_pr <- function(land_hex,
 #' @inheritParams common_docs
 #'
 #' @return data frame
+#'
+#' @export
 #'
 #' @examples
 #' calculate_z_scores(psu_hexagons, hex_id)
