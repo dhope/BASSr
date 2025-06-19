@@ -36,3 +36,4 @@
 ^pkgdown$
 _cach/
 ^vignettes/functions.Rmd$
+^codecov\.yml$

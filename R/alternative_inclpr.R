@@ -32,14 +32,14 @@ calculate_PPS_hab_inlc_pr <- function(land_hex,
 
   att_summary <- calculate_land_cover_summary(land_hex, {{stratum_id }}) |>
     dplyr::group_by( dplyr::across(by)) |>
-    dplyr::mutate(p_hab_PPS = 1/(dplyr::n()*sum(area_total)) ) |>
+    dplyr::mutate(p_hab_PPS = 1/(dplyr::n()*sum(.data$area_total)) ) |>
     dplyr::ungroup()
 
 
   dplyr::left_join(att_long, att_summary,
             by = by) |>
-    dplyr::mutate(psel_hex_hab_PPS = p_hab_PPS * area) |>
-    dplyr::summarize(p_sel_PPS_hab = units::set_units(sum(psel_hex_hab_PPS), NULL),
+    dplyr::mutate(psel_hex_hab_PPS = .data$p_hab_PPS * .data$area) |>
+    dplyr::summarize(p_sel_PPS_hab = units::set_units(sum(.data$psel_hex_hab_PPS), NULL),
               .by = c({{stratum_id}},{{hex_id}})) |>
     dplyr::left_join(x = land_hex, by  = dplyr::join_by({{hex_id}}))
 
@@ -75,19 +75,19 @@ calculate_z_scores <-  function(land_hex,
 
   # calculate mean and sd of eac land cover class
   att_sum <- att_long |>
-    dplyr::summarize(mean = mean(area),
-              sd = sd(area),
+    dplyr::summarize(mean = mean(.data$area),
+              sd = stats::sd(.data$area),
               .by = by)
 
 
   att_long |>
-    dplyr::select(-area_total, -total_phab) |>
+    dplyr::select(-.data$area_total, -.data$total_phab) |>
     dplyr::left_join(att_sum, by = by) |>
-    dplyr::mutate(abs_diff = abs(area-mean),
-      z_score =(area-mean)/sd) |>
+    dplyr::mutate(abs_diff = abs(.data$area-.data$mean),
+      z_score =(.data$area-.data$mean)/.data$sd) |>
     dplyr::summarise(
-      avg_abs_diff = mean(abs_diff, na.rm=T),
-      avg_z_score = mean(z_score, na.rm = T),
+      avg_abs_diff = mean(.data$abs_diff, na.rm=T),
+      avg_z_score = mean(.data$z_score, na.rm = T),
                      .by = {{hex_id}})
 
 

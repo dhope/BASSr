@@ -22,8 +22,8 @@ downweight_selection_pr <- function(sample_locs,
                                     existing_sampling = NULL,
                                     dmat = NULL){
   f <- switch (fun,
-    cauchy = function(x,mn,sd)dcauchy(x,mn, sd),
-    normal = function(x,mn,sd)dnorm(x,mn, sd),
+    cauchy = function(x,mn,sd)stats::dcauchy(x,mn, sd),
+    normal = function(x,mn,sd)stats::dnorm(x,mn, sd),
     exp = function(x,mn,sd) {exp(-x**2/ sd**2)},
 
   )
