@@ -69,20 +69,17 @@ cost_vars <- list(
 estimate_cost_study_area <- function(narus, StudyAreas, pr, sr, wr = 0,
                                      dist_base_sa, dist_airport_sa,
                                      dist2airport_base, AirportType, vars) {
-
-  list2env(vars, envir = environment())
-
   StudyAreas %>%
     dplyr::mutate(AT = {{AirportType}}) %>%
     {if("lCost" %in% names(.)){.} else{
-      dplyr::left_join(x = ., helicopter_airport_cost_per_l,
+      dplyr::left_join(x = ., vars$helicopter_airport_cost_per_l,
               by = c("AT" = "AirportType") ) }} %>%
     dplyr::mutate(
 
     # Cost of survey the study area by truck
-    primary_cost = truck_cost_per_day * narus / (truck_arus_per_crew_per_day), #* truck_n_crews),
+    primary_cost = vars$truck_cost_per_day * narus / (vars$truck_arus_per_crew_per_day), #* truck_n_crews),
     # Cost of surveying the study area by atv
-    atv_cost = atv_cost_per_day * narus / (atv_arus_per_crew_per_day * atv_n_crews),
+    atv_cost = vars$atv_cost_per_day * narus / (vars$atv_arus_per_crew_per_day * vars$atv_n_crews),
     # # Distance between airport and basecamp
     # if(!isTRUE(manualdist)){
     # dist2airport_base <- as.numeric(st_distance(base, airport)  )/1000
@@ -94,36 +91,38 @@ estimate_cost_study_area <- function(narus, StudyAreas, pr, sr, wr = 0,
 
     # Fuel cost
     # Based on distance to base from airport and distance from base to sa
-    heli_cost_per_l = dplyr::if_else({{ dist_airport_sa }} < helicopter_max_km_from_base,
+    heli_cost_per_l = dplyr::if_else({{ dist_airport_sa }} < vars$helicopter_max_km_from_base,
                                      lCost,
       # helicopter_airport_cost_per_l,
-      dplyr::if_else({{ dist_base_sa }} < helicopter_max_km_from_base,
-        helicopter_base_cost_per_l, helicopter_2nd_base_cost_per_l
+      dplyr::if_else({{ dist_base_sa }} < vars$helicopter_max_km_from_base,
+                     vars$helicopter_base_cost_per_l,
+                     vars$helicopter_2nd_base_cost_per_l
       )
     ),
 
     # Estimated helicopter cost
-    cost_base = ifelse({{ dist_airport_sa }} < helicopter_max_km_from_base, 0,
-      {{ dist2airport_base }} * helicopter_base_setup_cost_per_km + # Cost to move fuel to basecamp
-        2 * {{ dist2airport_base }} / helicopter_relocation_speed * helicopter_l_per_hour * heli_cost_per_l
+    cost_base = ifelse({{ dist_airport_sa }} < vars$helicopter_max_km_from_base, 0,
+      {{ dist2airport_base }} * vars$helicopter_base_setup_cost_per_km + # Cost to move fuel to basecamp
+        2 * {{ dist2airport_base }} / vars$helicopter_relocation_speed * vars$helicopter_l_per_hour * .data$heli_cost_per_l
     ),
 
-    cost_to_SA = ifelse({{ dist_airport_sa }} < helicopter_max_km_from_base,
+    cost_to_SA = ifelse({{ dist_airport_sa }} < vars$helicopter_max_km_from_base,
       # If no camp
-      2 * {{ dist_airport_sa }} / helicopter_relocation_speed * (helicopter_l_per_hour * heli_cost_per_l + helicopter_cost_per_hour),
+      2 * {{ dist_airport_sa }} / vars$helicopter_relocation_speed * (vars$helicopter_l_per_hour * .data$heli_cost_per_l +
+                                                                        vars$helicopter_cost_per_hour),
       # with Camp
-      2 * {{ dist_base_sa }} / helicopter_relocation_speed * (helicopter_l_per_hour * heli_cost_per_l + helicopter_cost_per_hour)
+      2 * {{ dist_base_sa }} / vars$helicopter_relocation_speed * (vars$helicopter_l_per_hour * .data$heli_cost_per_l + vars$helicopter_cost_per_hour)
     ),
-    cost_within_SA = narus / (helicopter_crew_size * helicopter_aru_per_person_per_day) *
-      helicopter_hours_flying_within_sa_per_day * (helicopter_cost_per_hour + helicopter_l_per_hour * heli_cost_per_l),
+    cost_within_SA = narus / (vars$helicopter_crew_size * vars$helicopter_aru_per_person_per_day) *
+      vars$helicopter_hours_flying_within_sa_per_day * (vars$helicopter_cost_per_hour + vars$helicopter_l_per_hour * .data$heli_cost_per_l),
 
-    total_truck_cost = primary_cost * {{ pr }},
-    total_atv_cost = atv_cost * {{ sr }},
-    total_winter_cost = atv_cost * {{ wr }}, # CURRENTLY USING ATV COSTING FOR WINTER ROAD
+    total_truck_cost = .data$primary_cost * {{ pr }},
+    total_atv_cost = .data$atv_cost * {{ sr }},
+    total_winter_cost = .data$atv_cost * {{ wr }}, # CURRENTLY USING ATV COSTING FOR WINTER ROAD
     p_heli = pmax(0,(1 - {{ pr }} - {{ sr }} - {{ wr }})),
-    total_heli_cost = p_heli * (cost_base + cost_to_SA + cost_within_SA),
+    total_heli_cost = .data$p_heli * (.data$cost_base + .data$cost_to_SA + .data$cost_within_SA),
     narus = narus,
-    RawCost = total_truck_cost + total_atv_cost + total_heli_cost + total_winter_cost
+    RawCost = .data$total_truck_cost + .data$total_atv_cost + .data$total_heli_cost + .data$total_winter_cost
   )
 
 

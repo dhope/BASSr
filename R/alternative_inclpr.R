@@ -71,7 +71,7 @@ calculate_z_scores <-  function(land_hex,
   # Prep data
 
   att_long <- prepare_hab_long(land_hex, {{ stratum_id }}) |>
-    dplyr::mutate(area = units::set_units(area, NULL))
+    dplyr::mutate(area = units::set_units(.data$area, NULL))
 
   # calculate mean and sd of eac land cover class
   att_sum <- att_long |>
