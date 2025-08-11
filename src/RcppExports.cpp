@@ -76,12 +76,15 @@ BEGIN_RCPP
 END_RCPP
 }
 
+RcppExport SEXP run_testthat_tests(SEXP);
+
 static const R_CallMethodDef CallEntries[] = {
     {"_BASSr_sumC", (DL_FUNC) &_BASSr_sumC, 1},
     {"_BASSr_oppositeSigns", (DL_FUNC) &_BASSr_oppositeSigns, 2},
     {"_BASSr_speedbass", (DL_FUNC) &_BASSr_speedbass, 5},
     {"_BASSr_allhexes", (DL_FUNC) &_BASSr_allhexes, 5},
     {"_BASSr_sumH", (DL_FUNC) &_BASSr_sumH, 2},
+    {"run_testthat_tests", (DL_FUNC) &run_testthat_tests, 1},
     {NULL, NULL, 0}
 };
 

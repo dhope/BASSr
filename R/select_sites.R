@@ -122,7 +122,7 @@ select_sites <- function(sites, type, n_samples, min_dist,
     if(!is.null(cluster_size) | !is.null(min_dist_cluster)) {
       inform("`cluster_size` and `min_dist_cluster`, do not apply to Shortest Path sampling")
     }
-    r <- select_by_random(sites, {{ hex_id }}, {{ site_id }}, n_samples, os,
+    r <- select_by_random(sites,  {{hex_id}} , {{site_id}}, n_samples, os,
                           ARUonly, min_dist, useGRTS, seed)
   } else if (type == "path") {
     if(!is.null(os) | !is.null(min_dist_cluster)) {
@@ -156,8 +156,8 @@ select_with_grts <- function(sites, hex_id, site_id, n, os, min_dist, seed) {
     nARUs = n,
     os = os,
     mindis = min_dist,
-    hex_id = site_id,
-    stratum_id = hex_id,
+    hex_id = {{site_id}},
+    stratum_id = {{hex_id}},
     seed = seed
   )
 
@@ -284,7 +284,7 @@ select_by_random <- function(sites, hex_id, site_id, n_samples, os,
                              ARUonly, min_dist, useGRTS, seed) {
 
   if(useGRTS) {
-    selected <- select_with_grts(sites, hex_id, site_id, n = n_samples, os, min_dist, seed)
+    selected <- select_with_grts(sites, {{hex_id}}, {{site_id}}, n = n_samples, os, min_dist, seed)
     if(ARUonly) selected$aru <- "ARU" else selected$aru <- "PC"
 
   } else {

@@ -26,6 +26,17 @@ test_that("clean_land_cover()", {
 test_that("estimate_cost_study_area()", {
 
   hex <- dplyr::select(psu_costs, 1:INLAKE)
+  hexLcost <- hex |> dplyr::mutate(lCost = -999)
+  expect_equal(
+    hexLcost$lCost,
+    estimate_cost_study_area(
+    narus = 3,hexLcost ,
+    pr, sr, wr,
+    dist_base_sa = basecamps,
+    dist_airport_sa = airportdist_km,
+    dist2airport_base = cabin_dist_to_air,
+    AirportType = AirportType,
+    vars = cost_vars) |> dplyr::pull(lCost))
 
   expect_silent(costs <- estimate_cost_study_area(
     narus = 3, hex,
