@@ -62,7 +62,7 @@
       <img src="../logo.png" class="logo" alt=""><h1>Step by Step</h1>
                         <h4 data-toc-skip class="author">David Hope</h4>
             
-            <h4 data-toc-skip class="date">2025-08-11</h4>
+            <h4 data-toc-skip class="date">2025-12-19</h4>
       
       <small class="dont-index">Source: <a href="https://github.com/dhope/BASSr/blob/main/vignettes/BASS_Benefit_Step_by_Step.Rmd" class="external-link"><code>vignettes/BASS_Benefit_Step_by_Step.Rmd</code></a></small>
       <div class="d-none name"><code>BASS_Benefit_Step_by_Step.Rmd</code></div>
@@ -190,7 +190,7 @@ below).</p>
 <span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggtheme.html" class="external-link">theme_linedraw</a></span><span class="op">(</span><span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggsf.html" class="external-link">geom_sf</a></span><span class="op">(</span>data <span class="op">=</span> <span class="fu"><a href="https://dplyr.tidyverse.org/reference/filter.html" class="external-link">filter</a></span><span class="op">(</span><span class="va">all_study_areas</span>, <span class="va">StudyAreaID</span> <span class="op">==</span> <span class="va">study_area_id</span><span class="op">)</span>, fill <span class="op">=</span> <span class="st">"red"</span><span class="op">)</span></span></code></pre></div>
 <div class="figure">
-<img src="BASS_Benefit_Step_by_Step_files/figure-html/ontario-map-1.png" alt="Figure 1. Map of Ontario study areas with example study area shown in red" width="768"><p class="caption">
+<img src="BASS_Benefit_Step_by_Step_files/figure-html/ontario-map-1.png" class="r-plt" alt="Figure 1. Map of Ontario study areas with example study area shown in red" width="768"><p class="caption">
 Figure 1. Map of Ontario study areas with example study area shown in
 red
 </p>
@@ -203,7 +203,7 @@ area, shown below in red. We will call this the ‘focal sample unit’.</p>
 <span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggsf.html" class="external-link">geom_sf</a></span><span class="op">(</span>data <span class="op">=</span> <span class="va">StudyArea_hexes</span><span class="op">$</span><span class="va">landcover</span>, fill <span class="op">=</span> <span class="cn">NA</span><span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggtheme.html" class="external-link">theme_minimal</a></span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
 <div class="figure">
-<img src="BASS_Benefit_Step_by_Step_files/figure-html/unnamed-chunk-1-1.png" alt="Figure 2. Example sample unit hexagon (in red). Used as the focal sample unit for the next steps." width="700"><p class="caption">
+<img src="BASS_Benefit_Step_by_Step_files/figure-html/unnamed-chunk-1-1.png" class="r-plt" alt="Figure 2. Example sample unit hexagon (in red). Used as the focal sample unit for the next steps." width="700"><p class="caption">
 Figure 2. Example sample unit hexagon (in red). Used as the focal sample
 unit for the next steps.
 </p>
@@ -241,7 +241,7 @@ unit hexagons of
 <span></span>
 <span><span class="va">lc</span></span></code></pre></div>
 <div class="figure">
-<img src="BASS_Benefit_Step_by_Step_files/figure-html/raster-plot-1.png" alt="Figure 3. The distribution of land cover classes across an example study area." width="700"><p class="caption">
+<img src="BASS_Benefit_Step_by_Step_files/figure-html/raster-plot-1.png" class="r-plt" alt="Figure 3. The distribution of land cover classes across an example study area." width="700"><p class="caption">
 Figure 3. The distribution of land cover classes across an example study
 area.
 </p>
@@ -261,7 +261,7 @@ polar grassland-lichen-moss” or “Wetland”, however there are
 <span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggtheme.html" class="external-link">theme_minimal</a></span><span class="op">(</span><span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/scale_manual.html" class="external-link">scale_fill_manual</a></span><span class="op">(</span>values <span class="op">=</span> <span class="va">pal_</span><span class="op">)</span></span></code></pre></div>
 <div class="figure">
-<img src="BASS_Benefit_Step_by_Step_files/figure-html/study-area-landcover-plot-1.png" alt="Figure 4. The distribution of National Land Cover Classes within example Study Area" width="700"><p class="caption">
+<img src="BASS_Benefit_Step_by_Step_files/figure-html/study-area-landcover-plot-1.png" class="r-plt" alt="Figure 4. The distribution of National Land Cover Classes within example Study Area" width="700"><p class="caption">
 Figure 4. The distribution of National Land Cover Classes within example
 Study Area
 </p>
@@ -293,7 +293,7 @@ sample unit is shown in red below.</p>
 <span>    angle <span class="op">=</span> <span class="fl">75</span>, vjust <span class="op">=</span> <span class="fl">1</span>, hjust <span class="op">=</span> <span class="fl">1</span></span>
 <span>  <span class="op">)</span><span class="op">)</span></span></code></pre></div>
 <div class="figure">
-<img src="BASS_Benefit_Step_by_Step_files/figure-html/land-cover-hexes-1.png" alt="Figure 5. The cumulative proportion of land cover classes within sample hexagons (grey) and the study area (black). The red line shows the example hexagon used in the initial benefit calculation." width="768"><p class="caption">
+<img src="BASS_Benefit_Step_by_Step_files/figure-html/land-cover-hexes-1.png" class="r-plt" alt="Figure 5. The cumulative proportion of land cover classes within sample hexagons (grey) and the study area (black). The red line shows the example hexagon used in the initial benefit calculation." width="768"><p class="caption">
 Figure 5. The cumulative proportion of land cover classes within sample
 hexagons (grey) and the study area (black). The red line shows the
 example hexagon used in the initial benefit calculation.
@@ -322,7 +322,7 @@ will call it the <em>focal sample unit</em> for now.</p>
 <span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/theme.html" class="external-link">theme</a></span><span class="op">(</span>legend.position <span class="op">=</span> <span class="st">"none"</span><span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggsf.html" class="external-link">coord_sf</a></span><span class="op">(</span>xlim <span class="op">=</span> <span class="fu"><a href="https://r-spatial.github.io/sf/reference/st_bbox.html" class="external-link">st_bbox</a></span><span class="op">(</span><span class="va">exampleHex</span><span class="op">)</span><span class="op">[</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">1</span>, <span class="fl">3</span><span class="op">)</span><span class="op">]</span>, ylim <span class="op">=</span> <span class="fu"><a href="https://r-spatial.github.io/sf/reference/st_bbox.html" class="external-link">st_bbox</a></span><span class="op">(</span><span class="va">exampleHex</span><span class="op">)</span><span class="op">[</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">2</span>, <span class="fl">4</span><span class="op">)</span><span class="op">]</span><span class="op">)</span></span></code></pre></div>
 <div class="figure">
-<img src="BASS_Benefit_Step_by_Step_files/figure-html/unnamed-chunk-2-1.png" alt="Figure 6. Example sample unit hexagon (in outline). Used as the focal sample unit for the next steps. See Figure 3 for legend." width="700"><p class="caption">
+<img src="BASS_Benefit_Step_by_Step_files/figure-html/unnamed-chunk-2-1.png" class="r-plt" alt="Figure 6. Example sample unit hexagon (in outline). Used as the focal sample unit for the next steps. See Figure 3 for legend." width="700"><p class="caption">
 Figure 6. Example sample unit hexagon (in outline). Used as the focal
 sample unit for the next steps. See Figure 3 for legend.
 </p>
@@ -346,7 +346,7 @@ area.</p>
 <span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/theme.html" class="external-link">theme</a></span><span class="op">(</span>legend.position <span class="op">=</span> <span class="st">"none"</span><span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/scale_manual.html" class="external-link">scale_fill_manual</a></span><span class="op">(</span>values <span class="op">=</span> <span class="va">pal_</span><span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/lims.html" class="external-link">lims</a></span><span class="op">(</span>y <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0</span>, <span class="fl">100</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
-<p><img src="BASS_Benefit_Step_by_Step_files/figure-html/unnamed-chunk-3-1.png" width="700"></p>
+<p><img src="BASS_Benefit_Step_by_Step_files/figure-html/unnamed-chunk-3-1.png" class="r-plt" width="700"></p>
 <div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">exLC</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
 <span>  <span class="fu">dplyr</span><span class="fu">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/select.html" class="external-link">select</a></span><span class="op">(</span><span class="va">lcc_fac</span>, <span class="va">pHab</span>, <span class="va">pHab_SA</span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
@@ -364,7 +364,7 @@ area.</p>
 <span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/theme.html" class="external-link">theme</a></span><span class="op">(</span>legend.position <span class="op">=</span> <span class="st">"none"</span><span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/scale_manual.html" class="external-link">scale_fill_manual</a></span><span class="op">(</span>values <span class="op">=</span> <span class="va">pal_</span><span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/lims.html" class="external-link">lims</a></span><span class="op">(</span>y <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0</span>, <span class="fl">100</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
-<p><img src="BASS_Benefit_Step_by_Step_files/figure-html/unnamed-chunk-4-1.png" width="700"></p>
+<p><img src="BASS_Benefit_Step_by_Step_files/figure-html/unnamed-chunk-4-1.png" class="r-plt" width="700"></p>
 <div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">exLC</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
 <span>  <span class="fu">dplyr</span><span class="fu">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/select.html" class="external-link">select</a></span><span class="op">(</span><span class="va">lcc_fac</span>, <span class="va">pHab</span>, <span class="va">pHab_SA</span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
@@ -379,7 +379,7 @@ area.</p>
 <span>  <span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggtheme.html" class="external-link">theme_minimal</a></span><span class="op">(</span><span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/scale_manual.html" class="external-link">scale_fill_manual</a></span><span class="op">(</span>values <span class="op">=</span> <span class="va">pal_</span><span class="op">)</span></span></code></pre></div>
-<p><img src="BASS_Benefit_Step_by_Step_files/figure-html/unnamed-chunk-5-1.png" width="700"></p>
+<p><img src="BASS_Benefit_Step_by_Step_files/figure-html/unnamed-chunk-5-1.png" class="r-plt" width="700"></p>
 <p>The table below compares how the percentages of land cover types
 differs between the example sample unit and the study area. In this
 example, the focal sample unit has a large proportion of “Temperate or
@@ -499,7 +499,7 @@ sample set.</p>
 <span></span>
 <span><span class="va">hex_wHHS</span></span></code></pre></div>
 <div class="figure">
-<img src="BASS_Benefit_Step_by_Step_files/figure-html/unnamed-chunk-6-1.png" alt="Figure 5. Plot of focal sample unit (red) and the hypothetical sample set (grey) within the study area (all hexagons)." width="700"><p class="caption">
+<img src="BASS_Benefit_Step_by_Step_files/figure-html/unnamed-chunk-6-1.png" class="r-plt" alt="Figure 5. Plot of focal sample unit (red) and the hypothetical sample set (grey) within the study area (all hexagons)." width="700"><p class="caption">
 Figure 5. Plot of focal sample unit (red) and the hypothetical sample
 set (grey) within the study area (all hexagons).
 </p>
@@ -574,14 +574,14 @@ set (grey) within the study area (all hexagons).
 <span><span class="co"># (hex_wHHS + theme(axis.text = element_blank())) /</span></span>
 <span></span>
 <span><span class="op">(</span><span class="fu">plot_single</span><span class="op">(</span><span class="fl">8</span><span class="op">)</span> <span class="op">/</span> <span class="op">(</span><span class="va">key_row</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span> <span class="fu"><a href="https://patchwork.data-imaginist.com/reference/plot_layout.html" class="external-link">plot_layout</a></span><span class="op">(</span>heights <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">2</span>, <span class="fl">1</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
-<p><img src="BASS_Benefit_Step_by_Step_files/figure-html/unnamed-chunk-8-1.png" width="700">
+<p><img src="BASS_Benefit_Step_by_Step_files/figure-html/unnamed-chunk-8-1.png" class="r-plt" width="700">
 Hypothetical Sample Set 9.9% less Wetland than Study Area Only 8.1% less
 than Study Area with inclusion of Focal Sample Unit Therefore Focal
 Sample Unit makes Sample Set more like Study Area Therefore Benefit!
 Benefit = 0.18 or 1.8%</p>
 <div class="sourceCode" id="cb16"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="op">(</span><span class="fu">plot_single</span><span class="op">(</span><span class="fl">14</span><span class="op">)</span> <span class="op">/</span> <span class="op">(</span><span class="va">key_row</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span> <span class="fu"><a href="https://patchwork.data-imaginist.com/reference/plot_layout.html" class="external-link">plot_layout</a></span><span class="op">(</span>heights <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">2</span>, <span class="fl">1</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
-<p><img src="BASS_Benefit_Step_by_Step_files/figure-html/unnamed-chunk-9-1.png" width="700"></p>
+<p><img src="BASS_Benefit_Step_by_Step_files/figure-html/unnamed-chunk-9-1.png" class="r-plt" width="700"></p>
 <p>Hypothetical Sample Set 2.6% greater shrubland than Study Area 5.1%
 greater than Study Area with inclusion of Focal Sample Unit Therefore
 Focal Sample Unit makes Sample Set less like Study Area Therefore NO
@@ -595,7 +595,7 @@ Benefit Benefit = 0</p>
 <span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggtheme.html" class="external-link">theme_minimal</a></span><span class="op">(</span><span class="op">)</span> </span>
 <span><span class="op">(</span><span class="va">fullplot</span> <span class="op">/</span> <span class="op">(</span><span class="va">key_row</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span> <span class="fu"><a href="https://patchwork.data-imaginist.com/reference/plot_layout.html" class="external-link">plot_layout</a></span><span class="op">(</span>heights <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">2</span>, <span class="fl">1</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
 <div class="figure">
-<img src="BASS_Benefit_Step_by_Step_files/figure-html/unnamed-chunk-10-1.png" alt="Figure 6. Distribution of land cover by focal sample unit, hypothetical sample set, hypothetical sample set plus focal sample unit and study area" width="1344"><p class="caption">
+<img src="BASS_Benefit_Step_by_Step_files/figure-html/unnamed-chunk-10-1.png" class="r-plt" alt="Figure 6. Distribution of land cover by focal sample unit, hypothetical sample set, hypothetical sample set plus focal sample unit and study area" width="1344"><p class="caption">
 Figure 6. Distribution of land cover by focal sample unit, hypothetical
 sample set, hypothetical sample set plus focal sample unit and study
 area
@@ -1060,7 +1060,7 @@ sample sets.</p>
 <span>  <span class="co"># xlim(0, 0.15) +</span></span>
 <span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/geom_text.html" class="external-link">geom_text</a></span><span class="op">(</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html" class="external-link">aes</a></span><span class="op">(</span>x <span class="op">=</span> <span class="va">multi_ex</span><span class="op">$</span><span class="va">benefit</span> <span class="op">+</span> <span class="fl">0.01</span>, y <span class="op">=</span> <span class="fl">1</span><span class="op">)</span>, label <span class="op">=</span> <span class="st">"bar(beta)[j]"</span>, parse <span class="op">=</span> <span class="cn">T</span><span class="op">)</span></span></code></pre></div>
 <div class="figure">
-<img src="BASS_Benefit_Step_by_Step_files/figure-html/unnamed-chunk-14-1.png" alt="Figure 7. Example focal sample unit benefit, calculated using 200 randomly drawn hypothetical sample sets. Mean benefit is shown in the vertical dotted line." width="700"><p class="caption">
+<img src="BASS_Benefit_Step_by_Step_files/figure-html/unnamed-chunk-14-1.png" class="r-plt" alt="Figure 7. Example focal sample unit benefit, calculated using 200 randomly drawn hypothetical sample sets. Mean benefit is shown in the vertical dotted line." width="700"><p class="caption">
 Figure 7. Example focal sample unit benefit, calculated using 200
 randomly drawn hypothetical sample sets. Mean benefit is shown in the
 vertical dotted line.
@@ -1098,7 +1098,7 @@ unit using the hypothetical sample set shown in
 <span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggtheme.html" class="external-link">theme_minimal</a></span><span class="op">(</span><span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="co"># xlim(0, 0.15)  +</span></span>
 <span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/geom_text.html" class="external-link">geom_text</a></span><span class="op">(</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html" class="external-link">aes</a></span><span class="op">(</span>x <span class="op">=</span> <span class="va">multi_ex</span><span class="op">$</span><span class="va">benefit</span> <span class="op">+</span> <span class="fl">0.01</span>, y <span class="op">=</span> <span class="fl">1.5</span><span class="op">)</span>, label <span class="op">=</span> <span class="st">"bar(beta)[example]"</span>, parse <span class="op">=</span> <span class="cn">T</span><span class="op">)</span></span></code></pre></div>
-<p><img src="BASS_Benefit_Step_by_Step_files/figure-html/all-benefits-1.png" width="700"></p>
+<p><img src="BASS_Benefit_Step_by_Step_files/figure-html/all-benefits-1.png" class="r-plt" width="700"></p>
 <p>There is as much variation across sample units as there is within
 iterations of the example sample units. The example sample unit looks to
 be in the middle of a possibly bimodal distribution. However we have
@@ -1148,7 +1148,7 @@ the focal sample unit plus hypothetical sample set.</p>
 <span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggtheme.html" class="external-link">theme_minimal</a></span><span class="op">(</span><span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/lims.html" class="external-link">xlim</a></span><span class="op">(</span><span class="fl">0</span>, <span class="fl">0.15</span><span class="op">)</span></span></code></pre></div>
 <div class="figure">
-<img src="BASS_Benefit_Step_by_Step_files/figure-html/200iterations-1-1.png" alt="Figure 9. Distribution across all sample units in a study area of the mean benefit calculated using 200 randomly drawn (with replacment; black) hypothetical sample sets or 100 hypothetical sample sets (grey), each consisting of 10 sample units. The mean benefit for the example focal sample unit described above is shown in the dotted line" width="700"><p class="caption">
+<img src="BASS_Benefit_Step_by_Step_files/figure-html/200iterations-1-1.png" class="r-plt" alt="Figure 9. Distribution across all sample units in a study area of the mean benefit calculated using 200 randomly drawn (with replacment; black) hypothetical sample sets or 100 hypothetical sample sets (grey), each consisting of 10 sample units. The mean benefit for the example focal sample unit described above is shown in the dotted line" width="700"><p class="caption">
 Figure 9. Distribution across all sample units in a study area of the
 mean benefit calculated using 200 randomly drawn (with replacment;
 black) hypothetical sample sets or 100 hypothetical sample sets (grey),
@@ -1186,7 +1186,7 @@ set.</p>
 <span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggtheme.html" class="external-link">theme_minimal</a></span><span class="op">(</span><span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/lims.html" class="external-link">xlim</a></span><span class="op">(</span><span class="fl">0</span>, <span class="fl">0.15</span><span class="op">)</span></span></code></pre></div>
 <div class="figure">
-<img src="BASS_Benefit_Step_by_Step_files/figure-html/200iterations-2-1.png" alt="Figure 10. Distribution of mean benefit distribution across all sample units. Calculation of benefit completed using 200 randomly drawn hypothetical sample sets of 20 sample units each (grey distribution).This is compared with the distribution of 200 sample sets of 10 sample units each (black distribution). The mean benefit for the example hexagon with sample sets of 20 sample units is shown in the dotted line." width="700"><p class="caption">
+<img src="BASS_Benefit_Step_by_Step_files/figure-html/200iterations-2-1.png" class="r-plt" alt="Figure 10. Distribution of mean benefit distribution across all sample units. Calculation of benefit completed using 200 randomly drawn hypothetical sample sets of 20 sample units each (grey distribution).This is compared with the distribution of 200 sample sets of 10 sample units each (black distribution). The mean benefit for the example hexagon with sample sets of 20 sample units is shown in the dotted line." width="700"><p class="caption">
 Figure 10. Distribution of mean benefit distribution across all sample
 units. Calculation of benefit completed using 200 randomly drawn
 hypothetical sample sets of 20 sample units each (grey
@@ -1222,7 +1222,7 @@ units.</p>
 <span><span class="co"># ggspatial::annotation_scale(location = "bl", width_hint = 0.4)</span></span>
 <span><span class="va">benefit_sf</span></span></code></pre></div>
 <div class="figure" style="text-align: center">
-<img src="BASS_Benefit_Step_by_Step_files/figure-html/unnamed-chunk-15-1.png" alt="Figure 11. The plotted mean benefit estimate running 200 iterations of hypothetical sample sets each of 10 sample units." width="384"><p class="caption">
+<img src="BASS_Benefit_Step_by_Step_files/figure-html/unnamed-chunk-15-1.png" class="r-plt" alt="Figure 11. The plotted mean benefit estimate running 200 iterations of hypothetical sample sets each of 10 sample units." width="384"><p class="caption">
 Figure 11. The plotted mean benefit estimate running 200 iterations of
 hypothetical sample sets each of 10 sample units.
 </p>
@@ -1260,7 +1260,7 @@ units to sample within that study area using the GRTS algorithm.</p>
 </div>
 
 <div class="pkgdown-footer-right">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.1.3.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.2.0.</p>
 </div>
 
     </footer>
