@@ -183,6 +183,7 @@ run_grts_on_BASS <- function(probs, nARUs, os = NULL, num_runs = 1,
       # abort_strat("There is only one stratum")
       n_os <- n_os[[1]]
       n_strata <- n_strata[[1]]
+      stratum_var <- NULL
     }
   }
 
