@@ -186,17 +186,26 @@ run_grts_on_BASS <- function(probs, nARUs, os = NULL, num_runs = 1,
 
   selection_weighting <- rlang::as_name(rlang::enquo(selection_weighting))
 
+  args <- list2(...)
+
+
   s <- set_seed(seed, {
     purrr::map(
-      1:num_runs,
+      1:num_runs,~do.call(spsurvey::grts,exprs(
+                                               sframe = probs,
+                                              n_over = n_os,
+                                              n_base = n_strata,
+                                              stratum_var = stratum_name,
+                                              aux_var = selection_weighting,
+                                              !!!args)) )
       # Must be \(x) to use ... (otherwise ... overwritten)
-      \(x) spsurvey::grts(sframe = probs,
-                          n_over = n_os,
-                          n_base = n_strata,
-                          stratum_var = stratum_name,
-                          aux_var = selection_weighting,
-                          ...)
-    )
+    #   \(x) spsurvey::grts(sframe = probs,
+    #                       n_over = n_os,
+    #                       n_base = n_strata,
+    #                       stratum_var = stratum_name,
+    #                       aux_var = selection_weighting,
+    #                       ...)
+    # )
   })
 
   # If only one run

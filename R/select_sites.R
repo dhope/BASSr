@@ -123,7 +123,7 @@ select_sites <- function(sites, type, n_samples, min_dist,
       inform("`cluster_size` and `min_dist_cluster`, do not apply to Shortest Path sampling")
     }
     r <- select_by_random(sites,  {{hex_id}} , {{site_id}}, n_samples, os,
-                          ARUonly, min_dist, useGRTS, seed)
+                          ARUonly, min_dist, useGRTS, seed, ...)
   } else if (type == "path") {
     if(!is.null(os) | !is.null(min_dist_cluster)) {
       inform("`os`, `min_dist_cluster`, `ARUonly` and `useGRTS` do not apply to Shortest Path sampling")
@@ -150,16 +150,38 @@ select_with_grts <- function(sites, hex_id, site_id, n, os, min_dist, seed, ...)
   sites <- sites |>
     dplyr::mutate(inclpr = .data[["scaled_benefit"]]) |>
     dplyr::select({{ hex_id }}, {{ site_id }}, "X", "Y", "inclpr")
+  args <- dots_list(...)
+  args$mindis <- min_dist
+  # args$probs = sites
+  # args$nARUs = n
+  # args$os = os
+  # # mindis = min_dist,
+  # # args$hex_id = rlang::parse_expr(!!site_id) %>% rlang::new_quosure()#{{site_id}},
+  # # args$stratum_id = rlang::parse_expr(hex_id) %>% rlang::new_quosure()#{{hex_id}},
+  # args$seed = seed#, ... = args
 
-  selected <- run_grts_on_BASS(
-    probs = sites,
-    nARUs = n,
-    os = os,
-    mindis = min_dist,
-    hex_id = {{site_id}},
-    stratum_id = {{hex_id}},
-    seed = seed, ...
-  )
+
+  selected <-  do.call(run_grts_on_BASS,
+                       exprs(!!!args,
+                               probs = sites,
+                               nARUs = n,
+                               os = os,
+                               hex_id = {{site_id}},
+                               stratum_id = {{hex_id}},
+                               seed = seed ) )
+
+
+
+
+  # selected <- run_grts_on_BASS(
+  #   probs = sites,
+  #   nARUs = n,
+  #   os = os,
+  #   # mindis = min_dist,
+  #   hex_id = {{site_id}},
+  #   stratum_id = {{hex_id}},
+  #   seed = seed, ... = args
+  # )
 
   dplyr::bind_rows(selected$sites_base, selected$sites_over) |>
     sf::st_drop_geometry() |>
@@ -281,10 +303,10 @@ cluster_dist <- function(cells, spacing) {
 }
 
 select_by_random <- function(sites, hex_id, site_id, n_samples, os,
-                             ARUonly, min_dist, useGRTS, seed) {
+                             ARUonly, min_dist, useGRTS, seed, ...) {
 
   if(useGRTS) {
-    selected <- select_with_grts(sites, {{hex_id}}, {{site_id}}, n = n_samples, os, min_dist, seed)
+    selected <- select_with_grts(sites, {{hex_id}}, {{site_id}}, n = n_samples, os, min_dist, seed, ...)
     if(ARUonly) selected$aru <- "ARU" else selected$aru <- "PC"
 
   } else {
