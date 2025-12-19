@@ -58,7 +58,7 @@ calculate_benefit <- function(land_hex, samples,
   check_column(samples, {{ hex_id }})
   check_column(samples, {{ stratum_id }})
   samples <- check_samples(samples, land_hex, {{ hex_id }}, {{ stratum_id }})
-  check_non_random_set(non_random_set, dplyr::pull(land_hex, {{ hex_id }}))
+
   check_land_cover_weights(land_cover_weights, land_hex)
 
 
@@ -73,7 +73,7 @@ calculate_benefit <- function(land_hex, samples,
   if (!is.null(non_random_set)) {
 
     if (is.vector(non_random_set)) {
-
+      check_non_random_set(non_random_set, dplyr::pull(land_hex, {{ hex_id }}))
       extra <- land_long %>%
         dplyr::mutate({{ hex_id }} := as.character({{ hex_id }})) %>%
         tidyr::pivot_wider(id_cols = {{ hex_id }},
@@ -85,6 +85,8 @@ calculate_benefit <- function(land_hex, samples,
         dplyr::bind_rows(samples, extra)
 
     } else if(is.data.frame(non_random_set)){
+      check_non_random_set(dplyr::pull(non_random_set, {{hex_id}}),
+                           dplyr::pull(land_hex, {{ hex_id }}))
 
       random_sample_summary_widenest <- tidyr::expand_grid(
         non_random_set,
