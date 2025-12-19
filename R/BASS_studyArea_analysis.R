@@ -179,9 +179,9 @@ run_grts_on_BASS <- function(probs, nARUs, os = NULL, num_runs = 1,
     }
 
     # Problem: Chose stratification, but only one strata
-    if(length(n_strata) == 1 || (rlang::is_named(n_os) && length(n_os) == 1)) {
-      abort_strat("There is only one stratum")
-    }
+    # if(length(n_strata) == 1 || (rlang::is_named(n_os) && length(n_os) == 1)) {
+    #   abort_strat("There is only one stratum")
+    # }
   }
 
   selection_weighting <- rlang::as_name(rlang::enquo(selection_weighting))

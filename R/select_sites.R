@@ -86,7 +86,7 @@ select_sites <- function(sites, type, n_samples, min_dist,
                          cluster_size = NULL, min_dist_cluster = NULL, os = NULL,
                          hex_id = hex_id, site_id = site_id,
                          ARUonly = FALSE, useGRTS = TRUE,
-                         progress = TRUE, seed = NULL) {
+                         progress = TRUE, seed = NULL, ...) {
 
   # Checks
   if(!type %in% c("cluster", "random", "path")) {
@@ -117,7 +117,7 @@ select_sites <- function(sites, type, n_samples, min_dist,
       inform("`cluster_size` and `min_dist_cluster`, do not applyare required for cluster sampling")
     }
     r <- select_by_cluster(sites, {{ hex_id }}, {{ site_id }}, n_samples, os, cluster_size,
-                           ARUonly, min_dist, min_dist_cluster, useGRTS, spacing, seed)
+                           ARUonly, min_dist, min_dist_cluster, useGRTS, spacing, seed, ...)
   } else if (type == "random") {
     if(!is.null(cluster_size) | !is.null(min_dist_cluster)) {
       inform("`cluster_size` and `min_dist_cluster`, do not apply to Shortest Path sampling")
@@ -136,7 +136,7 @@ select_sites <- function(sites, type, n_samples, min_dist,
   r
 }
 
-select_with_grts <- function(sites, hex_id, site_id, n, os, min_dist, seed) {
+select_with_grts <- function(sites, hex_id, site_id, n, os, min_dist, seed, ...) {
 
   if(!("X" %in% names(sites) & "Y" %in% names(sites))) {
     sites <- dplyr::bind_cols(sites, dplyr::as_tibble(sf::st_coordinates(sites)))
@@ -158,7 +158,7 @@ select_with_grts <- function(sites, hex_id, site_id, n, os, min_dist, seed) {
     mindis = min_dist,
     hex_id = {{site_id}},
     stratum_id = {{hex_id}},
-    seed = seed
+    seed = seed, ...
   )
 
   dplyr::bind_rows(selected$sites_base, selected$sites_over) |>
@@ -172,7 +172,7 @@ select_with_grts <- function(sites, hex_id, site_id, n, os, min_dist, seed) {
 }
 
 select_by_cluster <- function(sites, hex_id, site_id, n_samples, os, cluster_size,
-                              ARUonly, min_dist, min_dist_cluster, useGRTS, spacing, seed) {
+                              ARUonly, min_dist, min_dist_cluster, useGRTS, spacing, seed, ...) {
 
   n_clusters <- floor(n_samples / cluster_size)
   n_os_clusters <- floor(n_clusters * (os))
@@ -186,7 +186,7 @@ select_by_cluster <- function(sites, hex_id, site_id, n_samples, os, cluster_siz
                 "there is a good chance that your clusters will overlap/abut"))
   }
 
-  if(useGRTS) selected <- select_with_grts(sites, {{hex_id}}, {{site_id}}, n_clusters, os, min_dist, seed)
+  if(useGRTS) selected <- select_with_grts(sites, {{hex_id}}, {{site_id}}, n_clusters, os, min_dist, seed, ...)
 
   if(!useGRTS) {
     hexes <- dplyr::pull(sites, {{ hex_id }}) |> dplyr::n_distinct()
